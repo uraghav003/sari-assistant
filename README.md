@@ -1,18 +1,16 @@
-# SARI - Sovereign AI Assistant
+# SARI Supreme Command
 
-Lucy-grade AI assistant with Self-Build Skills.
+Frontend: SARI  
+Brain: NotebookLM-style Drive pack (no Sheets)  
+Workers: BULBHUL | LAILA
 
 ## Live
-https://sari-assistant.vercel.app
+https://sari-supreme-command.vercel.app
 
-## Run local
-```bash
-npm install
-npm run dev
-```
+Git-linked: this repo → Vercel project `sari-supreme-command`.  
+Old `sari-assistant` Vercel project left ERROR on purpose (unlinked incomplete tree).
 
-## Features
-- Command Center
-- SARI Chat
-- Skills Builder (guide SARI to create skills)
-- Connections / Policies / Audit
+## Chain
+HI/MD → Mallik → SARI → workers
+
+No EMP_CODE, loan PII, or secrets in this repo.
