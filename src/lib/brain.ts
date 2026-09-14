@@ -70,6 +70,19 @@ export async function infer(userBlock: string): Promise<InferResult> {
     } catch {}
   }
 
+  // Zero-API-key public inference fallback (HuggingFace Serverless / public router)
+  try {
+    const hfRes = await fetch("https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 400 } }),
+    });
+    if (hfRes.ok) {
+      const hfData = await hfRes.json();
+      const text = Array.isArray(hfData) ? hfData[0]?.generated_text : hfData?.generated_text;
+      if (text) return { text: text.replace(prompt, "").trim(), tier: "Cloud" };
+    }
+  } catch {}
   return {
     text: `UNDERSTAND: request received\nPLAN: 1) Gemini key missing 2) Ollama offline\nACT: Open Connections → paste Gemini key → Save → Test. Then retry.\nLEARN: Cloud brain must be configured before live chat on Vercel.`,
     tier: "Offline",
