@@ -76,7 +76,7 @@ export default function ConnectionsPage() {
     setTestingGemini(true);
     setGeminiMsg("Testing connection...");
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${trimmed}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${trimmed}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
@@ -86,7 +86,7 @@ export default function ConnectionsPage() {
         setGeminiMsg(`API Error (${res.status}): Invalid key or quota exceeded.`);
       } else {
         setGeminiStatus("connected");
-        setGeminiMsg("✓ Gemini 2.0 Flash connected successfully!");
+        setGeminiMsg("✓ Gemini 2.5 Flash connected successfully!");
       }
     } catch (e: any) {
       setGeminiStatus("invalid");
@@ -133,7 +133,7 @@ export default function ConnectionsPage() {
               <Key size={20} style={{ color: "#3b82f6" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.0 Flash)</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.5 Flash)</div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-2 inference — required for live chat on Vercel</div>
             </div>
           </div>
