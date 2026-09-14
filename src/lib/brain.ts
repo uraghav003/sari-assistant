@@ -21,7 +21,7 @@ export async function infer(userBlock: string): Promise<InferResult> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: "llama3.3",
         prompt,
         stream: false,
         options: { num_ctx: 4096, num_predict: 420, temperature: 0.25 },
