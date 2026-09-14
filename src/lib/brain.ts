@@ -35,17 +35,17 @@ export async function infer(userBlock: string): Promise<InferResult> {
     if (text) return { text, tier: "Local" };
   } catch {}
 
-  const kimiKey = typeof window !== "undefined" ? localStorage.getItem("sari_kimi_key") : null;
-  if (kimiKey) {
+  const mallikKey = typeof window !== "undefined" ? localStorage.getItem("Mallik_API_KEY") : null;
+  if (mallikKey) {
     try {
-      const kimiRes = await fetch("https://api.moonshot.cn/v1/chat/completions", {
+      const mallikRes = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + mallikKey, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${kimiKey}` },
-        body: JSON.stringify({ model: "moonshot-v1-8k", messages: [{ role: "user", content: prompt }] }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       });
-      if (kimiRes.ok) {
-        const kData = await kimiRes.json();
-        const text = kData.choices?.[0]?.message?.content?.trim();
+      if (mallikRes.ok) {
+        const mData = await mallikRes.json();
+        const text = mData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (text) return { text, tier: "Cloud" };
       }
     } catch {}
