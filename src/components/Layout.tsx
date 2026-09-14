@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, MessageSquare, Sparkles, Link2,
-  Shield, Activity, LogOut, Wand2
+  Shield, Activity, LogOut, Wand2, Zap
 } from "lucide-react";
 import { clearSession } from "../lib/auth";
 
@@ -10,6 +10,7 @@ const nav = [
   { to: "/chat", icon: MessageSquare, label: "SARI Chat" },
   { to: "/skills", icon: Wand2, label: "Skills Builder" },
   { to: "/connections", icon: Link2, label: "Connections" },
+  { to: "/leads", icon: Zap, label: "Leads & Alerts" },
   { to: "/policies", icon: Shield, label: "Policies" },
   { to: "/audit", icon: Activity, label: "Audit Trail" },
 ];

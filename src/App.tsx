@@ -9,6 +9,7 @@ import SkillsPage from "./pages/SkillsPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import PoliciesPage from "./pages/PoliciesPage";
 import AuditPage from "./pages/AuditPage";
+import LeadsPage from "./pages/LeadsPage";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!isAuthenticated()) return <Navigate to="/login" replace />;
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="skills" element={<SkillsPage />} />
         <Route path="connections" element={<ConnectionsPage />} />
+        <Route path="leads" element={<LeadsPage />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="audit" element={<AuditPage />} />
       </Route>
