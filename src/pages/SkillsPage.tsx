@@ -70,6 +70,14 @@ export default function SkillsPage() {
     setAutoMode(n);
   }
 
+  function enableAllSkills() {
+    setAuto(true);
+    setAutoMode(true);
+    const updated = skills.map((s) => ({ ...s, status: "live" as const }));
+    saveSkills(updated);
+    setSkills(updated);
+  }
+
   return (
     <div className="page">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
@@ -77,7 +85,10 @@ export default function SkillsPage() {
           <h1 className="page-title">Skills Builder</h1>
           <p className="page-sub">Self-instruct · Auto-learn · Think then Act</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn-secondary" onClick={enableAllSkills}>
+            Enable All
+          </button>
           <button className={auto ? "btn-primary" : "btn-ghost"} onClick={toggleAuto}>
             Auto mode: {auto ? "ON" : "OFF"}
           </button>
