@@ -1,4 +1,4 @@
-import { MessageSquare, Mail, Phone, Zap, Activity, ShieldCheck, Bot, Wand2, ArrowRight } from "lucide-react";
+import { MessageSquare, Mail, Phone, Zap, Activity, ShieldCheck, Bot, Wand2, ArrowRight, Shield, Cpu } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const stats = [
@@ -6,6 +6,12 @@ const stats = [
   { label: "Unread", value: "12", icon: MessageSquare, color: "var(--purple)" },
   { label: "Calls Today", value: "5", icon: Phone, color: "var(--green)" },
   { label: "Skills Live", value: "6", icon: Wand2, color: "var(--amber)" },
+];
+
+const agentsHierarchy = [
+  { name: "SARI", role: "Master Sovereign AI", status: "ACTIVE", icon: Bot, color: "var(--cyan)", desc: "Executive Control, Workflow Builder, Multi-Agent Orchestration" },
+  { name: "LAILA", role: "System Auditor & Policy Controller", status: "ACTIVE", icon: Shield, color: "var(--purple)", desc: "Audit Trail Logging, Financial Data Protection, Zero-Trust Gatekeeping" },
+  { name: "BULBUL", role: "Operations & Reporting Analyst", status: "ACTIVE", icon: Cpu, color: "var(--green)", desc: "Lead Intake Ingestion, Telegram / WhatsApp Routing, Daily Operations Digest" },
 ];
 
 const recent = [
@@ -33,6 +39,32 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Real Hierarchy: SARI, LAILA, BULBUL */}
+      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, borderBottom: "1px solid var(--border)", paddingBottom: 10 }}>
+          <Bot size={16} style={{ color: "var(--cyan)" }} />
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Active Sovereign Agent Hierarchy (Divyanshi Capital)</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+          {agentsHierarchy.map((agent) => (
+            <div key={agent.name} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: 12, padding: 14, display: "flex", gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <agent.icon size={18} style={{ color: agent.color }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: agent.color }}>{agent.name}</span>
+                  <span className="badge" style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)", fontSize: 10.5 }}>{agent.status}</span>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text)", marginTop: 2 }}>{agent.role}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>{agent.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }}>
         <div className="card">
           <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
