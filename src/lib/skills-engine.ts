@@ -38,6 +38,16 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
+    id: "fish-audio",
+    name: "Fish Audio Voice Synthesis",
+    description: "Generate voiceovers, multilingual TTS, and real-time audio streams via Fish Audio API",
+    status: "live",
+    trigger: "audio / voice / tts / speech / fish audio",
+    steps: ["Format text/ssml", "Select speaker/voice ID", "Call Fish Audio API", "Stream / save audio output"],
+    instruction: "Convert text or assistant responses to natural voice audio using Fish Audio API endpoints with zero PII exposure.",
+    runs: 0,
+  },
+  {
     id: "laila-audit",
     name: "LAILA Zero-Trust Audit",
     description: "Sub-agent LAILA continuous audit of Zero-Trust policies and webhook channels",
