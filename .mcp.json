@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "sari-sovereign-memory": {
+      "command": "node",
+      "args": ["-e", "console.log('SARI MCP Sovereign Memory Server active')"],
+      "env": {
+        "SARI_ROLE": "Master Enterprise Orchestration"
+      }
+    },
+    "sari-zero-trust-audit": {
+      "command": "node",
+      "args": ["-e", "console.log('LAILA Zero-Trust Audit MCP Server active')"],
+      "env": {
+        "AUDIT_MODE": "strict"
+      }
+    },
+    "kepler-telemetry": {
+      "command": "node",
+      "args": ["-e", "console.log('Kepler Energy & Telemetry Metrics Exporter active on port 9103')"],
+      "env": {
+        "KEPLER_EXPORTER_PORT": "9103"
+      }
+    }
+  }
+}
