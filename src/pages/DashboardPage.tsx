@@ -15,8 +15,8 @@ const agentsHierarchy = [
 ];
 
 const recent = [
-  { type: "email", title: "Q3 Product Roadmap Review", from: "Priya Patel", time: "12m ago" },
-  { type: "whatsapp", title: "Can you check the latest designs?", from: "Priya Patel", time: "28m ago" },
+  { type: "email", title: "Zero-Trust Policy Heartbeat", from: "System Auditor (LAILA)", time: "12m ago" },
+  { type: "whatsapp", title: "Inbound Webhook Channel Check", from: "System Auditor (LAILA)", time: "28m ago" },
   { type: "skill", title: "Skill built: Daily Inbox Brief", from: "SARI", time: "2h ago" },
 ];
 
