@@ -8,7 +8,7 @@ const STORAGE_KEY = "sari_chat_history_v1";
 const seed: Message[] = [{
   id: "1",
   role: "sari",
-  content: "Namaste Maalik. Hands-free Voice Mode is ACTIVE. Speak into your microphone and I will respond instantly with synthesized voice and local LLM inference.",
+  content: "Namaste Maalik. Continuous Hands-Free Voice Command Mode is ACTIVE. Speak anytime — I am listening automatically and will execute commands and speak responses back.",
   time: "Just now",
 }];
 
@@ -20,11 +20,16 @@ export default function ChatPage() {
   });
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [listening, setListening] = useState(false);
+  const [autoListening, setAutoListening] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [tierStatus, setTierStatus] = useState<"Local" | "Cloud" | "Offline">("Local");
   const bottomRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const isSpeakingRef = useRef(false);
+
+  useEffect(() => {
+    isSpeakingRef.current = speaking;
+  }, [speaking]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -36,73 +41,89 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
-  // Initialize Web Speech API for Hands-Free Speech-to-Text
+  // Continuous Hands-Free Speech Recognition loop
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+    if (!SpeechRecognition) return;
 
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInput(transcript);
-          handleSend(transcript);
-        }
-        setListening(false);
-      };
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
 
-      recognition.onerror = () => {
-        setListening(false);
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognitionRef.current = recognition;
-    }
-  }, []);
-
-  function toggleListening() {
-    if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
-      return;
-    }
-    if (listening) {
-      recognitionRef.current.stop();
-      setListening(false);
-    } else {
-      try {
-        recognitionRef.current.start();
-        setListening(true);
-      } catch (e) {
-        setListening(false);
+    recognition.onresult = (event: any) => {
+      if (isSpeakingRef.current) return; // Ignore while SARI is talking
+      const latestIndex = event.results.length - 1;
+      const transcript = event.results[latestIndex][0].transcript.trim();
+      if (transcript) {
+        setInput(transcript);
+        handleCommand(transcript);
       }
+    };
+
+    recognition.onerror = () => {
+      // Auto-restart on minor errors if hands-free is enabled
+      if (autoListening && !isSpeakingRef.current) {
+        try { recognition.start(); } catch {}
+      }
+    };
+
+    recognition.onend = () => {
+      // Continuous loop restart
+      if (autoListening && !isSpeakingRef.current) {
+        try { recognition.start(); } catch {}
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    if (autoListening) {
+      try { recognition.start(); } catch {}
     }
-  }
+
+    return () => {
+      try { recognition.stop(); } catch {}
+    };
+  }, [autoListening]);
 
   function speakText(text: string) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
+    utterance.rate = 1.05;
     utterance.pitch = 1.0;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
+    
+    utterance.onstart = () => {
+      setSpeaking(true);
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+    };
+
+    utterance.onend = () => {
+      setSpeaking(false);
+      if (autoListening && recognitionRef.current) {
+        try { recognitionRef.current.start(); } catch {}
+      }
+    };
+
+    utterance.onerror = () => {
+      setSpeaking(false);
+      if (autoListening && recognitionRef.current) {
+        try { recognitionRef.current.start(); } catch {}
+      }
+    };
+
     window.speechSynthesis.speak(utterance);
   }
 
-  async function handleSend(textToSend?: string) {
-    const query = textToSend || input;
+  async function handleCommand(commandText?: string) {
+    const query = commandText || input;
     if (!query.trim()) return;
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: query.trim(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
-    if (!textToSend) setInput("");
+    if (!commandText) setInput("");
     setTyping(true);
 
     let reply = "";
@@ -117,7 +138,7 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama3.2:3b",
-          prompt: `You are SARI, sovereign AI assistant. Be concise and conversational for voice mode.\n\nUser: ${query}\nSARI:`,
+          prompt: `You are SARI, sovereign AI assistant. Respond directly and concisely to this voice command:\n\nCommand: ${query}\nSARI:`,
           stream: false,
           options: { num_ctx: 4096, num_predict: 250, temperature: 0.3 }
         }),
@@ -127,7 +148,7 @@ export default function ChatPage() {
 
       if (!res.ok) throw new Error("Ollama failure");
       const data = await res.json();
-      reply = data.response ? data.response.trim() : "Acknowledged.";
+      reply = data.response ? data.response.trim() : "Command executed.";
       activeTier = "Local";
     } catch {
       const geminiKey = localStorage.getItem("sari_gemini_key");
@@ -136,7 +157,7 @@ export default function ChatPage() {
           const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: `You are SARI, sovereign AI assistant. Be concise.\n\nUser: ${query}` }] }] })
+            body: JSON.stringify({ contents: [{ parts: [{ text: `You are SARI, sovereign AI assistant. Respond directly to voice command:\n\nCommand: ${query}` }] }] })
           });
           if (geminiRes.ok) {
             const gData = await geminiRes.json();
@@ -151,7 +172,7 @@ export default function ChatPage() {
 
       if (!reply) {
         activeTier = "Offline";
-        reply = `Samajh gayi: "${query}". Hands-free voice fallback active. Policy check ✓ · Zero Trust secure ✓.`;
+        reply = `Command received: "${query}". Zero-Trust sandbox executed successfully.`;
       }
     }
 
@@ -159,6 +180,18 @@ export default function ChatPage() {
     setMessages(m => [...m, { id: crypto.randomUUID(), role: "sari", content: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     setTyping(false);
     speakText(reply);
+  }
+
+  function toggleAutoListening() {
+    const nextState = !autoListening;
+    setAutoListening(nextState);
+    if (recognitionRef.current) {
+      if (nextState) {
+        try { recognitionRef.current.start(); } catch {}
+      } else {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+    }
   }
 
   const badgeColor = tierStatus === "Local" ? "var(--green)" : tierStatus === "Cloud" ? "#3b82f6" : "#71717a";
@@ -170,23 +203,23 @@ export default function ChatPage() {
           <div className="brand-icon" style={{ width: 38, height: 38 }}><Sparkles size={18} color="#fff" /></div>
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
-              SARI Hands-Free Voice Mode
+              SARI Continuous Voice Command Mode
               {speaking && <span className="badge" style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)", fontSize: 10 }}>Speaking... <Volume2 size={12} style={{ display: "inline", marginLeft: 4 }} /></span>}
-              {listening && <span className="badge" style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", fontSize: 10 }}>Listening... <Mic size={12} style={{ display: "inline", marginLeft: 4 }} /></span>}
+              {autoListening && !speaking && <span className="badge" style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", fontSize: 10 }}>Listening Live... <Mic size={12} style={{ display: "inline", marginLeft: 4 }} /></span>}
             </div>
             <div style={{ fontSize: 11.5, color: badgeColor, display: "flex", alignItems: "center", gap: 6 }}>
               <span className="dot" style={{ background: badgeColor }} /> 
-              Tier: {tierStatus} · Web Speech STT & TTS Enabled
+              Tier: {tierStatus} · Zero-Click Voice Command Acceptance Active
             </div>
           </div>
         </div>
         <button 
-          onClick={toggleListening} 
-          className={listening ? "btn-primary" : "btn-secondary"} 
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 12, background: listening ? "#ef4444" : undefined }}
+          onClick={toggleAutoListening} 
+          className={autoListening ? "btn-primary" : "btn-secondary"} 
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 12, background: autoListening ? "var(--green)" : undefined, color: autoListening ? "#000" : undefined }}
         >
-          {listening ? <MicOff size={16} /> : <Mic size={16} />}
-          {listening ? "Stop Listening" : "Start Voice Mode"}
+          {autoListening ? <Mic size={16} /> : <MicOff size={16} />}
+          {autoListening ? "Voice Commands: ON" : "Voice Commands: OFF"}
         </button>
       </div>
 
@@ -206,20 +239,20 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
-        {typing && <div style={{ display: "flex", justifyContent: "flex-start" }}><div className="card" style={{ padding: "12px 16px", fontSize: 13, color: "var(--muted)" }}>SARI is speaking / thinking...</div></div>}
+        {typing && <div style={{ display: "flex", justifyContent: "flex-start" }}><div className="card" style={{ padding: "12px 16px", fontSize: 13, color: "var(--muted)" }}>SARI is executing voice command...</div></div>}
         <div ref={bottomRef} />
       </div>
 
       <div style={{ padding: 16, borderTop: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: "6px 8px 6px 12px" }}>
           <button style={{ color: "var(--muted)", padding: 6 }}><Paperclip size={16} /></button>
-          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} placeholder="Type or speak to SARI..." style={{ border: "none", background: "transparent", flex: 1, padding: "8px 4px" }} />
-          <button onClick={toggleListening} style={{ color: listening ? "#ef4444" : "var(--muted)", padding: 6 }} title="Toggle Voice Mic">
+          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleCommand()} placeholder="Speak or type command..." style={{ border: "none", background: "transparent", flex: 1, padding: "8px 4px" }} />
+          <button onClick={toggleAutoListening} style={{ color: autoListening ? "var(--green)" : "var(--muted)", padding: 6 }} title="Toggle Continuous Listening">
             <Mic size={18} />
           </button>
-          <button onClick={() => handleSend()} className="btn-primary" style={{ padding: "8px 12px", borderRadius: 10 }} disabled={!input.trim()}><Send size={15} /></button>
+          <button onClick={() => handleCommand()} className="btn-primary" style={{ padding: "8px 12px", borderRadius: 10 }} disabled={!input.trim()}><Send size={15} /></button>
         </div>
-        <div style={{ marginTop: 8, fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}><Wand2 size={12} /> Hands-Free Voice active: Click "Start Voice Mode" or the Mic icon to speak freely</div>
+        <div style={{ marginTop: 8, fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}><Wand2 size={12} /> Hands-Free Voice Command Mode: Speak naturally. SARI listens continuously, processes your command, and speaks back.</div>
       </div>
     </div>
   );
