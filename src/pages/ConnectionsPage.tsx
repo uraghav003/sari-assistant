@@ -126,7 +126,6 @@ export default function ConnectionsPage() {
       <h1 className="page-title">Connections & Integrations</h1>
       <p className="page-sub">Manage Cloud Brain, Memory Vault, and Local AI runtimes</p>
 
-      {/* 1. CLOUD BRAIN (Gemini) */}
       <div className="card" style={{ padding: 24, marginTop: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -135,7 +134,7 @@ export default function ConnectionsPage() {
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.0 Flash)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-2 fallback inference engine</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-2 inference — required for live chat on Vercel</div>
             </div>
           </div>
           <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: geminiBadgeColor, borderColor: geminiBadgeColor }}>
@@ -146,14 +145,14 @@ export default function ConnectionsPage() {
           Get a free API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: "var(--cyan)", display: "inline-flex", alignItems: "center", gap: 4 }}>Google AI Studio <ExternalLink size={12} /></a>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input 
-            type="password" 
-            value={geminiKey} 
-            onChange={(e) => setGeminiKey(e.target.value)} 
-            placeholder="AIzaSy..." 
-            style={{ flex: 1, minWidth: 260, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }} 
+          <input
+            type="password"
+            value={geminiKey}
+            onChange={(e) => setGeminiKey(e.target.value)}
+            placeholder="AIzaSy..."
+            style={{ flex: 1, minWidth: 260, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
           />
-          <button onClick={saveKey} className="btn-secondary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }}>Save</button>
+          <button onClick={saveGeminiKey} className="btn-secondary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }}>Save</button>
           <button onClick={testGemini} className="btn-primary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }} disabled={testingGemini}>
             {testingGemini ? "Testing..." : "Test Connection"}
           </button>
@@ -161,7 +160,6 @@ export default function ConnectionsPage() {
         {geminiMsg && <div style={{ marginTop: 12, fontSize: 12.5, color: geminiStatus === "connected" ? "var(--green)" : geminiStatus === "invalid" ? "#ef4444" : "var(--muted)" }}>{geminiMsg}</div>}
       </div>
 
-      {/* 2. MEMORY VAULT (Drive) */}
       <div className="card" style={{ padding: 24, marginTop: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -186,7 +184,6 @@ export default function ConnectionsPage() {
         </label>
       </div>
 
-      {/* 3. LOCAL AI (Ollama) */}
       <div className="card" style={{ padding: 24, marginTop: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -195,7 +192,7 @@ export default function ConnectionsPage() {
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: 16 }}>Local AI (Ollama)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-1 local runtime (127.0.0.1:11434)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-1 local runtime (127.0.0.1:11434) — laptop only</div>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -213,7 +210,7 @@ export default function ConnectionsPage() {
           </div>
         ) : (
           <div style={{ fontSize: 13, color: "#ef4444" }}>
-            Ollama offline — run <code style={{ background: "rgba(255,255,255,0.06)", padding: "2px 6px", borderRadius: 4 }}>ollama serve</code> in your terminal
+            Ollama offline on this device — Vercel chat uses Gemini key from this page
           </div>
         )}
       </div>
