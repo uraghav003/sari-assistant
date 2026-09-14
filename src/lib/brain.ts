@@ -35,6 +35,22 @@ export async function infer(userBlock: string): Promise<InferResult> {
     if (text) return { text, tier: "Local" };
   } catch {}
 
+  const kimiKey = typeof window !== "undefined" ? localStorage.getItem("sari_kimi_key") : null;
+  if (kimiKey) {
+    try {
+      const kimiRes = await fetch("https://api.moonshot.cn/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${kimiKey}` },
+        body: JSON.stringify({ model: "moonshot-v1-8k", messages: [{ role: "user", content: prompt }] }),
+      });
+      if (kimiRes.ok) {
+        const kData = await kimiRes.json();
+        const text = kData.choices?.[0]?.message?.content?.trim();
+        if (text) return { text, tier: "Cloud" };
+      }
+    } catch {}
+  }
+
   const geminiKey = typeof window !== "undefined" ? localStorage.getItem("sari_gemini_key") : null;
   if (geminiKey) {
     try {
