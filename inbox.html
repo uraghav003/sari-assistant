@@ -1,0 +1,444 @@
+function SARI_UI_() {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SARI Supreme</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#00ffd5;--accent-rgb:0,255,213;
+  --accent-dim:rgba(0,255,220,.12);--accent-border:rgba(0,255,220,.25);
+  --bg:#020a0d;--bg-card:rgba(0,20,18,.6);
+  --text:#e0fff8;--text-dim:#5a8a82;
+  --glow-color:rgba(0,255,220,.08);
+  --tube-grad-top:rgba(0,255,220,.06);--tube-grad-bot:rgba(0,255,220,.04);
+}
+[data-theme="dark"]{
+  --accent:#e0e0e0;--accent-rgb:224,224,224;
+  --accent-dim:rgba(255,255,255,.08);--accent-border:rgba(255,255,255,.15);
+  --bg:#000;--bg-card:rgba(18,18,18,.8);
+  --text:#ccc;--text-dim:#555;
+  --glow-color:rgba(255,255,255,.04);
+  --tube-grad-top:rgba(255,255,255,.04);--tube-grad-bot:rgba(255,255,255,.02);
+}
+[data-theme="premium"]{
+  --accent:#e8a838;--accent-rgb:232,168,56;
+  --accent-dim:rgba(232,168,56,.12);--accent-border:rgba(232,168,56,.25);
+  --bg:#08060f;--bg-card:rgba(25,18,35,.7);
+  --text:#f0e8d8;--text-dim:#8a7a60;
+  --glow-color:rgba(232,168,56,.06);
+  --tube-grad-top:rgba(232,168,56,.06);--tube-grad-bot:rgba(232,168,56,.03);
+}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;transition:background .6s,color .6s}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(var(--accent-rgb),.03) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--accent-rgb),.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.hud-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(0,0,0,.85);border-bottom:1px solid var(--accent-border);backdrop-filter:blur(12px);font-size:12px;transition:border-color .6s}
+.hud-bar .left{display:flex;align-items:center;gap:12px}
+.hud-bar .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+.hud-bar .label{color:var(--accent);font-weight:bold;letter-spacing:3px;font-size:13px}
+.hud-bar .ver{color:var(--text-dim);font-size:11px}
+.hud-bar .right{display:flex;gap:16px;color:var(--text-dim);font-size:11px}
+.hud-bar .right .on{color:var(--accent)}
+.main{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 42px);position:relative;z-index:1}
+.holo-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;border-right:1px solid var(--accent-border);transition:border-color .6s}
+.tube{width:200px;height:350px;border-radius:100px/36px;background:linear-gradient(180deg,var(--tube-grad-top) 0%,rgba(0,0,0,.3) 50%,var(--tube-grad-bot) 100%);border:1px solid var(--accent-border);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 50px var(--glow-color),0 0 30px var(--glow-color);overflow:hidden;transition:border-color .6s,box-shadow .6s}
+.tube::before{content:"";position:absolute;top:8px;width:90px;height:10px;border-radius:50%;background:rgba(var(--accent-rgb),.2);filter:blur(3px)}
+.tube::after{content:"";position:absolute;bottom:16px;width:120px;height:6px;border-radius:50%;background:rgba(var(--accent-rgb),.15);filter:blur(5px)}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(var(--accent-rgb),.3),transparent);animation:scanMove 4s linear infinite;z-index:5}
+@keyframes scanMove{0%{top:0}100%{top:100%}}
+.avatar-wrap{position:relative;z-index:3;display:flex;align-items:center;justify-content:center;height:100%}
+.avatar-wrap canvas{display:block}
+.base-ring{margin-top:10px;width:160px;height:20px;border-radius:50%;background:radial-gradient(ellipse,rgba(var(--accent-rgb),.12),transparent 70%);border:1px solid var(--accent-border)}
+.sari-label{margin-top:12px;letter-spacing:10px;font-weight:bold;font-size:15px;color:var(--accent);text-shadow:0 0 12px rgba(var(--accent-rgb),.4)}
+.speaking{display:none;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:var(--accent)}
+.speaking.active{display:flex}
+.speaking .bars{display:flex;gap:2px;align-items:end;height:14px}
+.speaking .bar{width:3px;background:var(--accent);border-radius:2px;animation:barPulse .6s ease-in-out infinite alternate}
+.speaking .bar:nth-child(2){animation-delay:.15s}
+.speaking .bar:nth-child(3){animation-delay:.3s}
+.speaking .bar:nth-child(4){animation-delay:.45s}
+@keyframes barPulse{0%{height:4px}100%{height:14px}}
+.status-panel{margin-top:16px;width:180px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:8px;padding:10px;font-size:11px;transition:border-color .6s,background .6s}
+.status-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(var(--accent-rgb),.06);color:var(--text-dim)}
+.status-row:last-child{border:none}
+.status-row .val{color:var(--accent);font-weight:600}
+.chat-panel{display:flex;flex-direction:column;padding:14px}
+.chat-area{flex:1;overflow-y:auto;max-height:calc(100vh - 190px);padding:8px;scrollbar-width:thin;scrollbar-color:rgba(var(--accent-rgb),.2) transparent}
+.msg{padding:10px 14px;margin:6px 0;border-radius:12px;max-width:85%;line-height:1.4;font-size:14px;white-space:pre-wrap;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.me{margin-left:auto;background:rgba(var(--accent-rgb),.1);border:1px solid var(--accent-border)}
+.ai{background:var(--bg-card);border:1px solid rgba(var(--accent-rgb),.1);border-left:3px solid rgba(var(--accent-rgb),.35)}
+.input-area{display:flex;gap:8px;padding:10px 0;border-top:1px solid var(--accent-border)}
+.input-area input{flex:1;padding:13px 16px;background:var(--bg-card);border:1px solid var(--accent-border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .3s}
+.input-area input:focus{border-color:var(--accent)}
+.input-area input::placeholder{color:var(--text-dim)}
+.btn{padding:13px 16px;border:1px solid var(--accent-border);border-radius:10px;background:var(--accent-dim);color:var(--accent);font-weight:bold;cursor:pointer;font-size:13px;transition:all .2s}
+.btn:hover{background:rgba(var(--accent-rgb),.2)}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.quick-row{display:flex;flex-wrap:wrap;gap:5px;padding:6px 0}
+.quick-row button{padding:6px 12px;border:1px solid var(--accent-border);border-radius:7px;background:var(--accent-dim);color:var(--text-dim);cursor:pointer;font-size:11px;transition:all .2s}
+.quick-row button:hover{color:var(--accent);border-color:var(--accent)}
+.footer-info{font-size:10px;color:var(--text-dim);text-align:center;padding:4px 0;opacity:.6}
+.dot-anim{display:inline-block;animation:dotPulse 1.2s infinite}
+@keyframes dotPulse{0%,60%,100%{opacity:.3}30%{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:768px){.main{grid-template-columns:1fr}.holo-panel{padding:14px;border-right:none;border-bottom:1px solid var(--accent-border)}.tube{width:150px;height:260px;border-radius:75px/28px}.chat-area{max-height:40vh}.status-panel{display:none}}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="hud-bar">
+  <div class="left">
+    <div class="dot"></div>
+    <span class="label">SARI SUPREME</span>
+    <span class="ver">v11.2</span>
+  </div>
+  <div class="right">
+    <span class="on" id="liveTag">&#9679; LIVE</span>
+    <span id="aiBar">AI: ...</span>
+    <span id="themeTag">HOLOGRAM</span>
+  </div>
+</div>
+<div class="main">
+  <div class="holo-panel">
+    <div class="tube">
+      <div class="scan-line"></div>
+      <div class="avatar-wrap">
+        <canvas id="sariCanvas" width="160" height="180"></canvas>
+      </div>
+    </div>
+    <div class="base-ring"></div>
+    <div class="sari-label">S A R I</div>
+    <div class="speaking" id="speakInd"><div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div><span>Speaking...</span></div>
+    <div class="status-panel">
+      <div class="status-row"><span>ENGINE</span><span class="val" id="engineVal">LOADING</span></div>
+      <div class="status-row"><span>VOICE</span><span class="val" id="voiceVal">INIT</span></div>
+      <div class="status-row"><span>THEME</span><span class="val" id="themeVal">HOLOGRAM</span></div>
+      <div class="status-row"><span>SECURITY</span><span class="val">LOCKED</span></div>
+    </div>
+  </div>
+  <div class="chat-panel">
+    <div class="chat-area" id="chat"></div>
+    <div class="input-area">
+      <input type="text" id="msg" placeholder="Command ya search karo..." onkeydown="if(event.key==='Enter')send()">
+      <button class="btn btn-primary" onclick="send()">Send</button>
+      <button class="btn" onclick="voice()">&#x1F399;</button>
+    </div>
+    <div class="quick-row">
+      <button onclick="quick('status')">Status</button>
+      <button onclick="quick('mail summary')">Mail</button>
+      <button onclick="quick('read mail inbox')">Inbox</button>
+      <button onclick="quick('search trending news india')">Search</button>
+      <button onclick="quick('change layout dark')">Dark</button>
+      <button onclick="quick('change layout hologram')">Hologram</button>
+      <button onclick="quick('change layout premium')">Premium</button>
+      <button onclick="quick('help')">Help</button>
+    </div>
+    <div class="footer-info">SARI Supreme v11.2 | Divyanshi Capital | 22 Official Languages + English</div>
+  </div>
+</div>
+<script>
+var chat = document.getElementById("chat");
+var isSpeaking = false;
+var chatHistory = [];
+try { chatHistory = JSON.parse(localStorage.getItem('SARI_CHAT') || '[]'); } catch(e) { chatHistory = []; }
+function saveChat() { try { localStorage.setItem('SARI_CHAT', JSON.stringify(chatHistory.slice(-30))); } catch(e) {} }
+function loadChat() {
+  chat.innerHTML = '';
+  if (!chatHistory.length) {
+    addMsg("SARI online. Malik, command dijiye.", "ai");
+    return;
+  }
+  chatHistory.forEach(function(m) { renderMsg(m.t, m.c); });
+}
+function renderMsg(t, c) {
+  var d = document.createElement("div");
+  d.className = "msg " + c;
+  d.textContent = t;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+function addMsg(t, c) { renderMsg(t, c); chatHistory.push({t: t, c: c}); saveChat(); }
+function showTyping() {
+  var d = document.createElement("div");
+  d.className = "msg ai";
+  d.id = "typing";
+  d.innerHTML = '<span style="opacity:.6">SARI soch rahi hai</span> <span class="dot-anim">●</span><span class="dot-anim" style="animation-delay:.2s">●</span><span class="dot-anim" style="animation-delay:.4s">●</span>';
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { var t = document.getElementById("typing"); if (t) t.remove(); }
+function quick(t) { document.getElementById("msg").value = t; send(); }
+
+function send() {
+  var input = document.getElementById("msg");
+  var message = input.value.trim();
+  if (!message) return;
+  addMsg("Malik: " + message, "me");
+  input.value = "";
+  showTyping();
+
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      var runner = google.script.run
+        .withSuccessHandler(function(r) {
+          hideTyping();
+          var reply = (r && r.reply) ? r.reply : JSON.stringify(r);
+          addMsg("SARI: " + reply, "ai");
+          speak(reply);
+          if (r && r.settings) applyTheme(r.settings.layout);
+        })
+        .withFailureHandler(function(e) {
+          hideTyping();
+          addMsg("SARI ERROR: " + (e.message || e), "ai");
+        });
+      
+      var request = {message: message, source: "WEB_UI"};
+      if (/^(mail|read mail|check mail|inbox|learn github|github status|send whatsapp|remind me|list reminders|show reminders|my reminders)/i.test(message)) {
+        runner.handleSariEditor(request);
+      } else {
+        runner.handleSariPublic(request);
+      }
+    } else {
+      hideTyping();
+      addMsg("SARI: Local mode — AI keys add karo in Script Properties", "ai");
+    }
+  } catch(e) {
+    hideTyping();
+    addMsg("ERROR: " + e.message, "ai");
+  }
+}
+
+function applyTheme(layout) {
+  var t = (layout || "HOLOGRAM").toUpperCase();
+  if (t === "DARK") document.body.setAttribute("data-theme", "dark");
+  else if (t === "PREMIUM") document.body.setAttribute("data-theme", "premium");
+  else document.body.removeAttribute("data-theme");
+  document.getElementById("themeTag").textContent = t;
+  document.getElementById("themeVal").textContent = t;
+}
+
+function speak(text) {
+  if (!text || text.length < 2) return;
+  isSpeaking = true;
+  showSpeak(true);
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text.replace(/[\*\#\_]/g, ""));
+    u.lang = "hi-IN";
+    u.pitch = 1.15;
+    u.rate = 0.95;
+    var voices = speechSynthesis.getVoices();
+    var fv = voices.find(function(v) { return v.lang.includes("hi") && (v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("google")); });
+    if (fv) u.voice = fv;
+    u.onend = function() { isSpeaking = false; showSpeak(false); };
+    u.onerror = function() { isSpeaking = false; showSpeak(false); };
+    speechSynthesis.speak(u);
+  } else {
+    setTimeout(function() { isSpeaking = false; showSpeak(false); }, 3000);
+  }
+}
+
+function showSpeak(on) {
+  document.getElementById("speakInd").className = on ? "speaking active" : "speaking";
+}
+
+function voice() {
+  var R = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!R) { addMsg("Mic not supported. Chrome use karo.", "ai"); return; }
+  var btn = document.querySelector('.btn:last-of-type');
+  var rec = new R();
+  rec.lang = "hi-IN";
+  rec.interimResults = false;
+  btn.style.background = "var(--accent)";
+  btn.style.color = "var(--bg)";
+  btn.textContent = "🔴";
+  addMsg("🎤 Listening...", "ai");
+  rec.onresult = function(e) {
+    document.getElementById("msg").value = e.results[0][0].transcript;
+    btn.textContent = "🎤";
+    btn.style.background = "";
+    btn.style.color = "";
+    send();
+  };
+  rec.onerror = function(e) {
+    btn.textContent = "🎤";
+    btn.style.background = "";
+    btn.style.color = "";
+    if (e.error === "not-allowed" || e.error === "permission-denied") {
+      addMsg("Mic permission denied. Browser settings check karo.", "ai");
+    } else if (e.error === "no-speech") {
+      addMsg("Kuch sunai nahi diya. Dobara bolo.", "ai");
+    } else {
+      addMsg("Mic ready. Bolo Malik.", "ai");
+    }
+  };
+  rec.onend = function() { btn.textContent = "🎤"; btn.style.background = ""; btn.style.color = ""; };
+  rec.start();
+}
+
+try {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run.withSuccessHandler(function(r) {
+      if (r && r.reply) {
+        var m = r.reply.match(/AI:\s*([^\s|]+)/);
+        if (m) {
+          document.getElementById("aiBar").textContent = "AI: " + m[1];
+          document.getElementById("engineVal").textContent = m[1];
+        }
+      }
+      if (r && r.settings) applyTheme(r.settings.layout);
+      document.getElementById("voiceVal").textContent = "WEB";
+    }).withFailureHandler(function() {
+      document.getElementById("engineVal").textContent = "READY";
+    }).handleSariPublic({message: "status", source: "HUD_INIT"});
+  } else {
+    document.getElementById("engineVal").textContent = "LOCAL";
+    document.getElementById("voiceVal").textContent = "WEB";
+  }
+} catch(e) {
+  document.getElementById("engineVal").textContent = "READY";
+}
+
+loadChat();
+
+(function() {
+  var canvas = document.getElementById('sariCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var blinkState = 0;
+  var nextBlink = performance.now() + 3000;
+
+  function drawFace(now) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var w = canvas.width, h = canvas.height;
+    var breathe = Math.sin(now * 0.0012) * 1.2;
+    var scale = 1 + Math.sin(now * 0.0015) * 0.01;
+
+    ctx.save();
+    ctx.translate(w/2, h/2 + breathe);
+    ctx.scale(scale, scale);
+    ctx.translate(-w/2, -h/2);
+
+    ctx.beginPath();
+    ctx.ellipse(80, 40, 50, 75, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#3e2723';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(80, 65, 43, 52, 0, 0, Math.PI*2);
+    var headGrad = ctx.createRadialGradient(65, 45, 10, 80, 65, 55);
+    headGrad.addColorStop(0, '#fce4ec');
+    headGrad.addColorStop(0.8, '#f8bbd0');
+    headGrad.addColorStop(1, '#e8a0b4');
+    ctx.fillStyle = headGrad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(38, 70, 7, 4, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,140,150,0.5)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(122, 70, 7, 4, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    drawEye(58, 58, blinkState);
+    drawEye(102, 58, blinkState);
+
+    ctx.beginPath();
+    ctx.moveTo(80, 68);
+    ctx.quadraticCurveTo(76, 78, 80, 80);
+    ctx.quadraticCurveTo(84, 78, 80, 68);
+    ctx.fillStyle = 'rgba(224,164,182,0.4)';
+    ctx.fill();
+
+    ctx.beginPath();
+    if (isSpeaking) {
+      var t = now * 0.001;
+      var open = 1.5 + Math.abs(Math.sin(t * 8)) * 3 + Math.abs(Math.sin(t * 13)) * 2 + Math.abs(Math.sin(t * 5)) * 2;
+      open = Math.min(open, 8);
+
+      ctx.ellipse(80, 84, 10, open, 0, 0, Math.PI*2);
+      ctx.fillStyle = '#880e4f';
+      ctx.fill();
+
+      if (open > 2.5) {
+        ctx.beginPath();
+        ctx.rect(74, 84 - open + 1, 12, 2.5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.ellipse(80, 84, 10, open, 0, 0, Math.PI*2);
+      ctx.strokeStyle = '#c2185b';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    } else {
+      ctx.arc(80, 82, 11, 0.15, Math.PI - 0.15);
+      ctx.strokeStyle = '#b9647a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.ellipse(80, 32, 40, 16, 0, 0, Math.PI);
+    ctx.fillStyle = '#3e2723';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawEye(x, y, blink) {
+    ctx.beginPath();
+    ctx.ellipse(x, y, 9, 10, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(100,180,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (blink < 0.99) {
+      ctx.beginPath();
+      ctx.arc(x + 2, y, 5, 0, Math.PI*2);
+      var irisGrad = ctx.createRadialGradient(x, y - 1, 1, x, y, 5);
+      irisGrad.addColorStop(0, '#4a90d9');
+      irisGrad.addColorStop(1, '#1e3a5f');
+      ctx.fillStyle = irisGrad;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 2, y, 2.5, 0, Math.PI*2);
+      ctx.fillStyle = '#000';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 1.5, y - 0.5, 0.8, 0, Math.PI*2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    } else {
+      ctx.fillStyle = '#f8bbd0';
+      ctx.fillRect(x - 9, y - 10, 18, 20);
+    }
+  }
+
+  function animate(now) {
+    if (now >= nextBlink) {
+      blinkState = 1;
+      setTimeout(function() { blinkState = 0; }, 100);
+      nextBlink = now + 2000 + Math.random() * 4000;
+      if (Math.random() < 0.2) {
+        setTimeout(function() {
+          blinkState = 1;
+          setTimeout(function() { blinkState = 0; }, 100);
+        }, 250);
+      }
+    }
+    drawFace(now);
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>`;
+}
