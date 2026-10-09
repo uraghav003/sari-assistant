@@ -27,13 +27,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const customKey = typeof req.headers["x-gemini-key"] === "string" ? req.headers["x-gemini-key"] : undefined;
-  const apiKey = process.env.GEMINI_API_KEY || customKey;
+  const customKey =
+    (typeof req.headers["x-gemini-key"] === "string" ? req.headers["x-gemini-key"] : undefined) ||
+    (typeof req.headers["x-mallik-key"] === "string" ? req.headers["x-mallik-key"] : undefined);
+
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.MALLIK_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.AI_STUDIO_API_KEY ||
+    customKey;
 
   if (!apiKey) {
     res.status(503).json({
       error: "NO_KEY",
-      hint: "Add GEMINI_API_KEY to Vercel Environment Variables, then redeploy.",
+      hint: "Add GEMINI_API_KEY or MALLIK_API_KEY to Vercel Environment Variables, or pass x-gemini-key header.",
     });
     return;
   }

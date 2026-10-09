@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
-import { Key, Database, Cpu, Upload, ExternalLink, RefreshCw, Code2, ShieldCheck, Zap, BookOpen, Layers } from "lucide-react";
+import { Key, Database, Cpu, Upload, ExternalLink, RefreshCw, Code2, ShieldCheck, Zap, BookOpen, Layers, FileJson, CheckCircle2, AlertCircle } from "lucide-react";
 import { loadDynamicConfig, saveDynamicConfig, pingAppsScript } from "../lib/config";
+import { importUniversalConfigJson, resolveActiveGeminiKey, validateGeminiKey } from "../lib/key-resolver";
 
 export default function ConnectionsPage() {
   const [config, setConfig] = useState(loadDynamicConfig());
 
-  // Gemini State
-  const [geminiStatus, setGeminiStatus] = useState<"not_configured" | "connected" | "invalid">("not_configured");
-  const [geminiMsg, setGeminiMsg] = useState("");
+  // Key Validation & Status
+  const [keyHealth, setKeyHealth] = useState<{ valid: boolean; message: string; source: string }>({
+    valid: false,
+    message: "Validating active keys...",
+    source: "init",
+  });
   const [testingGemini, setTestingGemini] = useState(false);
+
+  // JSON Import Status
+  const [importStatus, setImportStatus] = useState<string>("");
 
   // Apps Script Dynamic Mind State
   const [scriptStatus, setScriptStatus] = useState<"checking" | "connected" | "error">("checking");
@@ -32,7 +39,6 @@ export default function ConnectionsPage() {
   useEffect(() => {
     const current = loadDynamicConfig();
     setConfig(current);
-    if (current.geminiKey) setGeminiStatus("connected");
     if (current.notionToken) setNotionSaved(true);
     if (current.notebooklmFolderId) setNotebookSaved(true);
 
@@ -47,6 +53,7 @@ export default function ConnectionsPage() {
       }
     }
 
+    checkKeyHealth();
     checkAppsScript(current.deploymentId);
     checkOllama(current.ollamaUrl);
     const interval = setInterval(() => {
@@ -54,6 +61,17 @@ export default function ConnectionsPage() {
     }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  async function checkKeyHealth() {
+    setTestingGemini(true);
+    const res = await resolveActiveGeminiKey();
+    setKeyHealth({
+      valid: res.valid,
+      message: res.message,
+      source: res.source,
+    });
+    setTestingGemini(false);
+  }
 
   async function checkAppsScript(depId?: string) {
     setTestingScript(true);
@@ -89,53 +107,34 @@ export default function ConnectionsPage() {
   function handleSaveConfig() {
     const saved = saveDynamicConfig(config);
     setConfig(saved);
-    if (saved.geminiKey) {
-      setGeminiStatus("connected");
-      setGeminiMsg("Gemini API key saved.");
-    } else {
-      setGeminiStatus("not_configured");
-      setGeminiMsg("Key removed.");
-    }
     if (saved.notionToken) setNotionSaved(true);
     if (saved.notebooklmFolderId) setNotebookSaved(true);
+    checkKeyHealth();
     checkAppsScript(saved.deploymentId);
   }
 
-  async function testGemini() {
-    const trimmed = config.geminiKey.trim();
-    if (!trimmed) {
-      setGeminiStatus("not_configured");
-      setGeminiMsg("Please enter an API key first.");
-      return;
-    }
-    setTestingGemini(true);
-    setGeminiMsg("Testing connection...");
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${trimmed}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
-        }
-      );
-      if (!res.ok) {
-        setGeminiStatus("invalid");
-        setGeminiMsg(`API Error (${res.status}): Invalid key or quota exceeded.`);
-      } else {
-        setGeminiStatus("connected");
-        setGeminiMsg("✓ Gemini 2.0 Flash connected successfully!");
+  function handleUniversalJsonDrop(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const result = importUniversalConfigJson(text);
+        const updated = loadDynamicConfig();
+        setConfig(updated);
+        setImportStatus(`✓ Successfully extracted ${result.entriesCount} parameters from ${file.name}!`);
+        await checkKeyHealth();
+        await checkAppsScript(updated.deploymentId);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setImportStatus(`✗ Import failed: ${message}`);
       }
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
-      setGeminiStatus("invalid");
-      setGeminiMsg(`✗ Request failed: ${message}`);
-    } finally {
-      setTestingGemini(false);
-    }
+    };
+    reader.readAsText(file);
   }
 
-  function handleFileDrop(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleMemoryFileDrop(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -158,17 +157,78 @@ export default function ConnectionsPage() {
     reader.readAsText(file);
   }
 
-  const geminiBadgeColor = geminiStatus === "connected" ? "var(--green)" : geminiStatus === "invalid" ? "#ef4444" : "var(--muted)";
   const scriptBadgeColor = scriptStatus === "connected" ? "var(--green)" : "#ef4444";
   const ollamaBadgeColor = ollamaStatus === "connected" ? "var(--green)" : "#ef4444";
 
   return (
     <div className="page" style={{ maxWidth: 900, margin: "0 auto" }}>
       <h1 className="page-title">Connections & Sovereign Mind</h1>
-      <p className="page-sub">Configure Apps Script Autopilot, Gemini 2.0 Flash, Notion, NotebookLM, and Local Runtimes</p>
+      <p className="page-sub">Auto-resolve keys via JSON import, Script ID, Deployment ID, and Cloud/Local Runtimes</p>
+
+      {/* 1-Click Universal JSON Import Card */}
+      <div className="card" style={{ padding: 24, marginTop: 24, border: "1px dashed rgba(59,130,246,0.5)", background: "rgba(59,130,246,0.03)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <FileJson size={22} style={{ color: "#3b82f6" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Universal 1-Click JSON Configuration Import</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Drop any JSON file (apps-script-properties.json, SARI_CONFIG.json, .mcp.json)</div>
+            </div>
+          </div>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#3b82f6", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
+            <Upload size={16} /> Choose or Drop JSON
+            <input type="file" accept=".json" onChange={handleUniversalJsonDrop} style={{ display: "none" }} />
+          </label>
+        </div>
+        {importStatus && (
+          <div style={{ fontSize: 12.5, marginTop: 8, color: importStatus.startsWith("✓") ? "var(--green)" : "#ef4444", fontWeight: 500 }}>
+            {importStatus}
+          </div>
+        )}
+      </div>
+
+      {/* Pre-Validated Cloud Brain (Gemini 2.0 / MALLIK_API_KEY) Card */}
+      <div className="card" style={{ padding: 24, marginTop: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Key size={20} style={{ color: "#3b82f6" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.0 Flash / MALLIK_API_KEY)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Pre-flight validated key resolver with automatic failover</div>
+            </div>
+          </div>
+          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: keyHealth.valid ? "var(--green)" : "#ef4444", borderColor: keyHealth.valid ? "var(--green)" : "#ef4444", display: "flex", alignItems: "center", gap: 4 }}>
+            {keyHealth.valid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+            {keyHealth.valid ? "Validated Active" : "No Valid Key"}
+          </span>
+        </div>
+        <div style={{ fontSize: 13, marginBottom: 12, color: "var(--muted)" }}>
+          API key auto-resolves from <code>MALLIK_API_KEY</code>, <code>GEMINI_API_KEY</code>, or manual input below:
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            type="password"
+            value={config.geminiKey}
+            onChange={(e) => setConfig({ ...config, geminiKey: e.target.value })}
+            placeholder="AIzaSy... or MALLIK_API_KEY"
+            style={{ flex: 1, minWidth: 260, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
+          />
+          <button onClick={handleSaveConfig} className="btn-secondary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }}>Save</button>
+          <button onClick={checkKeyHealth} className="btn-primary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }} disabled={testingGemini}>
+            {testingGemini ? "Probing..." : "Test Key Health"}
+          </button>
+        </div>
+        <div style={{ marginTop: 12, fontSize: 12.5, color: keyHealth.valid ? "var(--green)" : "#ef4444" }}>
+          {keyHealth.message}
+        </div>
+      </div>
 
       {/* Dynamic Mind / Google Apps Script Autopilot Card */}
-      <div className="card" style={{ padding: 24, marginTop: 24 }}>
+      <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -200,7 +260,7 @@ export default function ConnectionsPage() {
               type="text"
               value={config.deploymentId}
               onChange={(e) => setConfig({ ...config, deploymentId: e.target.value })}
-              placeholder="1ru_EBflLmasLfZ7..."
+              placeholder="AKfycbwzdhZF3..."
               style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
             />
           </div>
@@ -214,41 +274,6 @@ export default function ConnectionsPage() {
           </button>
         </div>
         {scriptMsg && <div style={{ marginTop: 10, fontSize: 12.5, color: scriptStatus === "connected" ? "var(--green)" : "#ef4444" }}>{scriptMsg}</div>}
-      </div>
-
-      {/* Cloud Brain (Gemini 2.0 Flash) Card */}
-      <div className="card" style={{ padding: 24, marginTop: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Key size={20} style={{ color: "#3b82f6" }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.0 Flash)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-1 Serverless Proxy / Client API Key</div>
-            </div>
-          </div>
-          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: geminiBadgeColor, borderColor: geminiBadgeColor }}>
-            {geminiStatus === "connected" ? "Connected" : geminiStatus === "invalid" ? "Invalid Key" : "Not Configured"}
-          </span>
-        </div>
-        <div style={{ fontSize: 13, marginBottom: 12, color: "var(--muted)" }}>
-          Get a free API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" style={{ color: "var(--cyan)", display: "inline-flex", alignItems: "center", gap: 4 }}>Google AI Studio <ExternalLink size={12} /></a>
-        </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            type="password"
-            value={config.geminiKey}
-            onChange={(e) => setConfig({ ...config, geminiKey: e.target.value })}
-            placeholder="AIzaSy..."
-            style={{ flex: 1, minWidth: 260, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
-          />
-          <button onClick={handleSaveConfig} className="btn-secondary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }}>Save</button>
-          <button onClick={testGemini} className="btn-primary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }} disabled={testingGemini}>
-            {testingGemini ? "Testing..." : "Test Connection"}
-          </button>
-        </div>
-        {geminiMsg && <div style={{ marginTop: 12, fontSize: 12.5, color: geminiStatus === "connected" ? "var(--green)" : geminiStatus === "invalid" ? "#ef4444" : "var(--muted)" }}>{geminiMsg}</div>}
       </div>
 
       {/* Notion & NotebookLM Dual Integrations */}
@@ -365,7 +390,7 @@ export default function ConnectionsPage() {
         </div>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "rgba(255,255,255,0.06)", border: "1px dashed var(--border)", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
           <Upload size={16} /> Drop or Upload SARI_MEMORY.json
-          <input type="file" accept=".json" onChange={handleFileDrop} style={{ display: "none" }} />
+          <input type="file" accept=".json" onChange={handleMemoryFileDrop} style={{ display: "none" }} />
         </label>
       </div>
 
