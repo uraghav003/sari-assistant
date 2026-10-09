@@ -1,24 +1,21 @@
 {
   "mcpServers": {
-    "sari-sovereign-memory": {
+    "sari-sovereign-assistant": {
       "command": "node",
-      "args": ["-e", "console.log('SARI MCP Sovereign Memory Server active')"],
+      "args": ["mcp-server.cjs"],
       "env": {
-        "SARI_ROLE": "Master Enterprise Orchestration"
+        "SARI_SCRIPT_ID": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
+        "SARI_DEPLOYMENT_ID": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
+        "OLLAMA_URL": "http://127.0.0.1:11434",
+        "OLLAMA_MODEL": "llama3.2:latest"
       }
     },
-    "sari-zero-trust-audit": {
+    "bulbhul": {
       "command": "node",
-      "args": ["-e", "console.log('LAILA Zero-Trust Audit MCP Server active')"],
+      "args": ["C:\\Users\\aecr\\.gemini\\config\\plugins\\bulbhul-mcp\\server.js"],
       "env": {
-        "AUDIT_MODE": "strict"
-      }
-    },
-    "kepler-telemetry": {
-      "command": "node",
-      "args": ["-e", "console.log('Kepler Energy & Telemetry Metrics Exporter active on port 9103')"],
-      "env": {
-        "KEPLER_EXPORTER_PORT": "9103"
+        "BULBHUL_SCRIPT_ID": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
+        "BULBHUL_EMP_CODE": "DC001"
       }
     }
   }
