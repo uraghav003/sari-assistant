@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Key, Database, Cpu, Upload, ExternalLink, RefreshCw, Code2, ShieldCheck, Zap } from "lucide-react";
+import { Key, Database, Cpu, Upload, ExternalLink, RefreshCw, Code2, ShieldCheck, Zap, BookOpen, Layers } from "lucide-react";
 import { loadDynamicConfig, saveDynamicConfig, pingAppsScript } from "../lib/config";
 
 export default function ConnectionsPage() {
@@ -25,12 +25,16 @@ export default function ConnectionsPage() {
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [checkingOllama, setCheckingOllama] = useState(false);
 
+  // Notion & NotebookLM State
+  const [notionSaved, setNotionSaved] = useState(false);
+  const [notebookSaved, setNotebookSaved] = useState(false);
+
   useEffect(() => {
     const current = loadDynamicConfig();
     setConfig(current);
-    if (current.geminiKey) {
-      setGeminiStatus("connected");
-    }
+    if (current.geminiKey) setGeminiStatus("connected");
+    if (current.notionToken) setNotionSaved(true);
+    if (current.notebooklmFolderId) setNotebookSaved(true);
 
     if (typeof window !== "undefined") {
       const v = localStorage.getItem("sari_memory_vault");
@@ -56,7 +60,7 @@ export default function ConnectionsPage() {
     const res = await pingAppsScript(depId || config.deploymentId);
     if (res.ok) {
       setScriptStatus("connected");
-      setScriptMsg("✓ Google Apps Script Web App live and responding");
+      setScriptMsg("✓ Google Apps Script Autopilot Core live and responding");
     } else {
       setScriptStatus("error");
       setScriptMsg(`✗ ${res.message}`);
@@ -92,6 +96,8 @@ export default function ConnectionsPage() {
       setGeminiStatus("not_configured");
       setGeminiMsg("Key removed.");
     }
+    if (saved.notionToken) setNotionSaved(true);
+    if (saved.notebooklmFolderId) setNotebookSaved(true);
     checkAppsScript(saved.deploymentId);
   }
 
@@ -158,10 +164,10 @@ export default function ConnectionsPage() {
 
   return (
     <div className="page" style={{ maxWidth: 900, margin: "0 auto" }}>
-      <h1 className="page-title">Connections & Dynamic Mind</h1>
-      <p className="page-sub">Configure Script ID, Deployment ID, Cloud Brain, Self-Healing, and Local Runtimes</p>
+      <h1 className="page-title">Connections & Sovereign Mind</h1>
+      <p className="page-sub">Configure Apps Script Autopilot, Gemini 2.0 Flash, Notion, NotebookLM, and Local Runtimes</p>
 
-      {/* Dynamic Mind / Google Apps Script Card */}
+      {/* Dynamic Mind / Google Apps Script Autopilot Card */}
       <div className="card" style={{ padding: 24, marginTop: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -169,22 +175,22 @@ export default function ConnectionsPage() {
               <Code2 size={20} style={{ color: "var(--green)" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Dynamic Mind (Google Apps Script / Divyanshi OS)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Direct binding via Script ID & Deployment ID (.clasp.json)</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Dynamic Mind (Google Apps Script Autopilot)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Zero-touch background sync via Script ID & Deployment ID</div>
             </div>
           </div>
           <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: scriptBadgeColor, borderColor: scriptBadgeColor }}>
-            {scriptStatus === "connected" ? "Live Connected" : scriptStatus === "checking" ? "Checking..." : "Offline / Unreachable"}
+            {scriptStatus === "connected" ? "Autopilot Live" : scriptStatus === "checking" ? "Checking..." : "Offline / Unreachable"}
           </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
-            <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>Script ID</label>
+            <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>Script ID (.clasp.json)</label>
             <input
               type="text"
               value={config.scriptId}
               onChange={(e) => setConfig({ ...config, scriptId: e.target.value })}
-              placeholder="1PP7wUFkDAkmg..."
+              placeholder="1ru_EBflLmasLfZ7..."
               style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
             />
           </div>
@@ -194,7 +200,7 @@ export default function ConnectionsPage() {
               type="text"
               value={config.deploymentId}
               onChange={(e) => setConfig({ ...config, deploymentId: e.target.value })}
-              placeholder="AKfycbwzdhZF3..."
+              placeholder="1ru_EBflLmasLfZ7..."
               style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
             />
           </div>
@@ -245,6 +251,71 @@ export default function ConnectionsPage() {
         {geminiMsg && <div style={{ marginTop: 12, fontSize: 12.5, color: geminiStatus === "connected" ? "var(--green)" : geminiStatus === "invalid" ? "#ef4444" : "var(--muted)" }}>{geminiMsg}</div>}
       </div>
 
+      {/* Notion & NotebookLM Dual Integrations */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 20 }}>
+        {/* Notion Connector */}
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(236,72,153,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Layers size={18} style={{ color: "#ec4899" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>Notion Database</div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Tasks, policies & lead records</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Notion API Token</label>
+            <input
+              type="password"
+              value={config.notionToken || ""}
+              onChange={(e) => setConfig({ ...config, notionToken: e.target.value })}
+              placeholder="secret_..."
+              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Database ID</label>
+            <input
+              type="text"
+              value={config.notionDatabaseId || ""}
+              onChange={(e) => setConfig({ ...config, notionDatabaseId: e.target.value })}
+              placeholder="32-character ID..."
+              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
+            />
+          </div>
+          <button onClick={handleSaveConfig} className="btn-secondary" style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12 }}>
+            {notionSaved ? "✓ Notion Linked" : "Save Notion"}
+          </button>
+        </div>
+
+        {/* NotebookLM Drive Pack */}
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(249,115,22,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <BookOpen size={18} style={{ color: "#f97316" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>NotebookLM Drive Pack</div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Credit manuals & circulars index</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Google Drive Folder ID / Pack</label>
+            <input
+              type="text"
+              value={config.notebooklmFolderId || ""}
+              onChange={(e) => setConfig({ ...config, notebooklmFolderId: e.target.value })}
+              placeholder="SARI_SUPREME Drive Folder ID..."
+              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
+            />
+          </div>
+          <button onClick={handleSaveConfig} className="btn-secondary" style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, marginTop: 28 }}>
+            {notebookSaved ? "✓ NotebookLM Linked" : "Save NotebookLM"}
+          </button>
+        </div>
+      </div>
+
       {/* Self-Healing & Self-Learning Sentinel Status */}
       <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -253,12 +324,12 @@ export default function ConnectionsPage() {
               <ShieldCheck size={20} style={{ color: "#eab308" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Self-Healing & Continuous Self-Learning</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Automated failover, heuristic extraction, and skill synthesis</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Self-Healing & Zero-Touch Autopilot</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Continuous background sync with zero Apps Script maintenance required</div>
             </div>
           </div>
           <span className="badge" style={{ background: "rgba(34,197,94,0.1)", color: "var(--green)", borderColor: "var(--green)" }}>
-            <Zap size={12} style={{ marginRight: 4 }} /> Active & Guarded
+            <Zap size={12} style={{ marginRight: 4 }} /> Autopilot Active
           </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 12.5, color: "var(--muted)" }}>
@@ -267,8 +338,8 @@ export default function ConnectionsPage() {
             Auto-detects 401 (Auth Expiry), 429 (Rate Limits), and 503 (Outages) with sub-second failover to local runtime.
           </div>
           <div style={{ padding: 12, background: "rgba(255,255,255,0.03)", borderRadius: 8, border: "1px solid var(--border)" }}>
-            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Self-Learning Engine</div>
-            Extracts actionable heuristics on every interaction and consolidates insights into your sovereign memory vault.
+            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Continuous Self-Learning</div>
+            Automatically syncs interaction lessons and dynamic skill cards to Apps Script Memory Vault.
           </div>
         </div>
       </div>

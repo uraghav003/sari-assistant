@@ -12,11 +12,59 @@ export interface Skill {
   lastRun?: string;
 }
 
-const SKILLS_KEY = "sari_skills_v2";
+const SKILLS_KEY = "sari_skills_v3";
 const LESSONS_KEY = "sari_lessons_v1";
 const AUTO_KEY = "sari_auto_mode";
 
 export const seedSkills: Skill[] = [
+  {
+    id: "sari-supreme-autopilot",
+    name: "SARI Supreme Command Zero-Touch Autopilot",
+    description: "Fully autonomous health monitoring, dynamic memory synchronization, failover self-healing, and continuous self-learning without manual maintenance",
+    status: "live",
+    trigger: "autopilot / auto / supreme command / self-heal / sync / health / maintain",
+    steps: [
+      "Poll system heartbeats across Cloud Edge, Google Apps Script, and Local Ollama",
+      "Auto-diagnose runtime anomalies and route failovers with zero disruption",
+      "Consolidate interaction heuristics and user rules into memory vault",
+      "Synchronize live state with Google Apps Script backend and Drive packs",
+      "Deliver proactive executive briefing to MD"
+    ],
+    instruction: "Operate as sovereign self-maintaining intelligence. Never require manual script maintenance. Automatically keep all tiers, memory banks, and connectors healthy.",
+    runs: 0,
+  },
+  {
+    id: "notion-autonomous-sync",
+    name: "Notion Workspace & Database Synchronizer",
+    description: "Bi-directional synchronization of DSA loan leads, policies, employee tasks, and meeting minutes with Notion databases",
+    status: "live",
+    trigger: "notion / workspace / database / notion sync / tasks / lead sync",
+    steps: [
+      "Verify Notion API Bearer token and Target Database ID",
+      "Structure lead / policy / task records into clean Notion property schemas",
+      "Query or upsert database pages via Notion REST API",
+      "Enforce strict Zero-PII sanitization prior to external indexing",
+      "Confirm synchronization timestamp and log audit heartbeat"
+    ],
+    instruction: "Sync and query Notion databases autonomously. Maintain strict property schemas, prevent duplicate entries, and redact sensitive borrower PII.",
+    runs: 0,
+  },
+  {
+    id: "notebooklm-drive-intelligence",
+    name: "NotebookLM Drive Knowledge Pack & Synthesis",
+    description: "Query and synthesize deep multi-document knowledge from Google Drive NotebookLM source packs (credit manuals, RBI circulars, DSA agreements)",
+    status: "live",
+    trigger: "notebooklm / drive pack / circular / rbi / policy doc / manual / pdf / deep research",
+    steps: [
+      "Scan designated Google Drive folder for authoritative lender manuals and circulars",
+      "Extract grounded facts, eligibility criteria, and regulatory constraints",
+      "Synthesize structured briefing with direct source citations",
+      "Cross-reference conflicting lender clauses and highlight key borrower benefits",
+      "Store extracted policy heuristics into SARI's active memory vault"
+    ],
+    instruction: "Act as a precision research partner. Ground all answers strictly in verified Drive/NotebookLM documents with zero hallucination.",
+    runs: 0,
+  },
   {
     id: "sovereign-control",
     name: "Sovereign Control & Governance Gatekeeper",
@@ -284,7 +332,7 @@ export function recordLesson(lesson: string): void {
   const clean = lesson.replace(/^LEARN:\s*/i, "").trim();
   if (!clean) return;
   const prev = loadLessons();
-  const next = [`${new Date().toISOString().slice(0, 16)} ${clean}`, ...prev].slice(0, 40);
+  const next = [`${new Date().toISOString().slice(0, 16)} ${clean}`, ...prev].slice(0, 50);
   localStorage.setItem(LESSONS_KEY, JSON.stringify(next));
 }
 
@@ -311,6 +359,7 @@ export function contextBlock(userText: string): string {
   const vault = localStorage.getItem("sari_memory_vault")?.slice(0, 800) || "";
   return [
     `AUTO_MODE=${isAutoMode() ? "ON" : "OFF"}`,
+    `AUTOPILOT_STATUS=AUTONOMOUS`,
     `SOVEREIGN_AUTHORITY=MD_ONLY`,
     `LIVE_SKILLS=${skills.map((s) => s.name).join(", ")}`,
     hit ? `MATCHED_SKILL=${hit.name}\nSKILL_INSTRUCTION=${hit.instruction}` : "MATCHED_SKILL=none",
