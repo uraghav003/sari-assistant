@@ -1,0 +1,12 @@
+**/**
+!appsscript.json
+!Code.js
+!Code.gs
+!*.gs
+!*.html
+node_modules/**
+dist/**
+src/**
+api/**
+.git/**
+.github/**
