@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { isAuthenticated } from "./lib/auth";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
@@ -18,18 +19,21 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<DashboardPage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="skills" element={<SkillsPage />} />
-        <Route path="connections" element={<ConnectionsPage />} />
-        <Route path="leads" element={<LeadsPage />} />
-        <Route path="policies" element={<PoliciesPage />} />
-        <Route path="audit" element={<AuditPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<DashboardPage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="skills" element={<SkillsPage />} />
+          <Route path="connections" element={<ConnectionsPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="policies" element={<PoliciesPage />} />
+          <Route path="audit" element={<AuditPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <SpeedInsights />
+    </>
   );
 }
