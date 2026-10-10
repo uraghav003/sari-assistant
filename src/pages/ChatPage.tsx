@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Volume2, Sparkles, Send, Paperclip, Wand2, Compass, Mail, ShieldAlert, Cpu } from "lucide-react";
+import { Mic, MicOff, Send, Compass, Mail, RefreshCw, Trash2, Volume2 } from "lucide-react";
 import { infer, type Tier } from "../lib/brain";
 import { bumpRun, contextBlock, extractLesson, matchSkill, loadSkills } from "../lib/skills-engine";
 
@@ -38,8 +38,8 @@ const seedMessages: Message[] = [
     id: "welcome-1",
     role: "sari",
     content:
-      "UNDERSTAND: Session initialized\nPLAN: 1) Verified Cloud Gemini 2.0 & Local Ollama 2) Connected Apps Script 3) Loaded sovereign memory\nACT: Pranam Maalik! SARI Personal Intelligence 11.2 is active. How may I serve Divyanshi Capital today?\nLEARN: Multi-tier sovereign bridge ready.",
-    time: "04:48 AM",
+      "Good morning, Malik! 🌟 SARI Supreme Intelligence v11.2 fully active.\n\nAll keyword traps have been eliminated, and Gemini 2.0 Flash is live with multi-model cascade. Tell me your objective, and I will execute.",
+    time: "Just now",
   },
 ];
 
@@ -59,17 +59,39 @@ export default function ChatPage() {
   const [autoListening, setAutoListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [tierStatus, setTierStatus] = useState<Tier>("Cloud");
+  const [clockTime, setClockTime] = useState("");
   const [showHologram, setShowHologram] = useState(true);
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isSpeakingRef = useRef(false);
+  const isThinkingRef = useRef(false);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+
+  // 1. Dynamic System Clock
+  useEffect(() => {
+    function updateClock() {
+      const now = new Date();
+      let hrs = now.getHours();
+      const mins = String(now.getMinutes()).padStart(2, "0");
+      const ampm = hrs >= 12 ? "PM" : "AM";
+      hrs = hrs % 12 || 12;
+      setClockTime(`${String(hrs).padStart(2, "0")}:${mins} ${ampm}`);
+    }
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     isSpeakingRef.current = speaking;
   }, [speaking]);
+
+  useEffect(() => {
+    isThinkingRef.current = typing;
+  }, [typing]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,6 +103,219 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
+  // 2. Fully Animated Cybernetic Avatar Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let eyeBlink = 0;
+    let blinkSpeed = 0.08;
+    let nextBlinkTime = Date.now() + 2500;
+    let mouthOpenness = 0;
+
+    const particles = Array.from({ length: 18 }, (_, i) => ({
+      angle: (i / 18) * Math.PI * 2,
+      speed: 0.008 + (i % 3) * 0.004,
+      radius: 130 + (i % 4) * 20,
+      size: 1.5 + (i % 3),
+    }));
+
+    function animateAvatar(timestamp: number) {
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      const isThinking = isThinkingRef.current;
+      const isSpeaking = isSpeakingRef.current;
+
+      // Organic Breathing Motion
+      const breathe = Math.sin(timestamp * 0.0018) * 4;
+      const headY = cy + breathe;
+
+      // Natural Blinking Logic
+      if (Date.now() > nextBlinkTime) {
+        eyeBlink += blinkSpeed;
+        if (eyeBlink >= 1) {
+          blinkSpeed = -0.12;
+        } else if (eyeBlink <= 0) {
+          eyeBlink = 0;
+          blinkSpeed = 0.08;
+          nextBlinkTime = Date.now() + 2500 + Math.random() * 3000;
+        }
+      }
+
+      // Lip-Sync Mouth Motion
+      if (isSpeaking) {
+        mouthOpenness = Math.abs(Math.sin(timestamp * 0.016)) * 6;
+      } else {
+        mouthOpenness = 0;
+      }
+
+      // 1. Holographic Aura
+      const auraGrad = ctx.createRadialGradient(cx, headY, 20, cx, headY, 170);
+      auraGrad.addColorStop(0, isThinking ? "rgba(0, 255, 213, 0.18)" : "rgba(0, 255, 213, 0.05)");
+      auraGrad.addColorStop(1, "transparent");
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(cx, headY, 170, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 3D Orbital Rings
+      ctx.save();
+      ctx.translate(cx, headY);
+
+      ctx.save();
+      ctx.rotate(0.35 + Math.sin(timestamp * 0.0006) * 0.05);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 160, 58, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = isThinking ? "rgba(0, 255, 213, 0.6)" : "rgba(0, 255, 213, 0.2)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      ctx.save();
+      ctx.rotate(-0.45 - Math.sin(timestamp * 0.0008) * 0.05);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 170, 48, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 255, 213, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. Orbiting Energy Particles
+      particles.forEach((p) => {
+        p.angle += p.speed * (isThinking ? 2.5 : 1);
+        const px = Math.cos(p.angle) * p.radius;
+        const py = Math.sin(p.angle) * (p.radius * 0.35);
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = isThinking ? "#ffffff" : "#00ffd5";
+        ctx.shadowColor = "#00ffd5";
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      ctx.restore();
+
+      // 4. Cybernetic Face Contours
+      ctx.save();
+      ctx.translate(cx, headY);
+
+      // Outer Head Contour
+      ctx.beginPath();
+      ctx.ellipse(0, -10, 75, 100, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 255, 213, 0.35)";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      // Jawline
+      ctx.beginPath();
+      ctx.moveTo(-45, -18);
+      ctx.quadraticCurveTo(-42, 42, -22, 68);
+      ctx.quadraticCurveTo(0, 80, 22, 68);
+      ctx.quadraticCurveTo(42, 42, 45, -18);
+      ctx.strokeStyle = "rgba(0, 255, 213, 0.45)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Crown Node
+      ctx.beginPath();
+      ctx.arc(0, -38, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffcf77";
+      ctx.shadowColor = "#ffcf77";
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Eyebrows
+      ctx.strokeStyle = "rgba(0, 255, 213, 0.55)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-36, -18);
+      ctx.quadraticCurveTo(-22, -24, -8, -18);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(8, -18);
+      ctx.quadraticCurveTo(22, -24, 36, -18);
+      ctx.stroke();
+
+      // Eyes
+      const eyeHeight = Math.max(1, 6 * (1 - eyeBlink));
+      ctx.strokeStyle = "#00ffd5";
+      ctx.lineWidth = 1.8;
+
+      ctx.beginPath();
+      ctx.ellipse(-22, -8, 10, eyeHeight, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      if (eyeBlink < 0.6) {
+        ctx.beginPath();
+        ctx.arc(-22, -8, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffd5";
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.ellipse(22, -8, 10, eyeHeight, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      if (eyeBlink < 0.6) {
+        ctx.beginPath();
+        ctx.arc(22, -8, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffd5";
+        ctx.fill();
+      }
+
+      // Nose Bridge
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.lineTo(-2, 18);
+      ctx.lineTo(3, 22);
+      ctx.lineTo(0, 23);
+      ctx.strokeStyle = "rgba(0, 255, 213, 0.35)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Animated Mouth (Lip-Sync)
+      ctx.beginPath();
+      if (mouthOpenness > 0.5) {
+        ctx.ellipse(0, 46, 10, mouthOpenness, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = "#00ffd5";
+        ctx.fillStyle = "rgba(0, 255, 213, 0.25)";
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.moveTo(-12, 46);
+        ctx.quadraticCurveTo(0, 50, 12, 46);
+        ctx.strokeStyle = "rgba(0, 255, 213, 0.7)";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+      }
+
+      // Neural Temple Nodes
+      [-40, 40].forEach((x) => {
+        ctx.beginPath();
+        ctx.arc(x, -6, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0, 255, 213, 0.8)";
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      animId = requestAnimationFrame(animateAvatar);
+    }
+
+    animId = requestAnimationFrame(animateAvatar);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  // 3. Speech Recognition (Microphone)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const SpeechRec =
@@ -120,12 +355,31 @@ export default function ChatPage() {
     };
   }, [autoListening]);
 
-  function speakText(text: string) {
+  function speakSari(text: string) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    const cleanText = text.replace(/(UNDERSTAND:|PLAN:|ACT:|LEARN:|\*)/g, "");
-    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const clean = text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[#*_`]/g, "")
+      .replace(/(UNDERSTAND:|PLAN:|ACT:|LEARN:)/g, "")
+      .trim();
+    if (!clean) return;
+
+    const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.05;
+    utterance.pitch = 1.1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find(
+        (v) =>
+          (v.lang.includes("IN") || v.name.includes("Zira") || v.name.includes("Google") || v.name.includes("Natural")) &&
+          v.name.includes("Female")
+      ) || voices.find((v) => v.lang.includes("en") || v.lang.includes("hi"));
+
+    if (preferred) utterance.voice = preferred;
+
     utterance.onstart = () => {
       setSpeaking(true);
       try {
@@ -149,11 +403,13 @@ export default function ChatPage() {
     const query = (commandText || input).trim();
     if (!query) return;
 
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
       content: query,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: timeStr,
     };
 
     const nextMessages = [...messagesRef.current, userMsg];
@@ -183,7 +439,7 @@ export default function ChatPage() {
       },
     ]);
     setTyping(false);
-    speakText(out.text);
+    speakSari(out.text);
   }
 
   function toggleAutoListening() {
@@ -196,88 +452,73 @@ export default function ChatPage() {
     }
   }
 
-  const badgeColor = tierStatus === "Local" ? "var(--green)" : tierStatus === "Cloud" ? "#3b82f6" : "#71717a";
+  function clearChat() {
+    const reset = [
+      {
+        id: "cleared-1",
+        role: "sari" as const,
+        content: "Conversation cleared. Ready for your next command, Malik.",
+        time: "Ready",
+      },
+    ];
+    setMessages(reset);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reset));
+    }
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "82vh", background: "radial-gradient(circle at 10% 20%, rgba(13,30,58,0.6) 0%, transparent 60%)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: "84vh", background: "#06112C" }}>
       {/* Top Holographic Navigation Bar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid var(--border)", background: "rgba(6,17,44,0.7)", backdropFilter: "blur(10px)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 24px", borderBottom: "1px solid rgba(0,255,213,0.15)", background: "rgba(6,17,44,0.9)", backdropFilter: "blur(12px)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--cyan)" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid #00ffd5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#00ffd5", boxShadow: "0 0 10px rgba(0,255,213,0.3)" }}>
             S
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            SARI <span style={{ color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>| PERSONAL INTELLIGENCE / 11.2</span>
+          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#ffffff" }}>
+            SARI <span style={{ color: "#94a3b8", fontWeight: 400, marginLeft: 6 }}>| PERSONAL INTELLIGENCE / 11.2</span>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 11, color: "var(--green)", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 8px var(--green)" }} />
-            Private Session Connected
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 11, color: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", boxShadow: `0 0 10px ${speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981"}` }} />
+            {speaking ? "SARI IS SPEAKING..." : typing ? "SARI IS THINKING..." : "PRIVATE SESSION CONNECTED"}
           </span>
-          <button onClick={() => setShowHologram(!showHologram)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", color: "inherit", padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{clockTime}</span>
+          <button onClick={() => setShowHologram(!showHologram)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(0,255,213,0.2)", color: "#00ffd5", padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
             {showHologram ? "Compact Chat" : "Hologram Persona"}
           </button>
         </div>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
-        {/* Left Pane: SARI Wireframe Hologram Persona (Image #1 Design) */}
+        {/* Left Pane: SARI Cybernetic Avatar (Canvas) */}
         {showHologram && (
-          <div style={{ width: "38%", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 24, position: "relative", overflow: "hidden" }}>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "var(--muted)", textTransform: "uppercase" }}>
-                A Presence, Beyond the Screen.
+          <div style={{ width: "40%", borderRight: "1px solid rgba(0,255,213,0.15)", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "20px 24px", position: "relative", background: "radial-gradient(circle at 50% 50%, rgba(0,255,213,0.04) 0%, transparent 70%)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: "0.15em", color: "#94a3b8", textTransform: "uppercase" }}>
+                  A Presence, Beyond the Screen.
+                </div>
+                <div style={{ fontSize: 11, color: "#00ffd5", marginTop: 2, letterSpacing: "0.1em", fontWeight: 600 }}>
+                  01 / SARI
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: "var(--cyan)", marginTop: 4, letterSpacing: "0.1em" }}>
-                01 / SARI
-              </div>
+              <span className="badge" style={{ background: "rgba(0,255,213,0.08)", color: "#00ffd5", border: "1px solid rgba(0,255,213,0.3)", fontSize: 10.5 }}>
+                {tierStatus}
+              </span>
             </div>
 
-            {/* Wireframe Hologram Face SVG Animation */}
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "20px 0", position: "relative" }}>
-              <svg width="220" height="220" viewBox="0 0 200 200" style={{ filter: "drop-shadow(0 0 16px rgba(56,189,248,0.25))" }}>
-                {/* Orbit Rings */}
-                <ellipse cx="100" cy="100" rx="90" ry="35" fill="none" stroke="rgba(56,189,248,0.2)" strokeWidth="1" strokeDasharray="4 2" transform="rotate(-25 100 100)">
-                  <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="20s" repeatCount="indefinite" />
-                </ellipse>
-                <ellipse cx="100" cy="100" rx="90" ry="35" fill="none" stroke="rgba(56,189,248,0.3)" strokeWidth="1" transform="rotate(35 100 100)">
-                  <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="25s" repeatCount="indefinite" />
-                </ellipse>
-
-                {/* SARI Wireframe Head Silhouette */}
-                <path d="M 60,60 C 60,30 140,30 140,60 C 140,110 130,140 100,160 C 70,140 60,110 60,60 Z" fill="none" stroke="rgba(56,189,248,0.4)" strokeWidth="1.2" />
-                <path d="M 70,55 C 85,45 115,45 130,55" fill="none" stroke="rgba(56,189,248,0.3)" strokeWidth="1" />
-                
-                {/* Eyes & Neural Nodes */}
-                <ellipse cx="82" cy="78" rx="6" ry="3" fill="none" stroke="var(--cyan)" strokeWidth="1.2" />
-                <circle cx="82" cy="78" r="1.5" fill="var(--cyan)" />
-                <ellipse cx="118" cy="78" rx="6" ry="3" fill="none" stroke="var(--cyan)" strokeWidth="1.2" />
-                <circle cx="118" cy="78" r="1.5" fill="var(--cyan)" />
-
-                {/* Mind Node Core (Pulsing Center) */}
-                <circle cx="100" cy="62" r="2.5" fill="#f59e0b">
-                  <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" />
-                </circle>
-
-                {/* Facial Grid Lines */}
-                <path d="M 100,68 L 100,105 L 94,115 L 106,115" fill="none" stroke="rgba(56,189,248,0.5)" strokeWidth="1" />
-                <path d="M 90,132 Q 100,136 110,132" fill="none" stroke="rgba(56,189,248,0.6)" strokeWidth="1.2" />
-                
-                {/* Cheek Matrix */}
-                <path d="M 72,95 L 85,115 L 75,125" fill="none" stroke="rgba(56,189,248,0.25)" strokeWidth="1" />
-                <path d="M 128,95 L 115,115 L 125,125" fill="none" stroke="rgba(56,189,248,0.25)" strokeWidth="1" />
-
-                {/* Neck & Torso Grid */}
-                <path d="M 85,155 L 70,185 L 130,185 L 115,155" fill="none" stroke="rgba(56,189,248,0.3)" strokeWidth="1" />
-              </svg>
+            {/* Cybernetic Animated Canvas Avatar */}
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "10px 0" }}>
+              <canvas ref={canvasRef} width={380} height={340} style={{ width: "100%", maxWidth: 360, height: "auto" }} />
             </div>
 
             <div>
-              <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>
                 YOUR SPACE. YOUR PACE.
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.05em", color: "var(--fg)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "0.06em", color: "#ffffff" }}>
                 Intelligence
               </div>
             </div>
@@ -286,38 +527,45 @@ export default function ChatPage() {
 
         {/* Right Pane: Conversation & Dynamic Focus Actions */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Welcome Banner & Focus Quick Action Cards (Image #1 Design) */}
-          <div style={{ padding: "20px 24px 12px", borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.15)" }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>
-              The Conversation
+          {/* Welcome Banner & Focus Quick Action Cards */}
+          <div style={{ padding: "18px 24px 14px", borderBottom: "1px solid rgba(0,255,213,0.15)", background: "rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ fontSize: 11, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                The Conversation
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={clearChat} style={{ background: "transparent", border: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Trash2 size={12} /> Clear conversation
+                </button>
+              </div>
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4, letterSpacing: "-0.01em" }}>
+            <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3, letterSpacing: "-0.01em", color: "#ffffff" }}>
               A little less noise. A little more clarity.
             </h2>
-            <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 14 }}>
-              Your private session is ready. SARI can use relevant saved context from your existing memory vault.
+            <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>
+              Your private session is ready. SARI can use relevant saved context from your existing memory.
             </p>
 
             {/* Quick Focus Action Chips */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div
                 onClick={() => handleCommand("Find my focus: optimize loan pipeline")}
-                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600 }}>
-                  <Compass size={14} style={{ color: "var(--cyan)" }} /> Find my focus
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#00ffd5" }}>
+                  <Compass size={14} /> Find my focus
                 </div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Make room for what matters</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Make room for what matters</div>
               </div>
 
               <div
                 onClick={() => handleCommand("Read my inbox and summarize pending approvals")}
-                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600 }}>
-                  <Mail size={14} style={{ color: "var(--purple)" }} /> Read my inbox
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#a855f7" }}>
+                  <Mail size={14} /> Read my inbox
                 </div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Authorized account only</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Authorized account only</div>
               </div>
             </div>
           </div>
@@ -328,8 +576,8 @@ export default function ChatPage() {
               const isUser = m.role === "user";
               return (
                 <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isUser ? "flex-end" : "flex-start" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, fontSize: 11, color: "var(--muted)" }}>
-                    <span>{isUser ? "Maalik" : "SARI"}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, fontSize: 11, color: "#94a3b8" }}>
+                    <span>{isUser ? "YOU" : "SARI"}</span>
                     <span>·</span>
                     <span>{m.time}</span>
                   </div>
@@ -338,11 +586,12 @@ export default function ChatPage() {
                       maxWidth: "85%",
                       padding: "12px 16px",
                       borderRadius: isUser ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
-                      background: isUser ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.04)",
-                      border: isUser ? "1px solid rgba(59,130,246,0.3)" : "1px solid var(--border)",
+                      background: isUser ? "rgba(0,255,213,0.12)" : "rgba(255,255,255,0.04)",
+                      border: isUser ? "1px solid rgba(0,255,213,0.3)" : "1px solid rgba(255,255,255,0.08)",
                       fontSize: 13.5,
                       lineHeight: "1.55",
                       whiteSpace: "pre-wrap",
+                      color: "#ffffff",
                     }}
                   >
                     {m.content}
@@ -351,26 +600,26 @@ export default function ChatPage() {
               );
             })}
             {typing && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--muted)", fontSize: 12, padding: "8px 0" }}>
-                <Sparkles size={14} className="spin" style={{ color: "var(--cyan)" }} />
-                SARI is reasoning...
+              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#00ffd5", fontSize: 12, padding: "8px 0" }}>
+                <span className="dot" style={{ background: "#00ffd5" }} />
+                SARI is reasoning with Dynamic Mind...
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Input Dialogue Bar (Image #1 Style: "Tell me, Malik...") */}
-          <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border)", background: "rgba(6,17,44,0.85)" }}>
+          {/* Input Dialogue Bar: "Tell me, Malik..." */}
+          <div style={{ padding: "14px 24px", borderTop: "1px solid rgba(0,255,213,0.15)", background: "rgba(6,17,44,0.95)" }}>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <button
                 onClick={toggleAutoListening}
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   borderRadius: 10,
                   background: autoListening ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.05)",
-                  border: autoListening ? "1px solid #ef4444" : "1px solid var(--border)",
-                  color: autoListening ? "#ef4444" : "var(--muted)",
+                  border: autoListening ? "1px solid #ef4444" : "1px solid rgba(0,255,213,0.2)",
+                  color: autoListening ? "#ef4444" : "#00ffd5",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -394,11 +643,11 @@ export default function ChatPage() {
                 placeholder="Tell me, Malik..."
                 style={{
                   flex: 1,
-                  background: "rgba(0,0,0,0.25)",
-                  border: "1px solid var(--border)",
+                  background: "rgba(0,0,0,0.35)",
+                  border: "1px solid rgba(0,255,213,0.25)",
                   borderRadius: 10,
                   padding: "11px 16px",
-                  color: "inherit",
+                  color: "#ffffff",
                   fontSize: 13.5,
                   outline: "none",
                 }}
@@ -408,18 +657,19 @@ export default function ChatPage() {
                 onClick={() => handleCommand()}
                 disabled={typing || !input.trim()}
                 style={{
-                  padding: "11px 20px",
-                  background: "var(--cyan)",
+                  padding: "11px 22px",
+                  background: "#00ffd5",
                   color: "#06112C",
                   border: "none",
                   borderRadius: 10,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: 13,
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                   opacity: typing || !input.trim() ? 0.5 : 1,
+                  boxShadow: "0 0 12px rgba(0,255,213,0.25)",
                 }}
               >
                 <Send size={15} /> Send
