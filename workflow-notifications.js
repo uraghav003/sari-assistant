@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -41,8 +41,8 @@ async function setAgentWorkflowsAndEmailNotifications() {
   }
 }
 
-if (require.main === module) {
+if (true) {
   setAgentWorkflowsAndEmailNotifications();
 }
 
-module.exports = { setAgentWorkflowsAndEmailNotifications };
+export default { setAgentWorkflowsAndEmailNotifications };
