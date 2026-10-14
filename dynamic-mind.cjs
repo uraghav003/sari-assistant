@@ -6,7 +6,7 @@
  */
 
 const SCRIPT_ID = process.env.SARI_SCRIPT_ID || "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM";
-const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
+const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || "AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g";
 const EXEC_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
 
 const OLLAMA_URL = (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");

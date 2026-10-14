@@ -122,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   // ─── MODEL CASCADE 3: APPS SCRIPT AI BACKEND BRIDGE ─────────────────────
-  const execUrl = "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
+  const execUrl = "https://script.google.com/macros/s/AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g/exec";
   try {
     const scriptRes = await fetch(execUrl, {
       method: "POST",
