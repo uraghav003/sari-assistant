@@ -2,7 +2,7 @@ import { audit } from "./storage";
 import { loadDynamicConfig } from "./config";
 import { withSelfHeal } from "./self-heal";
 import { learnFromInteraction } from "./self-learn";
-import { resolveActiveGeminiKey } from "./key-resolver";
+import { getSessionId } from "./auth";
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
 export type AgentResult = { content: string; mode: "cloud" | "ollama" | "offline" };
@@ -46,12 +46,13 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
 
   return await withSelfHeal<AgentResult>(
     "AgentInference",
-    // 1. Primary Attempt: Cloud Gemini 2.0 Flash via /api/chat
+    // Primary Attempt: Cloud via /api/chat (server-side cascade: Gemini -> Pollinations -> AppsScript)
+    // API keys are resolved server-side / proxied — never sent directly from the browser.
     async () => {
-      const activeKeyCheck = await resolveActiveGeminiKey();
+      const token = getSessionId();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (activeKeyCheck.valid && activeKeyCheck.key) {
-        headers["x-gemini-key"] = activeKeyCheck.key;
+      if (token) {
+        headers["x-sari-token"] = token;
       }
 
       const res = await fetch("/api/chat", {
@@ -64,7 +65,7 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
         if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
           const text = data.text.trim();
           if (text) {
-            audit("chat", "allowed", "Cloud Gemini 2.0 Flash responded via Edge");
+            audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
             learnFromInteraction(userPrompt, text, "Cloud");
             return { content: text, mode: "cloud" };
           }
@@ -72,45 +73,8 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       }
       throw new Error(`Edge API returned ${res.status}`);
     },
-    // Fallback Sequence: Verified Direct Client Key -> Local Ollama -> Offline
+    // Fallback Sequence: Local Ollama -> Offline Advisory
     async () => {
-      // 1b. Direct Pre-Validated Gemini / MALLIK API Key
-      const keyInfo = await resolveActiveGeminiKey();
-      if (keyInfo.valid && keyInfo.key) {
-        try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyInfo.key}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-              }),
-            }
-          );
-          if (res.ok) {
-            const data: unknown = await res.json();
-            if (
-              data &&
-              typeof data === "object" &&
-              "candidates" in data &&
-              Array.isArray(data.candidates) &&
-              data.candidates[0]?.content?.parts?.[0]?.text
-            ) {
-              const text = String(data.candidates[0].content.parts[0].text).trim();
-              if (text) {
-                audit("chat", "allowed", `Direct Gemini 2.0 Flash responded via ${keyInfo.source}`);
-                learnFromInteraction(userPrompt, text, "Cloud");
-                return { content: text, mode: "cloud" };
-              }
-            }
-          }
-        } catch {
-          // Direct key failed, proceed to local Ollama
-        }
-      }
-
       // 2. Secondary: Local Ollama runtime
       try {
         const response = await fetch(`${config.ollamaUrl}/api/chat`, {
@@ -149,7 +113,7 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       // 3. Graceful Offline Advisory
       audit("chat", "error", "All inference brains offline");
       const offlineMsg =
-        "Maalik, main connect karne ki koshish kar rahi hoon lekin dono brains (Cloud Gemini Proxy aur Local Ollama) offline hain.\n\nKripya Connections page par SARI_CONFIG.json drop kijiye ya Gemini Key verify karein.";
+        "Maalik, main connect karne ki koshish kar rahi hoon lekin dono brains (Cloud Proxy aur Local Ollama) offline hain.\n\nKripya dobara login karein ya Connections page par SARI_CONFIG.json drop kijiye.";
       return {
         content: offlineMsg,
         mode: "offline",
@@ -165,6 +129,6 @@ export async function infer(userBlock: string): Promise<InferResult> {
   return {
     text: result.content,
     tier,
-    model: result.mode === "cloud" ? "gemini-2.0-flash" : result.mode === "ollama" ? config.ollamaModel : undefined,
+    model: result.mode === "cloud" ? "edge-cascade" : result.mode === "ollama" ? config.ollamaModel : undefined,
   };
 }

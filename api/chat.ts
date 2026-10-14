@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { verifyToken } from "./_auth";
 
 interface GeminiCandidate {
   content?: {
@@ -33,6 +34,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // ─── AUTH GUARD: valid session token required (protects API quota) ──────
+  const token = typeof req.headers["x-sari-token"] === "string" ? req.headers["x-sari-token"] : "";
+  if (!verifyToken(token)) {
+    res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
@@ -95,7 +103,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   // ─── MODEL CASCADE 2: ZERO-KEY FREE INFERENCE (Pollinations OpenAI) ─────
-  // Replaces the dead api-inference.huggingface.co endpoint (shut down).
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);

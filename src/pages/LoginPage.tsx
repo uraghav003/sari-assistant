@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Lock, Mail } from "lucide-react";
-import { setSessionId } from "../lib/auth";
+import { loginWithServer } from "../lib/auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -16,9 +16,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (!email || !password) { setError("Email and password required"); return; }
-      await new Promise((r) => setTimeout(r, 500));
-      setSessionId(crypto.randomUUID());
-      navigate("/");
+      const result = await loginWithServer(email, password);
+      if (result.ok) {
+        navigate("/");
+      } else {
+        setError(result.error || "Authentication failed");
+      }
     } catch {
       setError("Authentication failed");
     } finally {
