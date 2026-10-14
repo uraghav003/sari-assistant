@@ -49,20 +49,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     (typeof req.headers["x-mallik-key"] === "string" ? req.headers["x-mallik-key"] : undefined) ||
     ("apiKey" in body && typeof body.apiKey === "string" ? body.apiKey : undefined);
 
-  const apiKey =
-    process.env.GEMINI_API_KEY ||
-    process.env.MALLIK_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.AI_STUDIO_API_KEY ||
-    customKey;
+  // Try EVERY available key (env + client-supplied), not just the first one found —
+  // an expired env key must not block a valid client key.
+  const candidateKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.MALLIK_API_KEY,
+    process.env.GOOGLE_API_KEY,
+    process.env.AI_STUDIO_API_KEY,
+    customKey,
+  ].filter((k): k is string => typeof k === "string" && k.trim().length > 10);
 
-  // ─── MODEL CASCADE 1: GOOGLE GEMINI 2.0 FLASH / 1.5 FLASH ──────────────
-  if (apiKey) {
-    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+  // ─── MODEL CASCADE 1: GOOGLE GEMINI (all keys x all models) ─────────────
+  const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+  for (const apiKey of candidateKeys) {
     for (const model of modelsToTry) {
       try {
         const upstream = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -86,34 +89,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         }
       } catch {
-        // Try next model in cascade
+        // Try next model / key in cascade
       }
     }
   }
 
-  // ─── MODEL CASCADE 2: ZERO-KEY PUBLIC INFERENCE ROUTER ───────────────────
+  // ─── MODEL CASCADE 2: ZERO-KEY FREE INFERENCE (Pollinations OpenAI) ─────
+  // Replaces the dead api-inference.huggingface.co endpoint (shut down).
   try {
-    const hfRes = await fetch(
-      "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inputs: `${SYSTEM_INSTRUCTION}\n\nUser: ${prompt}\n\nSARI:`,
-          parameters: { max_new_tokens: 500, return_full_text: false },
-        }),
-      }
-    );
-    if (hfRes.ok) {
-      const hfData: unknown = await hfRes.json();
-      let generatedText = "";
-      if (Array.isArray(hfData) && hfData[0] && typeof hfData[0] === "object" && "generated_text" in hfData[0]) {
-        generatedText = String(hfData[0].generated_text).trim();
-      } else if (hfData && typeof hfData === "object" && "generated_text" in hfData) {
-        generatedText = String((hfData as { generated_text: unknown }).generated_text).trim();
-      }
-      if (generatedText) {
-        res.status(200).json({ text: generatedText, tier: "PublicRouter", model: "DeepSeek-R1-Free" });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const pfRes = await fetch("https://text.pollinations.ai/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: SYSTEM_INSTRUCTION },
+          { role: "user", content: prompt },
+        ],
+        model: "openai",
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (pfRes.ok) {
+      const generatedText = (await pfRes.text()).trim();
+      if (generatedText && generatedText.length > 10) {
+        res.status(200).json({ text: generatedText, tier: "PublicRouter", model: "Pollinations-Free" });
         return;
       }
     }
