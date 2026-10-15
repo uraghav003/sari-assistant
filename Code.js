@@ -1,5 +1,5 @@
 ﻿/**
- * SARI Supreme Command Apps Script Autopilot Core — v3.2.0
+ * SARI Supreme Command Apps Script Autopilot Core â€” v3.2.0
  * Development ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM
  * Owner: MD (Upendra Singh Raghav) - Divyanshi Capital
  * Features: Zero-Touch Autopilot, Native google.script.run Bridge, AI Inference, Dynamic Memory Sync
@@ -46,6 +46,7 @@ function doPost(e) {
     }
     var action = payload.action || "ping";
     var timestamp = new Date().toISOString();
+    
     var response = {
       status: "success",
       action: action,
@@ -68,7 +69,6 @@ function doPost(e) {
 
       if (apiKey) {
         try {
-          var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]; var res = null; for(var mi=0; mi<models.length; mi++){ try { var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey; var tempRes = UrlFetchApp.fetch(url, options); if(tempRes.getResponseCode() === 200){ res = tempRes; break; } } catch(e){} } if(!res){ var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey; res = UrlFetchApp.fetch(url, options); }
           var options = {
             method: "post",
             contentType: "application/json",
@@ -79,7 +79,24 @@ function doPost(e) {
             }),
             muteHttpExceptions: true
           };
-          var apiRes = UrlFetchApp.fetch(url, options);
+
+          var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+          var apiRes = null;
+          for (var mi = 0; mi < models.length; mi++) {
+            try {
+              var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey;
+              var tempRes = UrlFetchApp.fetch(url, options);
+              if (tempRes.getResponseCode() === 200) {
+                apiRes = tempRes;
+                break;
+              }
+            } catch (errLoop) {}
+          }
+          if (!apiRes) {
+            var fallbackUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+            apiRes = UrlFetchApp.fetch(fallbackUrl, options);
+          }
+
           var resData = JSON.parse(apiRes.getContentText());
           var reply = (resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts && resData.candidates[0].content.parts[0]) ? resData.candidates[0].content.parts[0].text : "";
           response.result = { text: reply, source: "AppsScript_Gemini_UrlFetch" };
@@ -94,37 +111,13 @@ function doPost(e) {
       }
     } else if (action === "sync_memory" || action === "autopilot_learn") {
       var vault = payload.vault || {};
-      var lessons = payload.lessons || [];
-      var skills = payload.skills || [];
-
-      var currentMemoryRaw = PropertiesService.getScriptProperties().getProperty("SARI_MEMORY_VAULT");
-      var currentMemory = currentMemoryRaw ? JSON.parse(currentMemoryRaw) : {};
-      
-      var mergedVault = Object.assign({}, currentMemory, vault);
-      mergedVault._lastUpdated = timestamp;
-      mergedVault._latestLessons = lessons.slice(0, 50);
-      mergedVault._skillsCount = skills.length;
-
-      PropertiesService.getScriptProperties().setProperty("SARI_MEMORY_VAULT", JSON.stringify(mergedVault));
-      PropertiesService.getScriptProperties().setProperty("LAST_AUTOPILOT_SYNC", timestamp);
-      
-      response.result = {
-        saved: true,
-        totalEntries: Object.keys(mergedVault).length,
-        lessonsLogged: lessons.length
-      };
+      PropertiesService.getScriptProperties().setProperty("SARI_MEMORY_VAULT", JSON.stringify(vault));
+      response.result = { synced: true, keysCount: Object.keys(vault).length };
     } else if (action === "notion_sync") {
-      var notionToken = payload.notionToken || PropertiesService.getScriptProperties().getProperty("NOTION_API_KEY");
-      var databaseId = payload.databaseId || PropertiesService.getScriptProperties().getProperty("NOTION_DATABASE_ID");
-      if (payload.notionToken) PropertiesService.getScriptProperties().setProperty("NOTION_API_KEY", payload.notionToken);
-      if (payload.databaseId) PropertiesService.getScriptProperties().setProperty("NOTION_DATABASE_ID", payload.databaseId);
-      response.result = {
-        notionConfigured: true,
-        databaseId: databaseId ? databaseId.slice(0, 6) + "..." : "unset"
-      };
+      response.result = { notionConfigured: isNotionConfigured(), syncedCases: 0 };
     } else if (action === "notebooklm_sync") {
-      var folderId = payload.folderId || PropertiesService.getScriptProperties().getProperty("NOTEBOOKLM_FOLDER_ID");
-      if (payload.folderId) PropertiesService.getScriptProperties().setProperty("NOTEBOOKLM_FOLDER_ID", folderId);
+      var folderId = payload.folderId || "";
+      if (folderId) PropertiesService.getScriptProperties().setProperty("NOTEBOOKLM_FOLDER_ID", folderId);
       response.result = {
         notebooklmConfigured: true,
         folderId: folderId ? folderId.slice(0, 6) + "..." : "unset"
@@ -157,7 +150,6 @@ function handleSariSupreme(payload) {
 
   if (apiKey) {
     try {
-      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]; var res = null; for(var mi=0; mi<models.length; mi++){ try { var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey; var tempRes = UrlFetchApp.fetch(url, options); if(tempRes.getResponseCode() === 200){ res = tempRes; break; } } catch(e){} } if(!res){ var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey; res = UrlFetchApp.fetch(url, options); }
       var options = {
         method: "post",
         contentType: "application/json",
@@ -168,8 +160,25 @@ function handleSariSupreme(payload) {
         }),
         muteHttpExceptions: true
       };
-      var res = UrlFetchApp.fetch(url, options);
-      var resData = JSON.parse(res.getContentText());
+
+      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+      var apiRes = null;
+      for (var mi = 0; mi < models.length; mi++) {
+        try {
+          var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey;
+          var tempRes = UrlFetchApp.fetch(url, options);
+          if (tempRes.getResponseCode() === 200) {
+            apiRes = tempRes;
+            break;
+          }
+        } catch (errLoop) {}
+      }
+      if (!apiRes) {
+        var fallbackUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+        apiRes = UrlFetchApp.fetch(fallbackUrl, options);
+      }
+
+      var resData = JSON.parse(apiRes.getContentText());
       var text = (resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts && resData.candidates[0].content.parts[0]) ? resData.candidates[0].content.parts[0].text : "";
       if (text) {
         return { reply: text, status: "success" };
@@ -184,11 +193,9 @@ function handleSariSupreme(payload) {
 }
 
 function isNotionConfigured() {
-  var key = PropertiesService.getScriptProperties().getProperty("NOTION_API_KEY");
-  return !!key;
+  return !!PropertiesService.getScriptProperties().getProperty("NOTION_API_KEY");
 }
 
 function isNotebookLMConfigured() {
-  var folder = PropertiesService.getScriptProperties().getProperty("NOTEBOOKLM_FOLDER_ID");
-  return !!folder;
+  return !!PropertiesService.getScriptProperties().getProperty("NOTEBOOKLM_FOLDER_ID");
 }
