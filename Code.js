@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SARI Supreme Command Apps Script Autopilot Core — v3.2.0
  * Development ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM
  * Owner: MD (Upendra Singh Raghav) - Divyanshi Capital
@@ -68,7 +68,7 @@ function doPost(e) {
 
       if (apiKey) {
         try {
-          var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+          var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]; var res = null; for(var mi=0; mi<models.length; mi++){ try { var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey; var tempRes = UrlFetchApp.fetch(url, options); if(tempRes.getResponseCode() === 200){ res = tempRes; break; } } catch(e){} } if(!res){ var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey; res = UrlFetchApp.fetch(url, options); }
           var options = {
             method: "post",
             contentType: "application/json",
@@ -157,7 +157,7 @@ function handleSariSupreme(payload) {
 
   if (apiKey) {
     try {
-      var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]; var res = null; for(var mi=0; mi<models.length; mi++){ try { var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey; var tempRes = UrlFetchApp.fetch(url, options); if(tempRes.getResponseCode() === 200){ res = tempRes; break; } } catch(e){} } if(!res){ var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey; res = UrlFetchApp.fetch(url, options); }
       var options = {
         method: "post",
         contentType: "application/json",
