@@ -15,10 +15,10 @@ const CONFIG_STORAGE_KEY = "sari_dynamic_config_v1";
 
 export const DEFAULT_SCRIPT_ID = "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM";
 export const DEFAULT_DEPLOYMENT_ID = "AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g";
-export const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434";
+export const DEFAULT_OLLAMO_URL = "http://127.0.0.1:11434";
 export const DEFAULT_OLLAMA_MODEL = "llama3.2:latest";
 export const DEFAULT_EMP_CODE = "DC001";
-
+export const DEFAULT_NOTEBOOKLM_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
 export function loadDynamicConfig(): DynamicConfig {
   if (typeof window === "undefined") {
     return {
@@ -30,7 +30,7 @@ export function loadDynamicConfig(): DynamicConfig {
       empCode: DEFAULT_EMP_CODE,
       notionToken: "",
       notionDatabaseId: "",
-      notebooklmFolderId: "",
+  notebooklmFolderId: typeof parsed.notebooklmFolderId === "string" && parsed.notebooklmFolderId.trim() ? parsed.notebooklmFolderId.trim() : (localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID),
       autopilotEnabled: true,
     };
   }
@@ -47,7 +47,7 @@ export function loadDynamicConfig(): DynamicConfig {
       empCode: typeof parsed.empCode === "string" && parsed.empCode.trim() ? parsed.empCode.trim() : DEFAULT_EMP_CODE,
       notionToken: typeof parsed.notionToken === "string" ? parsed.notionToken.trim() : (localStorage.getItem("sari_notion_token") || ""),
       notionDatabaseId: typeof parsed.notionDatabaseId === "string" ? parsed.notionDatabaseId.trim() : (localStorage.getItem("sari_notion_database_id") || ""),
-      notebooklmFolderId: typeof parsed.notebooklmFolderId === "string" ? parsed.notebooklmFolderId.trim() : (localStorage.getItem("sari_notebooklm_folder") || ""),
+      notebooklmFolderId: typeof parsed.notebooklmFolderId === "string" && parsed.notebooklmFolderId.trim() ? parsed.notebooklmFolderId.trim() : (localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID),
       autopilotEnabled: parsed.autopilotEnabled !== false,
     };
   } catch {
