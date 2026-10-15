@@ -40,9 +40,12 @@ function doPost(e) {
   try {
     var rawData = e.postData ? e.postData.contents : "{}";
     var payload = JSON.parse(rawData);
+    if (payload.message && !payload.action) {
+      payload.action = "ai_infer";
+      payload.prompt = payload.message;
+    }
     var action = payload.action || "ping";
     var timestamp = new Date().toISOString();
-    
     var response = {
       status: "success",
       action: action,
@@ -130,8 +133,12 @@ function doPost(e) {
       response.result = { received: payload };
     }
 
-    return ContentService.createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
+    var replyText = (response.result && response.result.text) ? response.result.text : (response.result && response.result.message ? response.result.message : JSON.stringify(response.result));
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: true,
+      reply: replyText,
+      ...response
+    })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
