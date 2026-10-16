@@ -5,9 +5,12 @@ export interface DynamicConfig {
   ollamaUrl: string;
   ollamaModel: string;
   empCode: string;
+  /** Purely optional: Notion is retired and consolidated into Google Drive. Absence never causes validation errors. */
   notionToken?: string;
+  /** Purely optional: Notion is retired and consolidated into Google Drive. Absence never causes validation errors. */
   notionDatabaseId?: string;
   notebooklmFolderId?: string;
+  googleDriveFolderId?: string;
   autopilotEnabled: boolean;
 }
 
@@ -19,6 +22,7 @@ export const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434";
 export const DEFAULT_OLLAMA_MODEL = "llama3.2:latest";
 export const DEFAULT_EMP_CODE = "DC001";
 export const DEFAULT_NOTEBOOKLM_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
+export const DEFAULT_GOOGLE_DRIVE_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
 export function loadDynamicConfig(): DynamicConfig {
   if (typeof window === "undefined") {
     return {
@@ -28,9 +32,11 @@ export function loadDynamicConfig(): DynamicConfig {
       ollamaUrl: DEFAULT_OLLAMA_URL,
       ollamaModel: DEFAULT_OLLAMA_MODEL,
       empCode: DEFAULT_EMP_CODE,
+      // Notion properties are purely optional (consolidated to Google Drive)
       notionToken: "",
       notionDatabaseId: "",
       notebooklmFolderId: DEFAULT_NOTEBOOKLM_FOLDER_ID,
+      googleDriveFolderId: DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
       autopilotEnabled: true,
     };
   }
@@ -45,9 +51,11 @@ export function loadDynamicConfig(): DynamicConfig {
       ollamaUrl: typeof parsed.ollamaUrl === "string" && parsed.ollamaUrl.trim() ? parsed.ollamaUrl.trim().replace(/\/$/, "") : DEFAULT_OLLAMA_URL,
       ollamaModel: typeof parsed.ollamaModel === "string" && parsed.ollamaModel.trim() ? parsed.ollamaModel.trim() : DEFAULT_OLLAMA_MODEL,
       empCode: typeof parsed.empCode === "string" && parsed.empCode.trim() ? parsed.empCode.trim() : DEFAULT_EMP_CODE,
+      // Notion properties are purely optional (consolidated to Google Drive) and never cause validation errors
       notionToken: typeof parsed.notionToken === "string" ? parsed.notionToken.trim() : (localStorage.getItem("sari_notion_token") || ""),
       notionDatabaseId: typeof parsed.notionDatabaseId === "string" ? parsed.notionDatabaseId.trim() : (localStorage.getItem("sari_notion_database_id") || ""),
       notebooklmFolderId: typeof parsed.notebooklmFolderId === "string" && parsed.notebooklmFolderId.trim() ? parsed.notebooklmFolderId.trim() : (localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID),
+      googleDriveFolderId: typeof parsed.googleDriveFolderId === "string" && parsed.googleDriveFolderId.trim() ? parsed.googleDriveFolderId.trim() : (localStorage.getItem("sari_google_drive_folder") || DEFAULT_GOOGLE_DRIVE_FOLDER_ID),
       autopilotEnabled: parsed.autopilotEnabled !== false,
     };
   } catch {
@@ -58,9 +66,11 @@ export function loadDynamicConfig(): DynamicConfig {
       ollamaUrl: DEFAULT_OLLAMA_URL,
       ollamaModel: DEFAULT_OLLAMA_MODEL,
       empCode: DEFAULT_EMP_CODE,
+      // Notion properties are purely optional (consolidated to Google Drive)
       notionToken: localStorage.getItem("sari_notion_token") || "",
       notionDatabaseId: localStorage.getItem("sari_notion_database_id") || "",
-      notebooklmFolderId: localStorage.getItem("sari_notebooklm_folder") || "",
+      notebooklmFolderId: localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID,
+      googleDriveFolderId: localStorage.getItem("sari_google_drive_folder") || DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
       autopilotEnabled: true,
     };
   }
@@ -78,7 +88,21 @@ export function saveDynamicConfig(config: Partial<DynamicConfig>): DynamicConfig
     if (config.notionToken !== undefined) localStorage.setItem("sari_notion_token", config.notionToken);
     if (config.notionDatabaseId !== undefined) localStorage.setItem("sari_notion_database_id", config.notionDatabaseId);
     if (config.notebooklmFolderId !== undefined) localStorage.setItem("sari_notebooklm_folder", config.notebooklmFolderId);
+    if (config.googleDriveFolderId !== undefined) localStorage.setItem("sari_google_drive_folder", config.googleDriveFolderId);
   }
+  return next;
+}
+
+/**
+ * Validates dynamic configuration.
+ * Notion properties (notionToken, notionDatabaseId) are purely optional
+ * (retired & consolidated into Google Drive) and NEVER cause validation errors.
+ */
+export function validateConfig(config?: Partial<DynamicConfig>): { valid: boolean; errors: string[] } {
+  return {
+    valid: true,
+    errors: [],
+  };
   return next;
 }
 

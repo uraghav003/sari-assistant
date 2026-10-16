@@ -1,23 +1,31 @@
-﻿{
-    "$schema":  "http://json-schema.org/draft-07/schema#",
-    "name":  "sari-plugins",
-    "version":  "1.0.0",
-    "description":  "Unified SARI Sovereign plugins configuration for Notion, NotebookLM, and Google Apps Script",
-    "notion":  {
-                   "enabled":  true,
-                   "token":  "",
-                   "databaseId":  "",
-                   "version":  "2022-06-28",
-                   "syncAction":  "notion_sync"
-               },
-    "notebooklm":  {
-                       "enabled":  true,
-                       "folderId":  "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
-                       "syncAction":  "notebooklm_sync",
-                       "dossierExportPath":  "notebooklm-dossier.md"
-                   },
-    "appsScript":  {
-                       "scriptId":  "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
-                       "deploymentId":  "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
-                   }
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "name": "sari-plugins",
+  "version": "1.0.0",
+  "description": "Unified SARI Sovereign plugins configuration for Google Drive, NotebookLM, Notion, and Google Apps Script",
+  "googleDrive": {
+    "name": "Google Drive Sovereign Knowledge Hub & Document Vault",
+    "enabled": true,
+    "folderId": "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
+    "dossierExportPath": "notebooklm-dossier.md",
+    "notebooklmSync": true,
+    "syncAction": "notebooklm_sync"
+  },
+  "notebooklm": {
+    "name": "Google NotebookLM Integration (Powered by Google Drive)",
+    "enabled": true,
+    "folderId": "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
+    "syncAction": "notebooklm_sync",
+    "dossierExportPath": "notebooklm-dossier.md"
+  },
+  "notion": {
+    "name": "Notion Integration (Retired -> Consolidated to Google Drive)",
+    "enabled": false,
+    "status": "CONSOLIDATED_TO_GOOGLE_DRIVE",
+    "note": "Zero external tokens needed. All documents and dossiers sync natively to Google Drive."
+  },
+  "appsScript": {
+    "scriptId": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
+    "deploymentId": "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
+  }
 }
