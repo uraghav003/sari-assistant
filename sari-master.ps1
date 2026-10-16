@@ -39,12 +39,12 @@ function Show-Header {
 }
 
 function Show-GitStatus {
-    $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-    $head = (git log -1 --format="%h - %s (%cr)").Trim()
+    $branch = ([string](git rev-parse --abbrev-ref HEAD)).Trim()
+    $head = ([string](git log -1 --format="%h - %s (%cr)")).Trim()
     Write-Host "[OK] Git Branch: $branch" -ForegroundColor Green
     Write-Host "[OK] Git HEAD:   $head" -ForegroundColor Green
     
-    $status = (git status --porcelain).Trim()
+    $status = ([string](git status --porcelain)).Trim()
     if ([string]::IsNullOrWhiteSpace($status)) {
         Write-Host "[OK] Working Tree: Clean (0 uncommitted changes)" -ForegroundColor Green
     } else {
@@ -137,7 +137,7 @@ switch ($Action) {
         # 2. Remote tracking and sync
         Write-Host "[*] Checking remote sync alignment with origin/main..." -ForegroundColor Cyan
         git fetch origin main --quiet
-        $revCounts = (git rev-list --left-right --count HEAD...origin/main).Trim()
+        $revCounts = ([string](git rev-list --left-right --count HEAD...origin/main)).Trim()
         $parts = ($revCounts -split '\s+')
         $localAhead  = [int]$parts[0]
         $localBehind = [int]$parts[1]
@@ -179,7 +179,7 @@ switch ($Action) {
     "deploy" {
         Show-Header "SARI MASTER CONTROL PLANE: DEPLOYMENT"
         Write-Host "[*] Checking working tree for uncommitted changes..." -ForegroundColor Cyan
-        $status = (git status --porcelain).Trim()
+        $status = ([string](git status --porcelain)).Trim()
         if (-not [string]::IsNullOrWhiteSpace($status)) {
             Write-Host "[*] Staging and committing changes..." -ForegroundColor Yellow
             git add -A
