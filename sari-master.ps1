@@ -234,7 +234,8 @@ switch ($Action) {
         Write-Host "   Branch:    " -NoNewline; git branch --show-current
         Write-Host "   Remote:    " -NoNewline; git config --get remote.origin.url
         $sariStat = (git status --short) -join ", "
-        Write-Host "   Status:    $($sariStat ? $sariStat : 'CLEAN')" -ForegroundColor Gray
+        $statMsg = if ($sariStat) { $sariStat } else { "CLEAN" }
+        Write-Host "   Status:    $statMsg" -ForegroundColor Gray
         try {
             $sariWeb = Invoke-WebRequest -Uri "https://sari-supreme-command.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
             Write-Host "-> SARI Vercel Interface: ONLINE (HTTP $($sariWeb.StatusCode))" -ForegroundColor Green
