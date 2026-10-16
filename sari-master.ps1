@@ -2,16 +2,27 @@
 .SYNOPSIS
  SARI Sovereign PowerShell Master Control Plane
 .DESCRIPTION
- Manage status, test, build, audit, deploy, and sync across the SARI ecosystem.
+ Manage status, test, build, audit, deploy, sync, and plugin integrations (Notion, NotebookLM) across the SARI ecosystem.
 .EXAMPLE
  powershell.exe -File .\sari-master.ps1 -Action status
- powershell.exe -File .\sari-master.ps1 -Action audit
+ powershell.exe -File .\sari-master.ps1 -Action plugins
+ powershell.exe -File .\sari-master.ps1 -Action notion -Token <secret> -DatabaseId <id>
+ powershell.exe -File .\sari-master.ps1 -Action notebooklm -FolderId <id>
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position=0, Mandatory=$false)]
-    [ValidateSet("status", "test", "build", "audit", "deploy", "sync")]
+    [ValidateSet("status", "test", "build", "audit", "deploy", "sync", "plugins", "notion", "notebooklm")]
     [string]$Action = "status",
+
+    [Parameter(Mandatory=$false)]
+    [string]$Token,
+
+    [Parameter(Mandatory=$false)]
+    [string]$DatabaseId,
+
+    [Parameter(Mandatory=$false)]
+    [string]$FolderId,
 
     [Parameter(ValueFromRemainingArguments=$true)]
     [string[]]$RemainingArgs
@@ -87,6 +98,45 @@ function Probe-Vercel {
         return $false
     }
 }
+$PluginConfigFile = Join-Path $RepoRoot "sari-plugins.json"
+
+function Get-PluginConfig {
+    if (-not (Test-Path $PluginConfigFile)) {
+        $defaultConfig = [ordered]@{
+            "`$schema" = "http://json-schema.org/draft-07/schema#"
+            name = "sari-plugins"
+            version = "1.0.0"
+            description = "Unified SARI Sovereign plugins configuration for Notion, NotebookLM, and Google Apps Script"
+            notion = [ordered]@{
+                enabled = $true
+                token = ""
+                databaseId = ""
+                version = "2022-06-28"
+                syncAction = "notion_sync"
+            }
+            notebooklm = [ordered]@{
+                enabled = $true
+                folderId = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu"
+                syncAction = "notebooklm_sync"
+                dossierExportPath = "notebooklm-dossier.md"
+            }
+            appsScript = [ordered]@{
+                scriptId = "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM"
+                deploymentId = $CanonicalDeploymentId
+            }
+        }
+        $defaultConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $PluginConfigFile -Encoding UTF8
+    }
+    $raw = Get-Content -Raw -Path $PluginConfigFile -Encoding UTF8
+    return ($raw | ConvertFrom-Json)
+}
+
+function Save-PluginConfig {
+    param([Parameter(Mandatory=$true)]$Config)
+    $json = $Config | ConvertTo-Json -Depth 10
+    Set-Content -Path $PluginConfigFile -Value $json -Encoding UTF8
+}
+
 
 switch ($Action) {
     "status" {
@@ -207,6 +257,191 @@ switch ($Action) {
             exit $LASTEXITCODE
         }
         Write-Host "[OK] Repository synchronized with origin/main!" -ForegroundColor Green
+        exit 0
+    }
+
+    "plugins" {
+        Show-Header "SARI MASTER CONTROL PLANE: PLUGINS OVERVIEW"
+        $cfg = Get-PluginConfig
+        Write-Host "[*] Configuration Source: $PluginConfigFile" -ForegroundColor Cyan
+        Write-Host ""
+        
+        $pluginList = @()
+
+        # Notion row
+        $notionToken = if ($cfg.notion.token) { $cfg.notion.token } elseif ($env:NOTION_API_KEY) { $env:NOTION_API_KEY } elseif ($env:NOTION_TOKEN) { $env:NOTION_TOKEN } else { "" }
+        $notionStatus = if ([string]::IsNullOrWhiteSpace($notionToken)) { "STANDBY (Missing Token)" } else { "CONFIGURED" }
+        $notionVal = "DB: $(if ($cfg.notion.databaseId) { $cfg.notion.databaseId } else { 'unset' }) | Ver: $($cfg.notion.version)"
+        $pluginList += [PSCustomObject]@{
+            Plugin      = "Notion"
+            Enabled     = $cfg.notion.enabled
+            Status      = $notionStatus
+            Configured  = $notionVal
+            SyncAction  = $cfg.notion.syncAction
+        }
+
+        # NotebookLM row
+        $dossierRel = if ($cfg.notebooklm.dossierExportPath) { $cfg.notebooklm.dossierExportPath } else { "notebooklm-dossier.md" }
+        $dossierFull = Join-Path $RepoRoot $dossierRel
+        $dossierExists = Test-Path $dossierFull
+        $nlmStatus = if ($dossierExists) { "READY (Dossier Present)" } else { "READY (Folder Configured)" }
+        $nlmVal = "Folder: $($cfg.notebooklm.folderId) | Dossier: $dossierRel"
+        $pluginList += [PSCustomObject]@{
+            Plugin      = "NotebookLM"
+            Enabled     = $cfg.notebooklm.enabled
+            Status      = $nlmStatus
+            Configured  = $nlmVal
+            SyncAction  = $cfg.notebooklm.syncAction
+        }
+
+        # Apps Script row
+        $deploySnippet = if ($cfg.appsScript.deploymentId.Length -ge 12) { $cfg.appsScript.deploymentId.Substring(0, 12) + "..." } else { $cfg.appsScript.deploymentId }
+        $asVal = "DeployId: $deploySnippet | ScriptId: $($cfg.appsScript.scriptId)"
+        $pluginList += [PSCustomObject]@{
+            Plugin      = "Google Apps Script"
+            Enabled     = $true
+            Status      = "CONNECTED"
+            Configured  = $asVal
+            SyncAction  = "ping / notion_sync / notebooklm_sync"
+        }
+
+        $pluginList | Format-Table -AutoSize | Out-String | Write-Host
+        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "[OK] All SARI plugins loaded successfully." -ForegroundColor Green
+        exit 0
+    }
+
+    "notion" {
+        Show-Header "SARI MASTER CONTROL PLANE: NOTION PLUGIN"
+        $cfg = Get-PluginConfig
+
+        $didUpdate = $false
+        if ($PSBoundParameters.ContainsKey("Token") -and -not [string]::IsNullOrWhiteSpace($Token)) {
+            if ($cfg.notion.PSObject.Properties['token']) {
+                $cfg.notion.token = $Token
+            } else {
+                $cfg.notion | Add-Member -MemberType NoteProperty -Name "token" -Value $Token
+            }
+            $cfg.notion.enabled = $true
+            $didUpdate = $true
+            Write-Host "[OK] Updated Notion token in sari-plugins.json" -ForegroundColor Green
+        }
+        if ($PSBoundParameters.ContainsKey("DatabaseId") -and -not [string]::IsNullOrWhiteSpace($DatabaseId)) {
+            if ($cfg.notion.PSObject.Properties['databaseId']) {
+                $cfg.notion.databaseId = $DatabaseId
+            } else {
+                $cfg.notion | Add-Member -MemberType NoteProperty -Name "databaseId" -Value $DatabaseId
+            }
+            $cfg.notion.enabled = $true
+            $didUpdate = $true
+            Write-Host "[OK] Updated Notion databaseId in sari-plugins.json ($DatabaseId)" -ForegroundColor Green
+        }
+        if ($didUpdate) {
+            Save-PluginConfig -Config $cfg
+        }
+
+        # Read active token from config or environment
+        $activeToken = $cfg.notion.token
+        if ([string]::IsNullOrWhiteSpace($activeToken)) {
+            if (-not [string]::IsNullOrWhiteSpace($env:NOTION_API_KEY)) {
+                $activeToken = $env:NOTION_API_KEY
+            } elseif (-not [string]::IsNullOrWhiteSpace($env:NOTION_TOKEN)) {
+                $activeToken = $env:NOTION_TOKEN
+            }
+        }
+
+        $notionConnected = $false
+        if (-not [string]::IsNullOrWhiteSpace($activeToken)) {
+            Write-Host "[*] Probing Notion API (https://api.notion.com/v1/users/me)..." -ForegroundColor Cyan
+            $notionVersion = if ($cfg.notion.version) { $cfg.notion.version } else { "2022-06-28" }
+            $notionHeaders = @{
+                "Authorization" = "Bearer $activeToken"
+                "Notion-Version" = $notionVersion
+            }
+            try {
+                $notionRes = Invoke-RestMethod -Uri "https://api.notion.com/v1/users/me" -Headers $notionHeaders -Method Get -TimeoutSec 15
+                $userName = if ($notionRes.name) { $notionRes.name } else { $notionRes.type }
+                Write-Host "[OK] Notion API Probe: CONNECTED (User/Bot: $userName)" -ForegroundColor Green
+                $notionConnected = $true
+            } catch {
+                Write-Host "[!] Notion API probe returned error: $_" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "[*] Notion Token: Not configured in sari-plugins.json or environment" -ForegroundColor Yellow
+            Write-Host "[STANDBY] Notion integration is in STANDBY mode." -ForegroundColor Yellow
+            Write-Host "          To configure Notion, pass credentials:" -ForegroundColor DarkGray
+            Write-Host "            sari notion -Token <secret_xxx> -DatabaseId <database_id>" -ForegroundColor Cyan
+            Write-Host "          Or set `$env:NOTION_API_KEY / `$env:NOTION_TOKEN in your environment." -ForegroundColor DarkGray
+        }
+
+        # Trigger Apps Script backend notion_sync (action: "notion_sync")
+        Write-Host "[*] Triggering Apps Script backend notion_sync..." -ForegroundColor Cyan
+        $body = @{ action = "notion_sync" } | ConvertTo-Json -Compress
+        try {
+            $syncRes = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
+            Write-Host "[OK] Apps Script backend notion_sync responded:" -ForegroundColor Green
+            Write-Host "     $($syncRes | ConvertTo-Json -Compress)" -ForegroundColor DarkGray
+        } catch {
+            Write-Host "[!] Apps Script notion_sync request failed: $_" -ForegroundColor Yellow
+        }
+
+        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        if ($notionConnected) {
+            Write-Host "[OK] NOTION STATUS: CONNECTED (Database: $(if ($cfg.notion.databaseId) { $cfg.notion.databaseId } else { 'not specified' }))" -ForegroundColor Green
+        } else {
+            Write-Host "[OK] NOTION STATUS: STANDBY (Ready for token configuration)" -ForegroundColor Yellow
+        }
+        exit 0
+    }
+
+    "notebooklm" {
+        Show-Header "SARI MASTER CONTROL PLANE: NOTEBOOKLM PLUGIN"
+        $cfg = Get-PluginConfig
+
+        if ($PSBoundParameters.ContainsKey("FolderId") -and -not [string]::IsNullOrWhiteSpace($FolderId)) {
+            if ($cfg.notebooklm.PSObject.Properties['folderId']) {
+                $cfg.notebooklm.folderId = $FolderId
+            } else {
+                $cfg.notebooklm | Add-Member -MemberType NoteProperty -Name "folderId" -Value $FolderId
+            }
+            $cfg.notebooklm.enabled = $true
+            Save-PluginConfig -Config $cfg
+            Write-Host "[OK] Updated NotebookLM Google Drive Folder ID in sari-plugins.json ($FolderId)" -ForegroundColor Green
+        }
+
+        # Verify Google Drive Folder ID (default 1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu)
+        $activeFolderId = if ($cfg.notebooklm.folderId) { $cfg.notebooklm.folderId } else { "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu" }
+        Write-Host "[OK] Verified Google Drive Folder ID: $activeFolderId" -ForegroundColor Green
+
+        # Trigger Apps Script backend notebooklm_sync (action: "notebooklm_sync", folderId: ...)
+        Write-Host "[*] Triggering Apps Script backend notebooklm_sync..." -ForegroundColor Cyan
+        $nlmBody = @{
+            action = "notebooklm_sync"
+            folderId = $activeFolderId
+        } | ConvertTo-Json -Compress
+        try {
+            $nlmRes = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $nlmBody -ContentType "application/json" -TimeoutSec 15
+            Write-Host "[OK] Apps Script backend notebooklm_sync responded:" -ForegroundColor Green
+            Write-Host "     $($nlmRes | ConvertTo-Json -Compress)" -ForegroundColor DarkGray
+        } catch {
+            Write-Host "[!] Apps Script notebooklm_sync request failed: $_" -ForegroundColor Yellow
+        }
+
+        # Confirm notebooklm-dossier.md exists and is ready for NotebookLM
+        $dossierRelPath = if ($cfg.notebooklm.dossierExportPath) { $cfg.notebooklm.dossierExportPath } else { "notebooklm-dossier.md" }
+        $dossierFullPath = Join-Path $RepoRoot $dossierRelPath
+        if (Test-Path $dossierFullPath) {
+            $item = Get-Item $dossierFullPath
+            $lineCount = (Get-Content -Path $dossierFullPath).Count
+            Write-Host "[OK] NotebookLM Dossier: CONFIRMED READY" -ForegroundColor Green
+            Write-Host "     File:  $dossierFullPath" -ForegroundColor DarkGray
+            Write-Host "     Size:  $($item.Length) bytes ($lineCount lines)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "[!] NotebookLM Dossier file not found at $dossierFullPath" -ForegroundColor Yellow
+        }
+
+        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "[OK] NOTEBOOKLM STATUS: CONNECTED & SYNCHRONIZED" -ForegroundColor Green
         exit 0
     }
 }

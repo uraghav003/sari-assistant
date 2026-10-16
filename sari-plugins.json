@@ -1,0 +1,23 @@
+﻿{
+    "$schema":  "http://json-schema.org/draft-07/schema#",
+    "name":  "sari-plugins",
+    "version":  "1.0.0",
+    "description":  "Unified SARI Sovereign plugins configuration for Notion, NotebookLM, and Google Apps Script",
+    "notion":  {
+                   "enabled":  true,
+                   "token":  "",
+                   "databaseId":  "",
+                   "version":  "2022-06-28",
+                   "syncAction":  "notion_sync"
+               },
+    "notebooklm":  {
+                       "enabled":  true,
+                       "folderId":  "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
+                       "syncAction":  "notebooklm_sync",
+                       "dossierExportPath":  "notebooklm-dossier.md"
+                   },
+    "appsScript":  {
+                       "scriptId":  "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
+                       "deploymentId":  "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
+                   }
+}
