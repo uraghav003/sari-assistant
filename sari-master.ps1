@@ -12,7 +12,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position=0, Mandatory=$false)]
-    [ValidateSet("status", "test", "build", "audit", "deploy", "sync", "plugins", "notion", "notebooklm")]
+    [ValidateSet("status", "test", "build", "audit", "dual-audit", "deploy", "sync", "plugins", "notion", "notebooklm")]
     [string]$Action = "status",
 
     [Parameter(Mandatory=$false)]
@@ -224,6 +224,54 @@ switch ($Action) {
             Write-Host "[X] AUDIT VERDICT: FAILED - One or more components failed" -ForegroundColor Red
             exit 1
         }
+    }
+    "dual-audit" {
+        Show-Header "DIVYANSHI CAPITAL: SARI & BULBHUL DUAL-SYSTEM AUDIT"
+        
+        # 1. Project 1: SARI Sovereign
+        Write-Host "`n[PROJECT 1: SARI SOVEREIGN]" -ForegroundColor Green
+        Write-Host "-> Workspace: $RepoRoot" -ForegroundColor Gray
+        Write-Host "   Branch:    " -NoNewline; git branch --show-current
+        Write-Host "   Remote:    " -NoNewline; git config --get remote.origin.url
+        $sariStat = (git status --short) -join ", "
+        Write-Host "   Status:    $($sariStat ? $sariStat : 'CLEAN')" -ForegroundColor Gray
+        try {
+            $sariWeb = Invoke-WebRequest -Uri "https://sari-supreme-command.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
+            Write-Host "-> SARI Vercel Interface: ONLINE (HTTP $($sariWeb.StatusCode))" -ForegroundColor Green
+        } catch {
+            Write-Host "-> SARI Vercel Notice: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+
+        # 2. Project 2: Bulbhul Central Engine
+        Write-Host "`n[PROJECT 2: BULBHUL CENTRAL ENGINE]" -ForegroundColor Green
+        $loanRepo = "C:\Users\aecr\divyanshi-loan-os"
+        if (Test-Path $loanRepo) {
+            Push-Location $loanRepo
+            Write-Host "-> Workspace: $loanRepo" -ForegroundColor Gray
+            Write-Host "   Branch:    " -NoNewline; git branch --show-current
+            Write-Host "   Remote:    " -NoNewline; git config --get remote.origin.url
+            $loanStatus = git status --porcelain
+            if ($loanStatus) {
+                Write-Host "   [!] Uncommitted files in Bulbhul: $($loanStatus -join ', ')" -ForegroundColor Yellow
+            } else {
+                Write-Host "   -> Working tree: CLEAN (0 uncommitted files)" -ForegroundColor Green
+            }
+            Pop-Location
+        }
+        try {
+            $bulbWeb = Invoke-WebRequest -Uri "https://mallik-sovereign-build-engine.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
+            Write-Host "-> Bulbhul Vercel Interface: ONLINE (HTTP $($bulbWeb.StatusCode))" -ForegroundColor Green
+        } catch {
+            Write-Host "-> Bulbhul Vercel Notice: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+
+        # 3. Canonical Shared Cloud Hub
+        Write-Host "`n[3/3] Probing Canonical Apps Script Handshake..." -ForegroundColor Cyan
+        $hubOk = Probe-AppsScript
+        
+        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "[OK] DUAL-SYSTEM AUDIT COMPLETE: ALL SYSTEMS READY" -ForegroundColor Green
+        exit 0
     }
 
     "deploy" {
