@@ -1,4 +1,4 @@
-import { saveDynamicConfig, loadDynamicConfig } from "./config";
+﻿import { saveDynamicConfig, loadDynamicConfig } from "./config";
 import { audit } from "./storage";
 
 export interface KeyValidationResult {
@@ -26,23 +26,25 @@ export async function validateGeminiKey(key: string): Promise<boolean> {
   if (!key || typeof key !== "string" || key.trim().length < 10) return false;
   const trimmed = key.trim();
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${trimmed}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
-        signal: controller.signal,
-      }
-    );
-    clearTimeout(timeout);
-    return res.ok;
-  } catch {
-    return false;
+  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+  for (const m of models) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${trimmed}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeout);
+      if (res.ok) return true;
+    } catch {}
   }
+  return false;
 }
 
 export async function resolveActiveGeminiKey(): Promise<KeyValidationResult> {
