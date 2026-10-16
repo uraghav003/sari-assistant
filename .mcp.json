@@ -5,7 +5,7 @@
       "args": ["mcp-server.cjs"],
       "env": {
         "SARI_SCRIPT_ID": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
-        "SARI_DEPLOYMENT_ID": "AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g",
+        "SARI_DEPLOYMENT_ID": "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc",
         "OLLAMA_URL": "http://127.0.0.1:11434",
         "OLLAMA_MODEL": "llama3.2:latest"
       }

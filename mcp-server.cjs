@@ -4,7 +4,7 @@
  *  SARI PERSONAL INTELLIGENCE 11.2 — MODEL CONTEXT PROTOCOL (MCP) SERVER
  *  Driven directly by Node.js Dynamic Mind Bridge (`dynamic-mind.cjs`)
  *  Development Script ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM
- *  Web App Deployment ID: AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g
+ *  Web App Deployment ID: AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc
  *  Owner: MD (Upendra Singh Raghav) - Divyanshi Capital
  * ═══════════════════════════════════════════════════════════════════════════════
  */
@@ -67,7 +67,7 @@ const TOOLS = [
   },
   {
     name: "sari_apps_script_bridge",
-    description: "Execute a remote command on the SARI Google Apps Script Web App (Deployment ID: AKfycbx9Hn0bQ0pLgmkBA6erQOB1tT-7EkhOyLAA00pgjtTYw6Ck78ksRN3mgiTF6Rpfnc917g)",
+    description: "Execute a remote command on the SARI Google Apps Script Web App (Deployment ID: AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc)",
     inputSchema: {
       type: "object",
       properties: {

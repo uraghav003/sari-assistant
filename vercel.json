@@ -28,7 +28,7 @@
         { "key": "Expires", "value": "0" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, x-gemini-key" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, x-gemini-key, x-sari-token, x-mallik-key" }
       ]
     },
     {
