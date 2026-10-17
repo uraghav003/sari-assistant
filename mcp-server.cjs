@@ -16,7 +16,7 @@ const { sovereignMind, SCRIPT_ID, DEPLOYMENT_ID, EXEC_URL } = require("./dynamic
 const TOOLS = [
   {
     name: "sari_infer_11_2",
-    description: "Run SARI Personal Intelligence 11.2 sovereign inference with live Dynamic Mind memory context (Priority: Cloud Gemini 2.0 Flash -> Local Ollama fallback)",
+    description: "Run SARI Personal Intelligence 11.2 sovereign inference with live Dynamic Mind memory context (Priority: Cloud Gemini 2.5 Flash -> Local Qwen 2.5 Coder fallback)",
     inputSchema: {
       type: "object",
       properties: {

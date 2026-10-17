@@ -10,7 +10,7 @@ const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || "AKfycbwzdhZF3cVTT01atwZ
 const EXEC_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
 
 const OLLAMA_URL = (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:latest";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5-coder:latest";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.MALLIK_API_KEY || "";
 
 class DynamicMind {
@@ -92,36 +92,39 @@ Protect confidential figures as [RESTRICTED].`;
 
     const enrichedPrompt = `DYNAMIC_MIND_CONTEXT: ${JSON.stringify(context).slice(0, 300)}\n\nPROMPT: ${prompt}`;
 
-    // 1. Cloud Tier: Gemini 2.0 Flash
+    // 1. Cloud Tier: Gemini 2.5 Flash / 2.0 Flash
     if ((tier === "auto" || tier === "cloud") && GEMINI_API_KEY) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: this.systemPrompt }] },
-            contents: [{ parts: [{ text: enrichedPrompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-          }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (res.ok) {
-          const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (text) {
-            return {
-              text,
-              tier: "Cloud",
-              model: "gemini-2.0-flash",
-              agent: agentName,
-            };
+      const cloudModels = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
+      for (const mName of cloudModels) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 6000);
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${GEMINI_API_KEY}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: this.systemPrompt }] },
+              contents: [{ parts: [{ text: enrichedPrompt }] }],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            if (text) {
+              return {
+                text,
+                tier: "Cloud",
+                model: mName,
+                agent: agentName,
+              };
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
     }
 
     // 2. Local Tier: Ollama
