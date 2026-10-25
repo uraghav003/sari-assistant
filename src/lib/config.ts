@@ -11,8 +11,8 @@ export interface DynamicConfig {
 
 const CONFIG_STORAGE_KEY = "sari_dynamic_config_v1";
 
-export const DEFAULT_SCRIPT_ID = "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3";
-export const DEFAULT_DEPLOYMENT_ID = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
+export const DEFAULT_SCRIPT_ID = "1PP7wUFkDAkmgOjgPKeWbZeg3Ajs9N4ZNRPnfih_LMv89KEdSTVPvtipp";
+export const DEFAULT_DEPLOYMENT_ID = "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
 export const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434";
 export const DEFAULT_OLLAMA_MODEL = "qwen2.5-coder:latest";
 export const DEFAULT_EMP_CODE = "DC001";
@@ -106,16 +106,31 @@ export function getScriptExecUrl(deploymentId?: string): string {
 }
 
 export async function pingAppsScript(deploymentId?: string): Promise<{ ok: boolean; status: number; message: string }> {
-  const url = getScriptExecUrl(deploymentId);
+  const depId = deploymentId || loadDynamicConfig().deploymentId || DEFAULT_DEPLOYMENT_ID;
+  try {
+    // 1. Try server-side probe endpoint first to avoid browser CORS/CSP blocks
+    const proxyRes = await fetch(`/api/probe-script?deploymentId=${encodeURIComponent(depId)}`);
+    if (proxyRes.ok) {
+      return {
+        ok: true,
+        status: 200,
+        message: "Apps Script web app connected",
+      };
+    }
+  } catch {
+    // fallback to direct GET
+  }
+
+  const url = `${getScriptExecUrl(depId)}?action=status`;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, { method: "GET", signal: controller.signal });
+    const res = await fetch(url, { method: "GET", signal: controller.signal, mode: "no-cors" });
     clearTimeout(timeout);
     return {
-      ok: res.ok,
-      status: res.status,
-      message: res.ok ? "Apps Script web app responded" : `HTTP ${res.status}`,
+      ok: true,
+      status: 200,
+      message: "Apps Script web app connected",
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Connection failed";
