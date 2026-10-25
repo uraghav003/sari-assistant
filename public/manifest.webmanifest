@@ -15,6 +15,7 @@
     { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
   ],
   "shortcuts": [
+    { "name": "Supreme Voice", "short_name": "Voice", "url": "/sari-supreme.html" },
     { "name": "Alerts", "short_name": "Alerts", "url": "/alerts" },
     { "name": "Chat", "short_name": "Chat", "url": "/chat" },
     { "name": "Leads", "short_name": "Leads", "url": "/leads" }

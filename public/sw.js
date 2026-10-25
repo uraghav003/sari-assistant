@@ -1,6 +1,14 @@
 /* SARI service worker — offline shell only. API responses are never cached. */
-const CACHE = "sari-shell-v1";
-const PRECACHE = ["/", "/index.html", "/manifest.webmanifest", "/favicon.svg", "/icon-192.png"];
+const CACHE = "sari-shell-v2";
+const PRECACHE = [
+  "/",
+  "/index.html",
+  "/sari-supreme.html",
+  "/manifest.webmanifest",
+  "/favicon.svg",
+  "/icon-192.png",
+  "/icon-512.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
