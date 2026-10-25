@@ -13,3 +13,6 @@ sari-plugins.local.json
 SARI_CONFIG.json
 SARI_MEMORY.json
 apps-script-properties.json
+*control*.json
+sari-control.json
+src/knowledge/*control*.json
