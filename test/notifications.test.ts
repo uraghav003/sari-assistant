@@ -153,3 +153,22 @@ describe('SARI Sovereign Notifications & Alerts', () => {
     expect(getAlerts().length).toBe(100);
   });
 });
+
+describe('SARI Banks Knowledgebase Adapter', () => {
+  it('loads banks catalog and returns matches for bank queries', () => {
+    const kb = require('../src/knowledge/search-engine.cjs');
+    expect(typeof kb.searchBanks).toBe('function');
+    const res = kb.searchBanks({ query: 'HDFC', product: 'PERSONAL LOAN' });
+    expect(res.results.length).toBeGreaterThan(0);
+    expect(res.results[0].bank).toContain('HDFC');
+    expect(res.results[0].startingRate).toBe('9.99%');
+  });
+
+  it('generates multi-loan split recommendation for amounts >= 50L', () => {
+    const kb = require('../src/knowledge/search-engine.cjs');
+    const res = kb.searchBanks({ amount: 6000000 });
+    expect(res.splitRecommendation).toBeTruthy();
+    expect(res.splitRecommendation.recommended).toBe(true);
+    expect(res.splitRecommendation.structure.length).toBe(2);
+  });
+});

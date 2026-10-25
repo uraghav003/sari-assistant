@@ -1,0 +1,383 @@
+{
+  "ok": true,
+  "products": [
+    "PERSONAL LOAN",
+    "BUSINESS LOAN",
+    "PROFESSIONAL LOAN",
+    "MACHINERY LOAN",
+    "HOME LOAN",
+    "LOAN AGAINST PROPERTY",
+    "WORKING CAPITAL",
+    "AUTO LOAN",
+    "EDUCATION LOAN",
+    "GOLD LOAN",
+    "PROJECT LOAN"
+  ],
+  "banks": {
+    "PERSONAL LOAN": [
+      "Axis Bank",
+      "HDFC Bank",
+      "ICICI Bank",
+      "IDFC First Bank",
+      "Kotak Bank",
+      "Bajaj Finserv",
+      "Tata Capital",
+      "Aditya Birla Finance",
+      "Axis Finance",
+      "Fullerton India (SMFG)",
+      "Piramal Finance",
+      "Hero FinCorp",
+      "InCred",
+      "Clix Capital",
+      "Protium Finance",
+      "Muthoot Finance",
+      "L&T Finance",
+      "KreditBee",
+      "Fibe (Early Salary)",
+      "Finnable",
+      "Bandhan Bank",
+      "IndusInd Bank",
+      "Poonawala Fincop",
+      "Poonawala",
+      "DMI Finance",
+      "Utkarsh Small Finance Bank",
+      "Money Control",
+      "Bajaj Market",
+      "Chola",
+      "Poonawalla Digital",
+      "IndusInd Digital",
+      "TATA Digital"
+    ],
+    "BUSINESS LOAN": [
+      "Axis Bank",
+      "HDFC Bank",
+      "ICICI Bank",
+      "Kotak Bank",
+      "IndusInd Bank",
+      "Yes Bank",
+      "Standard Chartered Bank",
+      "Bandhan Bank",
+      "Bank of Baroda",
+      "Tata Capital",
+      "Aditya Birla Finance",
+      "Bajaj Finserv",
+      "Piramal Finance",
+      "UGRO Capital",
+      "Protium Finance",
+      "Clix Capital",
+      "Lendingkart",
+      "NeoGrowth",
+      "FlexiLoans",
+      "Faircent",
+      "SMC Moneywise",
+      "Hero FinCorp",
+      "L&T Finance",
+      "Bajaj Market",
+      "Poonawala",
+      "Chola",
+      "IDFC First Bank",
+      "Muthoot Finance",
+      "Indifi",
+      "Jio Finance",
+      "Godrej Capital",
+      "IIFL Finance",
+      "Mahindra Finance",
+      "HDB Financial Services"
+    ],
+    "HOME LOAN AND LAP": [
+      "Aadhar Housing Finance",
+      "Aditya Birla Housing Finance",
+      "Art Housing Finance India Limited",
+      "Axis Bank",
+      "Bajaj Finserv",
+      "Bandhan Bank",
+      "Bank of Baroda",
+      "Bank of India",
+      "Bank of Maharashtra",
+      "Canara Bank",
+      "Capital India Finance Limited",
+      "Central Bank of India",
+      "Cholamandalam Investment and Finance Company",
+      "Clix Capital",
+      "CSL Finance",
+      "DCB Bank",
+      "Deutsche Bank",
+      "DMI Housing Finance",
+      "Edelweiss Housing Finance (Nido)",
+      "Fedfina Financial Services",
+      "Federal Bank",
+      "Fullerton India Home Finance / SMFG",
+      "Godrej Housing Finance",
+      "HDB Financial Services",
+      "HDFC Bank",
+      "Hero FinCorp",
+      "Hinduja Housing Finance",
+      "ICICI Bank",
+      "ICICI Home Finance (HFC)",
+      "IDBI Bank",
+      "IDFC Bank",
+      "Indian Bank",
+      "Indostar Capital (Niwas Housing)",
+      "IndusInd Bank",
+      "Jana Small Finance Bank",
+      "Karur Vysya Bank",
+      "Kotak Mahindra Bank",
+      "L&T Finance",
+      "Mahindra Finance",
+      "MAS Financial Services",
+      "Motilal Oswal Home Finance",
+      "Muthoot Housing Finance",
+      "PNB Housing Finance",
+      "Piramal Housing Finance",
+      "Poonawala Housing Finance",
+      "Profectus Capital",
+      "Protium Housing Finance",
+      "Punjab National Bank",
+      "RBL Bank",
+      "Saraswat Bank",
+      "Satin Housing Finance",
+      "Shivalik Bank",
+      "Shubham Housing Finance",
+      "Standard Chartered Bank",
+      "Suryoday Small Finance Bank",
+      "Tata Capital Housing Finance",
+      "Tata Housing Finance",
+      "Utkarsh Small Finance Bank",
+      "Vastu Housing Finance",
+      "Yes Bank"
+    ],
+    "OTHER": [
+      "other"
+    ],
+    "PROFESSIONAL LOAN": [
+      "HDFC BANK",
+      "ICICI BANK",
+      "AXIS BANK",
+      "STATE BANK OF INDIA",
+      "KOTAK MAHINDRA",
+      "BAJAJ FINSERV",
+      "POONAWALLA",
+      "IDFC FIRST BANK"
+    ],
+    "MACHINERY LOAN": [
+      "STATE BANK OF INDIA",
+      "HDFC BANK",
+      "AXIS BANK",
+      "TATA CAPITAL",
+      "BAJAJ FINSERV",
+      "L&T FINANCE",
+      "SIDBI",
+      "ICICI BANK",
+      "PIRAMAL"
+    ],
+    "HOME LOAN": [
+      "STATE BANK OF INDIA",
+      "HDFC BANK",
+      "ICICI BANK",
+      "AXIS BANK",
+      "KOTAK MAHINDRA",
+      "PNB HOUSING",
+      "BANK OF BARODA"
+    ],
+    "LOAN AGAINST PROPERTY": [
+      "HDFC BANK",
+      "ICICI BANK",
+      "AXIS BANK",
+      "STATE BANK OF INDIA",
+      "BAJAJ FINSERV",
+      "KOTAK MAHINDRA"
+    ],
+    "WORKING CAPITAL": [
+      "STATE BANK OF INDIA",
+      "HDFC BANK",
+      "ICICI BANK",
+      "AXIS BANK",
+      "BANK OF BARODA",
+      "KOTAK MAHINDRA"
+    ],
+    "AUTO LOAN": [
+      "HDFC BANK",
+      "STATE BANK OF INDIA",
+      "ICICI BANK",
+      "AXIS BANK",
+      "MAHINDRA FINANCE"
+    ],
+    "EDUCATION LOAN": [
+      "STATE BANK OF INDIA",
+      "HDFC CREDILA",
+      "AXIS BANK",
+      "ICICI BANK",
+      "AVANSE"
+    ],
+    "GOLD LOAN": [
+      "MUTHOOT FINANCE",
+      "MANAPPURAM",
+      "HDFC BANK",
+      "STATE BANK OF INDIA",
+      "ICICI BANK"
+    ],
+    "PROJECT LOAN": [
+      "STATE BANK OF INDIA",
+      "HDFC BANK",
+      "ICICI BANK",
+      "AXIS BANK",
+      "BANK OF BARODA",
+      "PIRAMAL"
+    ]
+  },
+  "tatMap": {
+    "PERSONAL LOAN": 4,
+    "BUSINESS LOAN": 6,
+    "PROFESSIONAL LOAN": 3,
+    "MACHINERY LOAN": 6,
+    "HOME LOAN": 15,
+    "LOAN AGAINST PROPERTY": 10,
+    "WORKING CAPITAL": 7,
+    "AUTO LOAN": 4,
+    "EDUCATION LOAN": 7,
+    "GOLD LOAN": 2,
+    "PROJECT LOAN": 15,
+    "HOME LOAN AND LAP": 8,
+    "OTHER": 4
+  },
+  "variants": {
+    "PERSONAL LOAN": [
+      "Fresh Personal Loan",
+      "Balance Transfer (BT)",
+      "Balance Transfer + Top-Up (BT + Top-Up)",
+      "Instant Top-Up Loan",
+      "Personal Overdraft (OD Limit)"
+    ],
+    "BUSINESS LOAN": [
+      "Fresh Business Term Loan",
+      "Business Overdraft (OD Limit)",
+      "Dropline Overdraft (DLOD)",
+      "Cash Credit (CC) Facility",
+      "Machinery / Equipment Loan",
+      "Merchant Line of Credit"
+    ],
+    "PROFESSIONAL LOAN": [
+      "Doctor Professional Loan",
+      "Chartered Accountant (CA) Loan",
+      "Architect / Company Secretary Loan",
+      "Medical Equipment Loan",
+      "Practice Expansion OD"
+    ],
+    "MACHINERY LOAN": [
+      "New Industrial Machinery Purchase",
+      "Used / Refurbished Equipment Financing",
+      "Sale & Lease Back Facility",
+      "Plant & Machinery Modernization"
+    ],
+    "HOME LOAN": [
+      "Fresh Home Purchase Loan",
+      "Home Loan Balance Transfer (BT)",
+      "Home Loan BT + Top-Up",
+      "Plot + Construction Loan",
+      "Home Renovation / Extension Loan"
+    ],
+    "LOAN AGAINST PROPERTY": [
+      "Commercial LAP",
+      "Residential LAP",
+      "Industrial LAP",
+      "LAP Overdraft (OD / DLOD)",
+      "Lease Rental Discounting (LRD)"
+    ],
+    "WORKING CAPITAL": [
+      "Cash Credit (CC) Limit",
+      "Overdraft (OD) Facility",
+      "Dropline Overdraft (DLOD)",
+      "Letter of Credit (LC) / Bank Guarantee (BG)",
+      "Invoice Discounting / Trade Finance"
+    ],
+    "AUTO LOAN": [
+      "New Car / Vehicle Loan",
+      "Used Car Purchase Loan",
+      "Auto Refinance / Car Top-Up",
+      "Commercial Vehicle (CV) Financing"
+    ],
+    "EDUCATION LOAN": [
+      "Domestic Higher Education",
+      "Overseas Studies Loan (Secured / Unsecured)",
+      "Executive Education / Up-skilling"
+    ],
+    "GOLD LOAN": [
+      "Bullet Repayment Gold Loan",
+      "Monthly Interest Gold Loan",
+      "Gold Overdraft (OD Limit)"
+    ],
+    "PROJECT LOAN": [
+      "Greenfield Project Finance",
+      "Brownfield Expansion Loan",
+      "Commercial Real Estate (CRE) Loan"
+    ]
+  },
+  "employmentTypes": [
+    "Salaried Employee (Corporate / MNC / Pvt Ltd)",
+    "Salaried Employee (Government / PSU / Defense)",
+    "Self-Employed Professional (Doctor / CA / CS / Architect / Lawyer)",
+    "Business Owner (Proprietorship Firm)",
+    "Director / Partner (Pvt Ltd / LLP / Partnership)",
+    "MSME Manufacturer / Trader / Retailer",
+    "Agriculturist / Farmer",
+    "Freelancer / Consultant / Other"
+  ],
+  "docMatrix": {
+    "COMMON": [
+      "PAN Card (Primary Identity)",
+      "Aadhaar Card (Address Proof)",
+      "Applicant Passport Photograph"
+    ],
+    "SALARIED": [
+      "Last 3 Months Salary Slips",
+      "6 Months Salary Bank Account Statement",
+      "Form 16 / Latest ITR"
+    ],
+    "PROFESSIONAL": [
+      "Professional Degree / Registration Certificate",
+      "Last 2 Years ITR with Computation",
+      "12 Months Primary Bank Statement",
+      "Clinic / Office Proof"
+    ],
+    "BUSINESS": [
+      "Business Registration (GST / Udyam / COI)",
+      "Last 2-3 Years CA-Audited Financials (P&L, Balance Sheet)",
+      "12 Months Current Bank Account Statement",
+      "12 Months GSTR-3B Returns"
+    ],
+    "MACHINERY": [
+      "Machinery Proforma Invoice / Quotation",
+      "Vendor Details & Quotation Specs",
+      "Existing Plant Layout / Electricity Bill",
+      "2-3 Years ITR & Financials"
+    ],
+    "BT_TOPUP": [
+      "Existing Loan Sanction Letter",
+      "Latest 12 Months Loan Statement of Account (SOA)",
+      "Foreclosure Letter / Outstanding Principal",
+      "List of Documents (LOD)"
+    ],
+    "PROPERTY": [
+      "Complete Property Chain Deeds (13-30 Years)",
+      "Approved Building / Floor Plan Map",
+      "Latest Property Tax Paid Receipt",
+      "NOC / Mutation Certificate"
+    ],
+    "WORKING_CAPITAL": [
+      "Sanction Letters of Existing Limits",
+      "Audited Balance Sheets (Last 3 Yrs)",
+      "Stock & Debtors Statement",
+      "Projected Turnover Statement"
+    ],
+    "GOLD": [
+      "Gold Ornament Details & Weight Estimation",
+      "Identity & Address Proof"
+    ],
+    "HR_STAFF": [
+      "Resume / CV",
+      "Aadhaar & PAN Card",
+      "Highest Degree Certificate",
+      "Previous Experience / Relieving Letter"
+    ]
+  }
+}
