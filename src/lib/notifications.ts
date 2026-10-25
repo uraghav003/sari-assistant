@@ -48,7 +48,16 @@ function read(): AppNotification[] {
 }
 
 let items: AppNotification[] = read();
-
+if (items.length === 0) {
+  items = [{
+    id: "sec-init-1",
+    title: "SARI Sovereign Security & Auto-Learn Active",
+    body: "Zero-trust guardrails enforced under MD (DC002) & Founder (DC001) governance. All tasks and events are monitored and synced.",
+    channel: "system",
+    createdAt: Date.now(),
+    read: false
+  }];
+}
 function persist(): void {
   if (typeof window !== "undefined") {
     try {
