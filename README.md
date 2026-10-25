@@ -8,6 +8,18 @@ https://sari-supreme-command.vercel.app
 
 Git-linked: this repo → Vercel project `sari-supreme-command`.
 
+## Project topology
+
+One repository → **one** Vercel project. A second project, `sari-assistant`,
+deploys the same repo on every push and is redundant; delete it (or disconnect
+its Git integration) so there is no ambiguity about production.
+`scripts/merge-vercel.ps1` performs that merge with an API token, including a
+308 redirect from the old domain.
+
+One local checkout as well. A second clone under `C:\Users\aecr\workspace` was
+retired to `sari-assistant.DUPLICATE-20261025`; two clones with two
+`.env.production.local` files is how the secrets drifted apart once already.
+
 ## Chain
 HI/MD → Mallik → SARI → workers
 
