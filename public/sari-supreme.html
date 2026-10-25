@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SARI Supreme — Intelligence. With presence.</title>
 <style>
 :root {
@@ -396,6 +396,13 @@ body {
   padding: 3px 6px;
   outline: none;
 }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
 </style>
 </head>
 <body data-theme="hologram">
@@ -468,13 +475,13 @@ body {
     <!-- CHAT INTERFACE -->
     <div class="chat-section">
       <div class="chat-meta">
-        <div>YOU + SARI &nbsp;•&nbsp; <span id="onlineTag" style="color:var(--accent);">ONLINE</span></div>
+        <div>YOU + SARI &nbsp;•&nbsp; <span id="onlineTag" style="color:var(--muted);">CHECKING SESSION…</span></div>
         <button class="clear-btn" onclick="clearChat()">Clear conversation</button>
       </div>
 
       <div class="chat-history" id="chatHistory">
         <div class="msg msg-bot">
-          Good morning Malik! 🌸 <strong>SARI v11.3</strong> — 22 official bhashaon aur English mein aapki seva mein hazir hoon.
+          Good morning Malik! 🌸 <strong>SARI</strong> — 10 bhashaon aur English mein aapki seva mein hazir hoon.
         </div>
       </div>
 
@@ -499,7 +506,7 @@ body {
       </div>
 
       <div class="panel-footer">
-        <div>Private session • Groq LPU engine connected • Mic works natively</div>
+        <div>Session-based access • Server-side model routing • Mic works natively</div>
         <div class="footer-right">
           <select id="langSelect" class="lang-select" onchange="changeLang()">
             <option value="hi" selected>Hindi (हिन्दी)</option>
@@ -526,9 +533,8 @@ body {
 </div>
 
 <script>
-// CONFIG & BACKEND LINK
-const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
-const MALLIK_KEY = "MALLIK_V3_786";
+// Same-origin, cookie-authenticated. No keys or deployment IDs reach the browser.
+const CHAT_ENDPOINT = "/api/chat";
 
 let isListening = false;
 let isTtsEnabled = true;
@@ -639,35 +645,59 @@ async function sendPrompt() {
   voiceStatusText.textContent = "SARI is thinking...";
 
   try {
-    const res = await fetch(BACKEND_URL, {
+    const res = await fetch(CHAT_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        message: text,
-        mallik_key: MALLIK_KEY,
-        lang: currentLang
-      })
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: text })
     });
 
-    const data = await res.json();
     sendBtn.disabled = false;
     hidePill();
     voiceStatusText.textContent = "Ready when you are";
 
-    if (data.ok && data.reply) {
-      addMessage(data.reply, "bot");
-      speakText(data.reply);
+    if (res.status === 401) {
+      addMessage("Session expired. Please sign in again at /login.", "bot");
+      showPill("Not authenticated.", "err");
+      return;
+    }
+
+    const data = await res.json();
+    if (data.ok && data.text) {
+      addMessage(data.text, "bot");
+      speakText(data.text);
     } else {
-      addMessage(data.error || "Response unavailable.", "bot");
+      addMessage(data.error || "No inference tier is available right now.", "bot");
+      showPill("Model unavailable.", "warn");
     }
   } catch (err) {
     sendBtn.disabled = false;
     hidePill();
     voiceStatusText.textContent = "Ready when you are";
     addMessage("Connection error: " + err.message, "bot");
-    showPill("Failed to reach SARI backend.", "err");
+    showPill("Failed to reach SARI.", "err");
   }
 }
+
+async function refreshSessionTag() {
+  const tag = document.getElementById("onlineTag");
+  try {
+    const res = await fetch("/api/session", { credentials: "same-origin" });
+    const data = await res.json();
+    if (data && data.ok) {
+      tag.textContent = "SIGNED IN";
+      tag.style.color = "var(--accent)";
+    } else {
+      tag.textContent = "SIGNED OUT";
+      tag.style.color = "var(--err)";
+    }
+  } catch (_) {
+    tag.textContent = "OFFLINE";
+    tag.style.color = "var(--err)";
+  }
+}
+
+refreshSessionTag();
 
 function sendQuick(cmd) {
   promptInput.value = cmd;

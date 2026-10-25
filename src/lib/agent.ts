@@ -2,7 +2,6 @@ import { audit } from "./storage";
 import { loadDynamicConfig } from "./config";
 import { withSelfHeal } from "./self-heal";
 import { learnFromInteraction } from "./self-learn";
-import { getSessionId } from "./auth";
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
 export type AgentResult = { content: string; mode: "cloud" | "ollama" | "offline" };
@@ -46,18 +45,13 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
 
   return await withSelfHeal<AgentResult>(
     "AgentInference",
-    // Primary Attempt: Cloud via /api/chat (server-side cascade: Gemini -> Pollinations -> AppsScript)
-    // API keys are resolved server-side / proxied — never sent directly from the browser.
+    // Primary Attempt: Cloud via /api/chat (server-side cascade: Gemini -> signed Apps Script)
+    // The session cookie is HttpOnly and same-origin, so no token is read here.
     async () => {
-      const token = getSessionId();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) {
-        headers["x-sari-token"] = token;
-      }
-
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers,
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
       if (res.ok) {

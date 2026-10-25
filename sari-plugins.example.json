@@ -1,0 +1,20 @@
+{
+  "system": {
+    "name": "SARI Supreme Command",
+    "version": "4.0.0",
+    "owner": "MD — Divyanshi Capital"
+  },
+  "appsScript": {
+    "scriptId": "",
+    "deploymentId": "",
+    "note": "Identifiers only. Secrets belong in Script Properties and Vercel environment variables."
+  },
+  "notebooklm": {
+    "folderId": ""
+  },
+  "notion": {
+    "databaseId": "",
+    "note": "Token is read from NOTION_API_KEY at runtime; never store it here."
+  },
+  "plugins": []
+}

@@ -34,8 +34,8 @@ export default function AuditPage() {
     <div className="page" style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 className="page-title">Audit Trail & Self-Healing Sentinel</h1>
-          <p className="page-sub">Live cryptographic event stream · Zero PII exposure · Sovereign provenance</p>
+          <h1 className="page-title">Local Event Log & Self-Healing Sentinel</h1>
+          <p className="page-sub">Browser-side diagnostics (not a tamper-evident audit trail) · PII redaction is not enforced here</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={refreshLogs} className="btn-secondary" style={{ padding: "8px 12px", borderRadius: 8, display: "flex", alignItems: "center", gap: 6 }}>

@@ -1,22 +1,29 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, MessageSquare, Sparkles, Link2,
-  Shield, Activity, LogOut, Wand2, Zap
+  Shield, Activity, LogOut, Wand2, Zap, Bell
 } from "lucide-react";
-import { clearSession } from "../lib/auth";
+import { logout } from "../lib/auth";
+import { subscribeAlerts, unreadCount } from "../lib/notifications";
 
 const nav = [
-  { to: "/", icon: LayoutDashboard, label: "Command Center" },
-  { to: "/chat", icon: MessageSquare, label: "SARI Chat" },
-  { to: "/skills", icon: Wand2, label: "Skills Builder" },
-  { to: "/connections", icon: Link2, label: "Connections" },
-  { to: "/leads", icon: Zap, label: "Leads & Alerts" },
+  { to: "/", icon: LayoutDashboard, label: "Command" },
+  { to: "/chat", icon: MessageSquare, label: "Chat" },
+  { to: "/skills", icon: Wand2, label: "Skills" },
+  { to: "/connections", icon: Link2, label: "Connect" },
+  { to: "/leads", icon: Zap, label: "Leads" },
+  { to: "/alerts", icon: Bell, label: "Alerts", badge: true },
   { to: "/policies", icon: Shield, label: "Policies" },
-  { to: "/audit", icon: Activity, label: "Audit Trail" },
+  { to: "/audit", icon: Activity, label: "Log" },
 ];
 
 export default function Layout() {
   const navigate = useNavigate();
+  const [unread, setUnread] = useState(() => unreadCount());
+
+  useEffect(() => subscribeAlerts(() => setUnread(unreadCount())), []);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -35,8 +42,11 @@ export default function Layout() {
               end={item.to === "/"}
               className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
             >
-              <item.icon size={17} />
-              <span>{item.label}</span>
+              <span className="nav-icon">
+                <item.icon size={17} />
+                {item.badge && unread > 0 && <span className="nav-badge">{unread > 9 ? "9+" : unread}</span>}
+              </span>
+              <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -44,10 +54,12 @@ export default function Layout() {
           <button
             className="nav-item"
             style={{ width: "100%" }}
-            onClick={() => { clearSession(); navigate("/login"); }}
+            onClick={() => {
+              void logout().then(() => navigate("/login"));
+            }}
           >
-            <LogOut size={17} />
-            <span>Logout</span>
+            <span className="nav-icon"><LogOut size={17} /></span>
+            <span className="nav-label">Logout</span>
           </button>
         </div>
       </aside>

@@ -56,18 +56,27 @@ Write-Host "--------------------------------`n" -ForegroundColor Cyan
 
 # 2. Native Speech Audio Output (Windows SAPI / System.Speech)
 Write-Host "[2/3] Speaking response via Sovereign Voice Engine..." -ForegroundColor Yellow
-try {
-    Add-Type -AssemblyName System.Speech
-    $Synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-    $Synth.Rate = 1
-    $Synth.Volume = 100
-    
-    # Clean text for natural speech
-    $SpokenText = $Answer -replace "(UNDERSTAND:|PLAN:|ACT:|LEARN:)", "" -replace "\*", "" -replace "`n", " "
-    $Synth.SpeakAsync($SpokenText) | Out-Null
-    Write-Host "  ✓ Voice Audio Synthesized & Playing" -ForegroundColor Green
-} catch {
-    Write-Host "  ✗ Speech synthesis warning: $($_.Exception.Message)" -ForegroundColor DarkGray
+if ($IsWindows -eq $false) {
+    Write-Host "  [SKIP] SAPI speech synthesis is Windows-only." -ForegroundColor DarkGray
+} else {
+    try {
+        Add-Type -AssemblyName System.Speech
+        $Synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
+        try {
+            $Synth.Rate = 1
+            $Synth.Volume = 100
+
+            # Clean text for natural speech
+            $SpokenText = $Answer -replace "(UNDERSTAND:|PLAN:|ACT:|LEARN:)", "" -replace "\*", "" -replace "`n", " "
+            # Speak() blocks until playback finishes; SpeakAsync() truncates on exit.
+            $Synth.Speak($SpokenText)
+            Write-Host "  ✓ Voice audio played" -ForegroundColor Green
+        } finally {
+            $Synth.Dispose()
+        }
+    } catch {
+        Write-Host "  ✗ Speech synthesis warning: $($_.Exception.Message)" -ForegroundColor DarkGray
+    }
 }
 
 # 3. Optional: Fish Audio / Remote Voice API

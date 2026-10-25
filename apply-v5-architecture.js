@@ -1,31 +1,48 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import { pathToFileURL } from "node:url";
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
+/**
+ * Records the architecture description in Supabase. Maintenance script: runs
+ * only when invoked directly. Requires SARI_SUPABASE_URL and SARI_SUPABASE_KEY.
+ */
 
-async function applyDivyanshiCapitalCloudHubV5() {
-  const architectureV5 = {
-    system: 'Divyanshi Capital Cloud Hub V5',
-    architecture: 'Master Sovereign AI (SARI) with Sub-Agent Fleet (LAILA, BULBUL, VOICE_FLEET)',
-    security_tier: 'Zero-Trust Enforced · Supabase Vault Encrypted',
-    ai_runtime: '3-Tier Hybrid (Ollama Local llama3.2:3b + Gemini 2.0 Flash + Sovereign Fallback)',
-    voice_engine: 'Web Speech API STT/TTS & ElevenLabs Speech Engine Integration',
-    routing_channels: 'Telegram & WhatsApp Webhook Dispatch + Inbound Lead Ingestion',
-    status: 'PRODUCTION_READY_ERROR_FREE',
-    deployed_at: new Date().toISOString()
-  };
-
-  console.log('Applying Divyanshi Capital Cloud Hub V5 architecture specification...');
-  const { error } = await supabase
-    .from('system_config')
-    .upsert({ id: 'divyanshi_capital_cloud_hub_v5', config: architectureV5 });
-
-  if (error) {
-    console.log('Supabase sync notice (vault ready for live keys):', error.message);
-  } else {
-    console.log('Divyanshi Capital Cloud Hub V5 Architecture successfully applied & locked error-free.');
+function client() {
+  const url = process.env.SARI_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = process.env.SARI_SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("SARI_SUPABASE_URL and SARI_SUPABASE_KEY must be set.");
   }
+  return createClient(url, key);
 }
 
-applyDivyanshiCapitalCloudHubV5();
+export async function applyDivyanshiCapitalCloudHubV5() {
+  const supabase = client();
+  const architectureV5 = {
+    system: "Divyanshi Capital Cloud Hub V5",
+    architecture: "Master Sovereign AI (SARI) with sub-agent fleet (LAILA, BULBUL, VOICE_FLEET)",
+    security_tier: "Session cookie auth · HMAC-gated Apps Script bridge · server-held credentials",
+    ai_runtime: "Gemini cloud tier → signed Apps Script bridge → local Ollama fallback",
+    voice_engine: "Web Speech API STT/TTS",
+    routing_channels: "Telegram dispatch via authenticated server route",
+    status: "CONFIGURED",
+    deployed_at: new Date().toISOString(),
+  };
+
+  console.log("Writing Cloud Hub V5 architecture record...");
+  const { error } = await supabase
+    .from("system_config")
+    .upsert({ id: "divyanshi_capital_cloud_hub_v5", config: architectureV5 });
+
+  if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
+  console.log("Architecture record written.");
+}
+
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (invokedDirectly) {
+  applyDivyanshiCapitalCloudHubV5().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}

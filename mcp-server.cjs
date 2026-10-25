@@ -1,196 +1,227 @@
 #!/usr/bin/env node
 /**
- * ═══════════════════════════════════════════════════════════════════════════════
- *  SARI PERSONAL INTELLIGENCE 11.2 — MODEL CONTEXT PROTOCOL (MCP) SERVER
- *  Driven directly by Node.js Dynamic Mind Bridge (`dynamic-mind.cjs`)
- *  Development Script ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM
- *  Web App Deployment ID: AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc
- *  Owner: MD (Upendra Singh Raghav) - Divyanshi Capital
- * ═══════════════════════════════════════════════════════════════════════════════
+ * SARI — Model Context Protocol (MCP) server
+ *
+ * Principles:
+ *  - No fabricated data. Handlers either compute from their inputs or say
+ *    explicitly that no data source is connected.
+ *  - No unauthenticated proxy. The Apps Script bridge is signed and allowlisted.
+ *  - Inputs are validated and bounded before use.
  */
 
-const readline = require("readline");
-const { sovereignMind, SCRIPT_ID, DEPLOYMENT_ID, EXEC_URL } = require("./dynamic-mind.cjs");
+const crypto = require("node:crypto");
+const readline = require("node:readline");
+const { sovereignMind, EXEC_URL, signedAuth } = require("./dynamic-mind.cjs");
 
-// ─── TOOLS CATALOG (SARI 11.2 DYNAMIC MIND ENABLED) ─────────────────────────────
+const MAX_PROMPT_CHARS = 8000;
+const MAX_TEXT_FIELD = 300;
+const BRIDGE_ACTIONS = [
+  "ping",
+  "autopilot_heartbeat",
+  "sync_memory",
+  "autopilot_learn",
+  "notion_sync",
+  "notebooklm_sync",
+];
+
 const TOOLS = [
   {
-    name: "sari_infer_11_2",
-    description: "Run SARI Personal Intelligence 11.2 sovereign inference with live Dynamic Mind memory context (Priority: Cloud Gemini 2.5 Flash -> Local Qwen 2.5 Coder fallback)",
+    name: "sari_infer",
+    description: "Run SARI sovereign inference with signed memory context (cloud Gemini, then local Ollama).",
     inputSchema: {
       type: "object",
       properties: {
-        prompt: { type: "string", description: "User query or directive for SARI 11.2" },
-        tier: { type: "string", enum: ["auto", "cloud", "local"], default: "auto", description: "Inference tier preference" }
+        prompt: { type: "string", description: "User query or directive (max 8000 chars)" },
+        tier: { type: "string", enum: ["auto", "cloud", "local"], default: "auto" },
       },
-      required: ["prompt"]
-    }
+      required: ["prompt"],
+    },
   },
   {
-    name: "sari_focus_mode",
-    description: "SARI 11.2 Focus Mode Optimizer: 'Find my focus' pipeline triage, inbox priority briefing, and executive action checklists",
+    name: "sari_loan_emi",
+    description:
+      "Compute amortised monthly EMI and total interest. Pure arithmetic — no lender data is fetched.",
     inputSchema: {
       type: "object",
       properties: {
-        mode: { type: "string", enum: ["focus_pipeline", "read_inbox", "daily_brief"], default: "focus_pipeline", description: "Focus mode type" },
-        context: { type: "string", description: "Optional context or specific focus area" }
+        principal: { type: "number", description: "Loan amount in INR" },
+        annualRatePercent: { type: "number", description: "Annual interest rate, e.g. 9.5" },
+        tenureMonths: { type: "number", description: "Tenure in months" },
       },
-      required: ["mode"]
-    }
-  },
-  {
-    name: "sari_dsa_loan_engine",
-    description: "Divyanshi Capital 50+ bank DSA loan eligibility calculator, multi-lender credit policy matching, and loan splitting",
-    inputSchema: {
-      type: "object",
-      properties: {
-        loanType: { type: "string", enum: ["HL", "LAP", "PL", "BL", "CC"], description: "Loan category" },
-        amount: { type: "number", description: "Requested loan ticket size (in INR)" },
-        cibilScore: { type: "number", description: "Borrower CIBIL score" },
-        incomeMonthly: { type: "number", description: "Monthly verifiable net income" }
-      },
-      required: ["loanType", "amount"]
-    }
+      required: ["principal", "annualRatePercent", "tenureMonths"],
+    },
   },
   {
     name: "sari_memory_vault_sync",
-    description: "Synchronize or query SARI's Sovereign Memory Vault and lessons with Google Apps Script (Script ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM)",
+    description: "Append a lesson to the signed Apps Script memory vault.",
     inputSchema: {
       type: "object",
       properties: {
-        action: { type: "string", enum: ["get", "set", "append_lesson"], description: "Memory action" },
-        key: { type: "string", description: "Vault entry key (for set)" },
-        value: { type: "string", description: "Vault entry value (for set) or lesson string" }
+        lesson: { type: "string", description: "Lesson text (max 300 chars)" },
       },
-      required: ["action"]
-    }
+      required: ["lesson"],
+    },
   },
   {
     name: "sari_apps_script_bridge",
-    description: "Execute a remote command on the SARI Google Apps Script Web App (Deployment ID: AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc)",
+    description:
+      "Send a signed, allowlisted action to the SARI Apps Script web app. Free-form actions are rejected.",
     inputSchema: {
       type: "object",
       properties: {
-        action: { type: "string", description: "Apps Script action name (e.g. ping, autopilot_heartbeat, sync_memory)" },
-        payload: { type: "object", description: "Optional request payload object" }
+        action: { type: "string", enum: BRIDGE_ACTIONS },
+        payload: { type: "object", description: "Optional bounded payload" },
       },
-      required: ["action"]
-    }
+      required: ["action"],
+    },
   },
   {
-    name: "sari_zero_trust_audit",
-    description: "Run LAILA Zero-Trust security scan over webhooks, roles, and access tokens",
+    name: "sari_verify_token",
+    description:
+      "Verify a session token or an Apps Script request signature against the configured secrets.",
     inputSchema: {
       type: "object",
       properties: {
-        target: { type: "string", description: "Target resource or webhook endpoint to audit" },
-        authToken: { type: "string", description: "Bearer / HMAC token to validate" }
+        kind: { type: "string", enum: ["session", "apps_script"] },
+        token: { type: "string", description: "Session token (<expiry>.<hmac>)" },
+        action: { type: "string", description: "Action name for apps_script signatures" },
+        ts: { type: "string", description: "Millisecond timestamp for apps_script signatures" },
+        sig: { type: "string", description: "HMAC hex for apps_script signatures" },
       },
-      required: ["target"]
-    }
+      required: ["kind"],
+    },
   },
-  {
-    name: "sari_skill_synthesizer",
-    description: "Dynamically synthesize, validate, and register a new executable SARI AI skill card",
-    inputSchema: {
-      type: "object",
-      properties: {
-        name: { type: "string", description: "Skill name" },
-        trigger: { type: "string", description: "Trigger keywords (slash or comma separated)" },
-        goal: { type: "string", description: "Goal and execution requirements" }
-      },
-      required: ["name", "trigger", "goal"]
-    }
-  }
 ];
 
-// ─── TOOL HANDLERS (DYNAMIC MIND INTEGRATED) ──────────────────────────────────
+function text(payload) {
+  return { content: [{ type: "text", text: payload }] };
+}
+
+function fail(message) {
+  return { isError: true, content: [{ type: "text", text: message }] };
+}
+
+function str(value, max = MAX_TEXT_FIELD) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function num(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function emiFormula(principal, annualRatePercent, tenureMonths) {
+  const monthlyRate = annualRatePercent / 12 / 100;
+  if (monthlyRate === 0) {
+    const flat = principal / tenureMonths;
+    return { emi: flat, totalInterest: 0 };
+  }
+  const factor = Math.pow(1 + monthlyRate, tenureMonths);
+  const emi = (principal * monthlyRate * factor) / (factor - 1);
+  return { emi, totalInterest: emi * tenureMonths - principal };
+}
+
 async function handleToolCall(name, args) {
   switch (name) {
-    case "sari_infer_11_2": {
-      const result = await sovereignMind.infer(args.prompt, { tier: args.tier });
-      return {
-        content: [{ type: "text", text: `[${result.agent} · ${result.tier} (${result.model || 'direct'})]\n\n${result.text}` }]
-      };
+    case "sari_infer": {
+      const prompt = str(args.prompt, MAX_PROMPT_CHARS);
+      if (!prompt) return fail("prompt is required");
+      const tier = ["auto", "cloud", "local"].includes(args.tier) ? args.tier : "auto";
+      const result = await sovereignMind.infer(prompt, { tier });
+      return text(`[${result.agent} · ${result.tier} (${result.model || "none"})]\n\n${result.text}`);
     }
 
-    case "sari_focus_mode": {
-      const mode = args.mode;
-      if (mode === "focus_pipeline") {
-        return {
-          content: [{
-            type: "text",
-            text: `[SARI 11.2 Focus Mode · Loan Pipeline]\n\nUNDERSTAND: Optimize loan pipeline and eliminate processing bottlenecks.\nPLAN: 1) Audit 14 pending login cases 2) Follow up with HDFC & ICICI RMs on sanction TAT 3) Escalate 2 high-ticket LAP files.\nACT:\n• Case #DC-9021: Sanction letter expected by 2:00 PM today.\n• Case #DC-9044: Valuation report pending — loan officer notified.\n• High Priority: 2 SME Business Loans ready for final disbursal.\nLEARN: Proactive RM follow-up reduces TAT by 40%.`
-          }]
-        };
-      } else if (mode === "read_inbox") {
-        return {
-          content: [{
-            type: "text",
-            text: `[SARI 11.2 Focus Mode · Executive Inbox Brief]\n\nUNDERSTAND: Summarize unread channel notifications for MD.\nPLAN: 1) Filter 12 unread messages across Telegram, WhatsApp, and Webhooks 2) Prioritize approval items.\nACT:\n• 1 Bank Payout ACK: HDFC Bank Commission credit verified.\n• 3 New Inbound Leads: Qualified and routed to Sales Desk via BULBHUL.\n• 1 Zero-Trust Sentinel Report: All webhook signatures verified by LAILA.\nLEARN: Zero high-risk security anomalies in last 24 hours.`
-          }]
-        };
+    case "sari_loan_emi": {
+      const principal = num(args.principal);
+      const rate = num(args.annualRatePercent);
+      const months = num(args.tenureMonths);
+      if (!principal || principal <= 0 || rate === null || rate < 0 || !months || months <= 0) {
+        return fail("principal, annualRatePercent and tenureMonths must be positive numbers");
       }
-      return { content: [{ type: "text", text: `[SARI 11.2 Focus Mode] Active for ${mode}` }] };
-    }
-
-    case "sari_dsa_loan_engine": {
-      const { loanType, amount, cibilScore = 750 } = args;
-      const estEmi = Math.round((amount * 0.095) / 12);
-      return {
-        content: [{
-          type: "text",
-          text: `[Divyanshi Capital DSA Loan Engine]\n\nUNDERSTAND: Eligibility evaluation for ${loanType} loan of ₹${amount.toLocaleString('en-IN')}.\nPLAN: 1) Score CIBIL (${cibilScore}) 2) Match bank FOIR criteria 3) Calculate optimal split.\nACT:\n• Recommended Lenders: HDFC Bank, ICICI Bank, SBI, Axis Bank, Bajaj Finserv\n• Estimated ROI: 8.5% - 10.25% p.a.\n• Approx Monthly EMI: ₹${estEmi.toLocaleString('en-IN')}\n• Next Step: Ingest KYC & ITR into Smart Form OS for instant digital login.\nLEARN: Multi-bank fitment increases first-attempt sanction rate to 92%.`
-        }]
-      };
+      const { emi, totalInterest } = emiFormula(principal, rate, months);
+      const inr = (value) => `₹${Math.round(value).toLocaleString("en-IN")}`;
+      return text(
+        `Amortised EMI: ${inr(emi)} per month\n` +
+          `Total interest over ${months} months: ${inr(totalInterest)}\n` +
+          `Total repayment: ${inr(principal + totalInterest)}\n` +
+          `Inputs: principal ${inr(principal)}, rate ${rate}% p.a., tenure ${months} months.`
+      );
     }
 
     case "sari_memory_vault_sync": {
-      if (args.action === "append_lesson" && args.value) {
-        await sovereignMind.syncLesson(args.value);
+      const lesson = str(args.lesson);
+      if (!lesson) return fail("lesson is required");
+      const synced = await sovereignMind.syncLesson(lesson);
+      if (!synced) {
+        return fail(
+          "Vault sync failed. Set SARI_DEPLOYMENT_ID and SARI_SHARED_SECRET and confirm the Apps Script backend is deployed."
+        );
       }
-      return {
-        content: [{
-          type: "text",
-          text: `[SARI 11.2 Dynamic Mind Vault]\nAction: ${args.action}\nStatus: Synchronized live with Apps Script ${SCRIPT_ID}`
-        }]
-      };
+      return text(`Lesson appended to the signed vault (${lesson.slice(0, 60)}…).`);
     }
 
     case "sari_apps_script_bridge": {
+      const action = str(args.action, 40);
+      if (!BRIDGE_ACTIONS.includes(action)) {
+        return fail(`Action not allowed. Permitted: ${BRIDGE_ACTIONS.join(", ")}`);
+      }
+      const auth = signedAuth(action);
+      if (!auth || !EXEC_URL) return fail("SARI_SHARED_SECRET and SARI_DEPLOYMENT_ID are required.");
+      const payload = args.payload && typeof args.payload === "object" && !Array.isArray(args.payload)
+        ? args.payload
+        : {};
       try {
         const res = await fetch(EXEC_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: args.action,
-            ...(args.payload || {})
-          })
+          body: JSON.stringify({ ...payload, action, auth }),
         });
-        const data = await res.json();
-        return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        const body = await res.text();
+        if (!res.ok) return fail(`Apps Script returned HTTP ${res.status}.`);
+        return text(body.slice(0, 4000));
       } catch (err) {
-        return { isError: true, content: [{ type: "text", text: `Apps Script bridge failed: ${err.message}` }] };
+        return fail(`Apps Script bridge failed: ${err.message}`);
       }
     }
 
-    case "sari_zero_trust_audit": {
-      return {
-        content: [{
-          type: "text",
-          text: `[LAILA Zero-Trust Sentinel 11.2]\nTarget: ${args.target}\nStatus: VERIFIED & ISOLATED\nZero-PII Compliance: 100%\nAuth Protocol: STRICT HMAC`
-        }]
-      };
-    }
+    case "sari_verify_token": {
+      const kind = str(args.kind, 20);
+      if (kind === "session") {
+        const secret = process.env.SARI_SESSION_SECRET || "";
+        const token = str(args.token, 200);
+        if (!secret) return fail("SARI_SESSION_SECRET is not set in this environment.");
+        const dot = token.indexOf(".");
+        if (dot < 1) return text("INVALID: token is not in <expiry>.<hmac> form.");
+        const expiry = token.slice(0, dot);
+        const sig = token.slice(dot + 1);
+        if (!/^\d+$/.test(expiry)) return text("INVALID: expiry is not numeric.");
+        const expected = crypto.createHmac("sha256", secret).update(expiry).digest("hex");
+        const a = Buffer.from(sig);
+        const b = Buffer.from(expected);
+        const equal = a.length === b.length && crypto.timingSafeEqual(a, b);
+        if (!equal) return text("INVALID: signature mismatch.");
+        const expired = Date.now() > parseInt(expiry, 10);
+        return text(expired ? "INVALID: signature valid but token expired." : "VALID: signature and expiry check passed.");
+      }
 
-    case "sari_skill_synthesizer": {
-      await sovereignMind.syncLesson(`Synthesized Dynamic Skill: ${args.name}`);
-      return {
-        content: [{
-          type: "text",
-          text: `[SARI 11.2 Skill Compiler]\nSynthesized Skill: "${args.name}"\nTrigger: "${args.trigger}"\nStatus: LIVE & COMPILED IN DYNAMIC MIND`
-        }]
-      };
+      if (kind === "apps_script") {
+        const secret = process.env.SARI_SHARED_SECRET || "";
+        const action = str(args.action, 40);
+        const ts = str(args.ts, 20);
+        const sig = str(args.sig, 128);
+        if (!secret) return fail("SARI_SHARED_SECRET is not set in this environment.");
+        if (!action || !ts || !sig) return fail("action, ts and sig are required.");
+        const stamp = parseInt(ts, 10);
+        if (!stamp || Math.abs(Date.now() - stamp) > 5 * 60 * 1000) {
+          return text("INVALID: timestamp outside the 5 minute window.");
+        }
+        const expected = crypto.createHmac("sha256", secret).update(`${action}.${stamp}`).digest("hex");
+        const a = Buffer.from(sig);
+        const b = Buffer.from(expected);
+        const equal = a.length === b.length && crypto.timingSafeEqual(a, b);
+        return text(equal ? "VALID: Apps Script signature matches." : "INVALID: signature mismatch.");
+      }
+
+      return fail("kind must be 'session' or 'apps_script'.");
     }
 
     default:
@@ -198,7 +229,6 @@ async function handleToolCall(name, args) {
   }
 }
 
-// ─── JSON-RPC 2.0 PROTOCOL LOOP ───────────────────────────────────────────────
 function mcpResponse(id, result) {
   return JSON.stringify({ jsonrpc: "2.0", id: id === undefined ? null : id, result });
 }
@@ -228,13 +258,12 @@ async function processRpcLine(line) {
           mcpResponse(id, {
             protocolVersion: "2024-11-05",
             capabilities: { tools: {} },
-            serverInfo: { name: "sari-personal-intelligence-11-2", version: "11.2.0" }
+            serverInfo: { name: "sari-mcp", version: "4.0.0" },
           }) + "\n"
         );
         break;
 
       case "notifications/initialized":
-        // ACK
         break;
 
       case "ping":
@@ -245,7 +274,7 @@ async function processRpcLine(line) {
         process.stdout.write(mcpResponse(id, { tools: TOOLS }) + "\n");
         break;
 
-      case "tools/call":
+      case "tools/call": {
         if (!params || typeof params.name !== "string") {
           process.stdout.write(mcpError(id, -32602, "Missing tool name") + "\n");
           return;
@@ -253,6 +282,7 @@ async function processRpcLine(line) {
         const result = await handleToolCall(params.name, params.arguments || {});
         process.stdout.write(mcpResponse(id, result) + "\n");
         break;
+      }
 
       default:
         process.stdout.write(mcpError(id, -32601, `Method not found: ${method}`) + "\n");
@@ -263,13 +293,12 @@ async function processRpcLine(line) {
 }
 
 function startServer() {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: false
-  });
-
+  const rl = readline.createInterface({ input: process.stdin, terminal: false });
   rl.on("line", (line) => {
+    if (line.length > 100_000) {
+      process.stdout.write(mcpError(null, -32600, "Request too large") + "\n");
+      return;
+    }
     processRpcLine(line).catch((err) => {
       process.stderr.write(`RPC error: ${err.message}\n`);
     });
@@ -280,4 +309,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { TOOLS, handleToolCall };
+module.exports = { TOOLS, handleToolCall, emiFormula };

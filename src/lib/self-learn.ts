@@ -15,7 +15,6 @@ export function learnFromInteraction(userPrompt: string, assistantReply: string,
     }
   }
 
-  // Detect user preferences or explicit rules
   const ruleMatch = userPrompt.match(/(always|never|remember|rules?|prefer)\s+(.+)/i);
   if (ruleMatch && ruleMatch[2]) {
     const preference = `MD Rule: ${ruleMatch[0].trim()}`;
@@ -24,15 +23,9 @@ export function learnFromInteraction(userPrompt: string, assistantReply: string,
     learned = true;
   }
 
-  // Autonomous background sync to Apps Script Memory Vault
   if (learned) {
-    try {
-      const lessons = loadLessons();
-      const skills = loadSkills();
-      const vaultRaw = typeof window !== "undefined" ? localStorage.getItem("sari_memory_vault") : null;
-      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
-      triggerAutopilotSync({ vault, lessons, skills }).catch(() => {});
-    } catch {}
+    // Server-side proxy; the browser holds no shared secret.
+    void triggerAutopilotSync({ lessons: loadLessons(), skills: [] });
   }
 }
 
@@ -65,18 +58,14 @@ export function synthesizeDynamicSkill(name: string, triggerPhrase: string, goal
     trigger: triggerPhrase,
     steps,
     instruction,
-    status: "live",
+    status: "live" as const,
     runs: 0,
   };
 
   audit("self_learn", "skill_synthesized", `New dynamic skill created: ${name}`);
   recordLesson(`Synthesized dynamic skill: ${name} (Trigger: ${triggerPhrase})`);
 
-  // Sync to backend autopilot
-  try {
-    const lessons = loadLessons();
-    triggerAutopilotSync({ lessons, skills: newSkills }).catch(() => {});
-  } catch {}
+  void triggerAutopilotSync({ lessons: loadLessons(), skills: newSkills });
 
   return created;
 }

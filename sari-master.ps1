@@ -33,13 +33,14 @@ $ErrorActionPreference = "Stop"
 # Canonical Paths and Endpoints
 $RepoRoot = $PSScriptRoot
 if (-not (Test-Path "$RepoRoot\package.json")) {
-    $RepoRoot = "C:\Users\aecr\workspace\sari-assistant"
+    Write-Host "[X] This script must live in the repository root (package.json not found)." -ForegroundColor Red
+    exit 1
 }
 Set-Location $RepoRoot
 
 $CanonicalDeploymentId = "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
 $CanonicalAppsScriptUrl = "https://script.google.com/macros/s/$CanonicalDeploymentId/exec"
-$CanonicalVercelUrl = "https://sari-assistant.vercel.app"
+$CanonicalVercelUrl = "https://sari-supreme-command.vercel.app"
 
 function Show-Header {
     param([string]$Title)
@@ -65,20 +66,46 @@ function Show-GitStatus {
 }
 
 function Probe-AppsScript {
-    Write-Host "[*] Probing canonical Google Apps Script deployment..." -ForegroundColor Cyan
-    $pingBody = @{ action = "ping" } | ConvertTo-Json -Compress
+    Write-Host "[*] Probing canonical Google Apps Script status endpoint..." -ForegroundColor Cyan
     try {
-        $res = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $pingBody -ContentType "application/json" -TimeoutSec 15
-        if ($res -and ($res.ok -or $res.message)) {
-            Write-Host "[OK] Apps Script Deployment: HEALTHY (Deployment ID: $CanonicalDeploymentId)" -ForegroundColor Green
+        $res = Invoke-RestMethod -Uri "$CanonicalAppsScriptUrl?action=status" -Method Get -TimeoutSec 15
+        if ($res -and $res.status -eq "ok") {
+            Write-Host "[OK] Apps Script Deployment: HEALTHY" -ForegroundColor Green
             return $true
-        } else {
-            Write-Host "[!] Apps Script Deployment returned: $($res | ConvertTo-Json -Compress)" -ForegroundColor Yellow
-            return $false
         }
+        Write-Host "[!] Apps Script returned an unexpected payload." -ForegroundColor Yellow
+        return $false
     } catch {
         Write-Host "[!] Apps Script Deployment probe failed: $_" -ForegroundColor Red
         return $false
+    }
+}
+
+# HMAC-signs Apps Script calls. The shared secret never leaves the environment.
+function Get-SariAuth {
+    param([string]$ScriptAction)
+    $secret = $env:SARI_SHARED_SECRET
+    if ([string]::IsNullOrWhiteSpace($secret)) { return $null }
+    $ts = [string][DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+    $hmac = [System.Security.Cryptography.HMACSHA256]::new([System.Text.Encoding]::UTF8.GetBytes($secret))
+    $bytes = $hmac.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("$ScriptAction.$ts"))
+    $sig = -join ($bytes | ForEach-Object { $_.ToString("x2") })
+    return @{ ts = $ts; sig = $sig }
+}
+
+function Invoke-SariScript {
+    param([string]$ScriptAction, [hashtable]$Extra = @{})
+    $auth = Get-SariAuth -ScriptAction $ScriptAction
+    if (-not $auth) {
+        Write-Host "[SKIP] SARI_SHARED_SECRET is not set; refusing to call the Apps Script backend." -ForegroundColor Yellow
+        return $null
+    }
+    $body = @{ action = $ScriptAction; auth = $auth } + $Extra
+    try {
+        return Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body ($body | ConvertTo-Json -Compress) -ContentType "application/json" -TimeoutSec 15
+    } catch {
+        Write-Host "[!] Apps Script '$ScriptAction' failed: $_" -ForegroundColor Yellow
+        return $null
     }
 }
 
@@ -243,21 +270,26 @@ switch ($Action) {
             Write-Host "-> SARI Vercel Notice: $($_.Exception.Message)" -ForegroundColor Yellow
         }
 
-        # 2. Project 2: Bulbhul Central Engine
+        # 2. Project 2: Bulbhul Central Engine (path from env; optional)
         Write-Host "`n[PROJECT 2: BULBHUL CENTRAL ENGINE]" -ForegroundColor Green
-        $loanRepo = "C:\Users\aecr\divyanshi-loan-os"
-        if (Test-Path $loanRepo) {
+        $loanRepo = $env:SARI_LOAN_REPO
+        if ($loanRepo -and (Test-Path $loanRepo)) {
             Push-Location $loanRepo
-            Write-Host "-> Workspace: $loanRepo" -ForegroundColor Gray
-            Write-Host "   Branch:    " -NoNewline; git branch --show-current
-            Write-Host "   Remote:    " -NoNewline; git config --get remote.origin.url
-            $loanStatus = git status --porcelain
-            if ($loanStatus) {
-                Write-Host "   [!] Uncommitted files in Bulbhul: $($loanStatus -join ', ')" -ForegroundColor Yellow
-            } else {
-                Write-Host "   -> Working tree: CLEAN (0 uncommitted files)" -ForegroundColor Green
+            try {
+                Write-Host "-> Workspace: $loanRepo" -ForegroundColor Gray
+                Write-Host "   Branch:    " -NoNewline; git branch --show-current
+                Write-Host "   Remote:    " -NoNewline; git config --get remote.origin.url
+                $loanStatus = git status --porcelain
+                if ($loanStatus) {
+                    Write-Host "   [!] Uncommitted files in Bulbhul: $($loanStatus -join ', ')" -ForegroundColor Yellow
+                } else {
+                    Write-Host "   -> Working tree: CLEAN (0 uncommitted files)" -ForegroundColor Green
+                }
+            } finally {
+                Pop-Location
             }
-            Pop-Location
+        } else {
+            Write-Host "-> Bulbhul workspace not configured (set SARI_LOAN_REPO to enable)." -ForegroundColor DarkGray
         }
         try {
             $bulbWeb = Invoke-WebRequest -Uri "https://mallik-sovereign-build-engine.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
@@ -269,10 +301,14 @@ switch ($Action) {
         # 3. Canonical Shared Cloud Hub
         Write-Host "`n[3/3] Probing Canonical Apps Script Handshake..." -ForegroundColor Cyan
         $hubOk = Probe-AppsScript
-        
+
         Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "[OK] DUAL-SYSTEM AUDIT COMPLETE: ALL SYSTEMS READY" -ForegroundColor Green
-        exit 0
+        if ($hubOk) {
+            Write-Host "[OK] DUAL-SYSTEM AUDIT COMPLETE: APPS SCRIPT HEALTHY" -ForegroundColor Green
+            exit 0
+        }
+        Write-Host "[X] DUAL-SYSTEM AUDIT: APPS SCRIPT UNHEALTHY" -ForegroundColor Red
+        exit 1
     }
 
     "deploy" {
@@ -350,29 +386,19 @@ switch ($Action) {
             Write-Host "[!] NotebookLM Dossier file not found at $dossierFullPath" -ForegroundColor Yellow
         }
 
-        # Probe Apps Script backend with action: notebooklm_sync, folderId: targetFolderId
+        # Signed Apps Script call (action: notebooklm_sync, folderId: targetFolderId)
         Write-Host "[*] Probing Apps Script backend with Google Drive link..." -ForegroundColor Cyan
-        $driveProbeBody = @{
-            action = "notebooklm_sync"
-            folderId = $targetFolderId
-        } | ConvertTo-Json -Compress
+        $driveRes = Invoke-SariScript -ScriptAction "notebooklm_sync" -Extra @{ folderId = $targetFolderId }
 
-        $syncSuccess = $false
-        try {
-            $driveRes = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $driveProbeBody -ContentType "application/json" -TimeoutSec 15
-            if ($driveRes) {
-                $syncSuccess = $true
-            }
-        } catch {
-            # Even if remote endpoint encounters transient timeout/error, mark handled
-            Write-Host "[!] Apps Script probe warning: $_" -ForegroundColor Yellow
-        }
-
-        Write-Host "[OK] Apps Script Drive Sync: SYNCHRONIZED" -ForegroundColor Green
         Write-Host "[OK] External Notion Requirement: RETIRED (Zero manual tokens required)" -ForegroundColor Green
         Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "[OK] DRIVE STATUS: ONLINE & FULLY SYNCHRONIZED" -ForegroundColor Green
-        exit 0
+        if ($driveRes -and $driveRes.ok) {
+            Write-Host "[OK] DRIVE STATUS: SYNCHRONIZED" -ForegroundColor Green
+            exit 0
+        }
+
+        Write-Host "[X] DRIVE STATUS: SYNC FAILED (no signed acknowledgement from Apps Script)" -ForegroundColor Red
+        exit 1
     }
 
     "plugins" {
@@ -449,14 +475,10 @@ switch ($Action) {
 
         $didUpdate = $false
         if ($PSBoundParameters.ContainsKey("Token") -and -not [string]::IsNullOrWhiteSpace($Token)) {
-            if ($cfg.notion.PSObject.Properties['token']) {
-                $cfg.notion.token = $Token
-            } else {
-                $cfg.notion | Add-Member -MemberType NoteProperty -Name "token" -Value $Token
-            }
-            $cfg.notion.enabled = $true
-            $didUpdate = $true
-            Write-Host "[OK] Updated Notion token in sari-plugins.json" -ForegroundColor Green
+            # Never persist the token to disk (the config file used to be committed).
+            $env:NOTION_API_KEY = $Token
+            Write-Host "[OK] Notion token applied to this process only (env:NOTION_API_KEY)." -ForegroundColor Green
+            Write-Host "[!] Persist it in Vercel / Apps Script properties, not in a file." -ForegroundColor Yellow
         }
         if ($PSBoundParameters.ContainsKey("DatabaseId") -and -not [string]::IsNullOrWhiteSpace($DatabaseId)) {
             if ($cfg.notion.PSObject.Properties['databaseId']) {
@@ -466,20 +488,16 @@ switch ($Action) {
             }
             $cfg.notion.enabled = $true
             $didUpdate = $true
-            Write-Host "[OK] Updated Notion databaseId in sari-plugins.json ($DatabaseId)" -ForegroundColor Green
+            Write-Host "[OK] Updated Notion databaseId in local config ($DatabaseId)" -ForegroundColor Green
         }
         if ($didUpdate) {
             Save-PluginConfig -Config $cfg
         }
 
-        # Read active token from config or environment
-        $activeToken = $cfg.notion.token
+        # Read active token from the environment only
+        $activeToken = $env:NOTION_API_KEY
         if ([string]::IsNullOrWhiteSpace($activeToken)) {
-            if (-not [string]::IsNullOrWhiteSpace($env:NOTION_API_KEY)) {
-                $activeToken = $env:NOTION_API_KEY
-            } elseif (-not [string]::IsNullOrWhiteSpace($env:NOTION_TOKEN)) {
-                $activeToken = $env:NOTION_TOKEN
-            }
+            $activeToken = $env:NOTION_TOKEN
         }
 
         $notionConnected = $false
@@ -506,15 +524,11 @@ switch ($Action) {
             Write-Host "          Or set `$env:NOTION_API_KEY / `$env:NOTION_TOKEN in your environment." -ForegroundColor DarkGray
         }
 
-        # Trigger Apps Script backend notion_sync (action: "notion_sync")
-        Write-Host "[*] Triggering Apps Script backend notion_sync..." -ForegroundColor Cyan
-        $body = @{ action = "notion_sync" } | ConvertTo-Json -Compress
-        try {
-            $syncRes = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
-            Write-Host "[OK] Apps Script backend notion_sync responded:" -ForegroundColor Green
-            Write-Host "     $($syncRes | ConvertTo-Json -Compress)" -ForegroundColor DarkGray
-        } catch {
-            Write-Host "[!] Apps Script notion_sync request failed: $_" -ForegroundColor Yellow
+        # Trigger signed Apps Script notion_sync
+        Write-Host "[*] Triggering Apps Script notion_sync..." -ForegroundColor Cyan
+        $syncRes = Invoke-SariScript -ScriptAction "notion_sync"
+        if ($syncRes) {
+            Write-Host "[OK] Apps Script notion_sync responded: $($syncRes | ConvertTo-Json -Compress)" -ForegroundColor Green
         }
 
         Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
@@ -545,18 +559,11 @@ switch ($Action) {
         $activeFolderId = if ($cfg.notebooklm.folderId) { $cfg.notebooklm.folderId } else { "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu" }
         Write-Host "[OK] Verified Google Drive Folder ID: $activeFolderId" -ForegroundColor Green
 
-        # Trigger Apps Script backend notebooklm_sync (action: "notebooklm_sync", folderId: ...)
-        Write-Host "[*] Triggering Apps Script backend notebooklm_sync..." -ForegroundColor Cyan
-        $nlmBody = @{
-            action = "notebooklm_sync"
-            folderId = $activeFolderId
-        } | ConvertTo-Json -Compress
-        try {
-            $nlmRes = Invoke-RestMethod -Uri $CanonicalAppsScriptUrl -Method Post -Body $nlmBody -ContentType "application/json" -TimeoutSec 15
-            Write-Host "[OK] Apps Script backend notebooklm_sync responded:" -ForegroundColor Green
-            Write-Host "     $($nlmRes | ConvertTo-Json -Compress)" -ForegroundColor DarkGray
-        } catch {
-            Write-Host "[!] Apps Script notebooklm_sync request failed: $_" -ForegroundColor Yellow
+        # Trigger signed Apps Script notebooklm_sync
+        Write-Host "[*] Triggering Apps Script notebooklm_sync..." -ForegroundColor Cyan
+        $nlmRes = Invoke-SariScript -ScriptAction "notebooklm_sync" -Extra @{ folderId = $activeFolderId }
+        if ($nlmRes) {
+            Write-Host "[OK] Apps Script notebooklm_sync responded: $($nlmRes | ConvertTo-Json -Compress)" -ForegroundColor Green
         }
 
         # Confirm notebooklm-dossier.md exists and is ready for NotebookLM

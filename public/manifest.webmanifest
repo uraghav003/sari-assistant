@@ -1,0 +1,22 @@
+{
+  "name": "SARI Supreme Command",
+  "short_name": "SARI",
+  "description": "Sovereign AI operations console for Divyanshi Capital",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07070c",
+  "theme_color": "#0e0e16",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Alerts", "short_name": "Alerts", "url": "/alerts" },
+    { "name": "Chat", "short_name": "Chat", "url": "/chat" },
+    { "name": "Leads", "short_name": "Leads", "url": "/leads" }
+  ]
+}

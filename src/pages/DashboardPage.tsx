@@ -114,7 +114,7 @@ export default function DashboardPage() {
               <ShieldCheck size={15} style={{ color: "var(--purple)" }} />
               <span style={{ fontWeight: 600, fontSize: 13 }}>Zero Trust</span>
             </div>
-            <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>Session tokens short-lived. No hardcoded secrets. Tenant isolation ready.</p>
+            <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>HttpOnly session cookie. All provider keys and integration tokens are held server-side; the browser stores none.</p>
           </div>
         </div>
       </div>

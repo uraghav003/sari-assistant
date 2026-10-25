@@ -23,7 +23,7 @@ Divyanshi Capital Pvt Ltd is a premier Indian technology-driven Direct Selling A
 1. **Multi-Lender Policy Engine:** Algorithmic matching of borrower credit profiles, income types, banking behaviors, and property collaterals against 50+ institutional credit policy manuals.
 2. **Hybrid Intelligence (Human-in-the-Loop):** Autonomous task scheduling, telephony calling queues, document OCR, WhatsApp nudges, and credit evaluations handled by SARI and BULBHUL AI agent fleets, combined with strict governance gates where final disbursals, policies, and personnel decisions remain exclusively with MD Upendra Singh Raghav.
 3. **Turnaround Time (TAT) Supremacy:** Strict time SLAs governed by automated watchdog scripts ensuring Personal Loans sanction within 24–72 hours, Business Loans within 3–7 days, and secured Home Loans / LAP within 7–15 days.
-4. **Zero-Trust Sentinel Security:** End-to-end cryptographic token verification (`MALLIK_V3_786`), HMAC-SHA256 signature checks on webhooks, and automatic redaction of borrower PII (Aadhaar, PAN, Bank account numbers) before processing.
+4. **Zero-Trust Sentinel Security:** End-to-end cryptographic token verification (`[REDACTED-ROTATED]`), HMAC-SHA256 signature checks on webhooks, and automatic redaction of borrower PII (Aadhaar, PAN, Bank account numbers) before processing.
 
 ---
 

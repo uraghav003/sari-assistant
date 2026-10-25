@@ -13,7 +13,7 @@ Under the direct mandate of MD Upendra Singh Raghav and SARI Master Sovereign AI
 
 | Domain | Control Policy | Verification Method | Status |
 | :--- | :--- | :--- | :--- |
-| **Authentication Gate** | `MALLIK_V3_786` Token Gate | Live HTTP POST probe on Deployments @95 and @96 | **VERIFIED (100%)** |
+| **Authentication Gate** | `[REDACTED-ROTATED]` Token Gate | Live HTTP POST probe on Deployments @95 and @96 | **VERIFIED (100%)** |
 | **Tamper Resistance** | Rejection of forged/missing tokens | Constant-time SHA-256 digest comparison (`safeEqual_`) | **VERIFIED (100%)** |
 | **Borrower PII Protection** | Aadhaar, PAN, Bank credentials | Regex & recursive dict redaction to `[RESTRICTED]` | **VERIFIED (100%)** |
 | **Webhook Telemetry** | HMAC-SHA256 signature verification | Digest integrity, replay cache, timing-safe compare | **VERIFIED (100%)** |
@@ -34,7 +34,7 @@ Live probes were conducted against both production Google Apps Script deployment
 2. **Forged / Tampered Token Probe (`FORGED_TOKEN_000`):**
    - Output: `{"ok": false, "error": "UNAUTHORIZED: Invalid MALLIK_API_KEY."}`
    - Result: Strictly quarantined.
-3. **Master Token Probe (`MALLIK_V3_786`):**
+3. **Master Token Probe (`[REDACTED-ROTATED]`):**
    - Output: `{"ok": false, "reply": "No command received"}` (Authentication succeeded, execution passed to SARI command router)
    - Result: Authenticated & Authorized.
 
@@ -57,7 +57,7 @@ To prevent borrower identity leakage or unauthorized indexing by external AI inf
 All inbound webhooks (Meta/WhatsApp Graph API, Telegram, Jotform, Lender CRM endpoints) must pass through LAILA's Zero-Trust inspection filter:
 
 1. **HMAC-SHA256 Signature Validation:**
-   - Inbound `X-Hub-Signature-256` or equivalent headers are verified against payload bytes using `MALLIK_V3_786` as the HMAC key.
+   - Inbound `X-Hub-Signature-256` or equivalent headers are verified against payload bytes using `[REDACTED-ROTATED]` as the HMAC key.
    - Comparison uses timing-attack safe `hmac.compare_digest`.
    - Missing or tampered signatures result in immediate `QUARANTINED` status.
 2. **Replay Attack Defense:**
@@ -81,13 +81,13 @@ Emitted from LAILA System Auditor to SARI Master Sovereign AI:
   "deployment_targets": {
     "@95": {
       "deployment_id": "AKfycbw8JfQeC8Yz3vlYASjH6sBYz_aYyzbZh9_ANRcm4NCzjZJgCmdFHTmxsakAfyOpf0AmHg",
-      "auth_gate": "MALLIK_V3_786",
+      "auth_gate": "[REDACTED-ROTATED]",
       "status": "ZERO_TRUST_ENFORCED",
       "tamper_resistance": "PASS"
     },
     "canonical_production": {
       "deployment_id": "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc",
-      "auth_gate": "MALLIK_V3_786",
+      "auth_gate": "[REDACTED-ROTATED]",
       "status": "ZERO_TRUST_ENFORCED",
       "tamper_resistance": "PASS"
     }

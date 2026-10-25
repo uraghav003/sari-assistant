@@ -1,201 +1,229 @@
-﻿/**
- * SARI Supreme Command Apps Script Autopilot Core â€” v3.2.0
- * Development ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM
- * Owner: MD (Upendra Singh Raghav) - Divyanshi Capital
- * Features: Zero-Touch Autopilot, Native google.script.run Bridge, AI Inference, Dynamic Memory Sync
+/**
+ * SARI Supreme Command — Apps Script Autopilot Core v4.0.0
+ *
+ * Every write path is gated by an HMAC signature over `<action>.<timestamp>`
+ * using SARI_SHARED_SECRET (Script Properties). There is no caller-supplied
+ * API key fallback and no anonymous memory read.
  */
+
+var ALLOWED_ACTIONS = [
+  "ping",
+  "autopilot_heartbeat",
+  "ai_infer",
+  "sync_memory",
+  "autopilot_learn",
+  "notion_sync",
+  "notebooklm_sync"
+];
+
+var AUTH_WINDOW_MS = 5 * 60 * 1000;
+var MAX_VAULT_BYTES = 32 * 1024;
+
+function props_() {
+  return PropertiesService.getScriptProperties();
+}
+
+function sharedSecret_() {
+  return props_().getProperty("SARI_SHARED_SECRET") || "";
+}
+
+function hmacHex_(message, secret) {
+  var bytes = Utilities.computeHmacSha256Signature(message, secret);
+  var hex = "";
+  for (var i = 0; i < bytes.length; i++) {
+    var v = (bytes[i] < 0 ? bytes[i] + 256 : bytes[i]).toString(16);
+    hex += v.length === 1 ? "0" + v : v;
+  }
+  return hex;
+}
+
+/** Constant-time comparison to avoid leaking signature prefixes. */
+function constantTimeEqual_(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  var diff = 0;
+  for (var i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+function verifyAuth_(action, ts, sig) {
+  var secret = sharedSecret_();
+  if (!secret || !ts || !sig) return false;
+  var stamp = parseInt(ts, 10);
+  if (!stamp || Math.abs(Date.now() - stamp) > AUTH_WINDOW_MS) return false;
+  return constantTimeEqual_(hmacHex_(action + "." + stamp, secret), String(sig));
+}
+
+function jsonOut_(payload) {
+  return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
+}
 
 function doGet(e) {
   var params = (e && e.parameter) ? e.parameter : {};
   var action = params.action || "status";
 
-  var output = {
-    status: "ok",
-    system: "SARI_SUPREME_COMMAND_AUTOPILOT",
-    version: "3.2.0",
-    developmentId: "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
-    time: new Date().toISOString(),
-    action: action,
-    autopilot: "ACTIVE",
-    notion: isNotionConfigured() ? "CONNECTED" : "STANDBY",
-    notebooklm: isNotebookLMConfigured() ? "CONNECTED" : "STANDBY",
-    cache: "NO_CACHE_DYNAMIC"
-  };
-
-  if (action === "get_memory") {
-    var stored = PropertiesService.getScriptProperties().getProperty("SARI_MEMORY_VAULT");
-    output.memory = stored ? JSON.parse(stored) : {};
-  } else if (action === "get_config") {
-    output.config = {
-      aiStudioEmail: PropertiesService.getScriptProperties().getProperty("AI_STUDIO_PUBLISHER_EMAIL") || "u.raghav003@gmail.com",
-      lastAutopilotSync: PropertiesService.getScriptProperties().getProperty("LAST_AUTOPILOT_SYNC") || "Never"
-    };
+  // Public health probe only — no identifiers, no memory, no config.
+  if (action === "status") {
+    return jsonOut_({
+      status: "ok",
+      system: "SARI_SUPREME_COMMAND_AUTOPILOT",
+      version: "4.0.0",
+      time: new Date().toISOString()
+    });
   }
 
-  return ContentService.createTextOutput(JSON.stringify(output))
-    .setMimeType(ContentService.MimeType.JSON);
+  if (!verifyAuth_(action, params.ts, params.sig)) {
+    return jsonOut_({ ok: false, error: "UNAUTHORIZED" });
+  }
+
+  if (action === "get_memory") {
+    var stored = props_().getProperty("SARI_MEMORY_VAULT");
+    return jsonOut_({ ok: true, memory: stored ? JSON.parse(stored) : {} });
+  }
+
+  return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
+}
+
+function sanitizeVault_(vault) {
+  if (!vault || typeof vault !== "object" || Array.isArray(vault)) return {};
+  var clean = {};
+  var keys = Object.keys(vault).slice(0, 200);
+  for (var i = 0; i < keys.length; i++) {
+    var value = vault[keys[i]];
+    if (typeof value === "string") clean[keys[i].slice(0, 120)] = value.slice(0, 2000);
+  }
+  return clean;
 }
 
 function doPost(e) {
   try {
-    var rawData = e.postData ? e.postData.contents : "{}";
-    var payload = JSON.parse(rawData);
-    if (payload.message && !payload.action) {
-      payload.action = "ai_infer";
-      payload.prompt = payload.message;
-    }
+    var raw = e && e.postData ? e.postData.contents : "{}";
+    var payload = JSON.parse(raw);
     var action = payload.action || "ping";
+    var auth = payload.auth || {};
     var timestamp = new Date().toISOString();
-    
-    var response = {
-      status: "success",
-      action: action,
-      timestamp: timestamp,
-      result: null
-    };
+
+    if (ALLOWED_ACTIONS.indexOf(action) === -1) {
+      return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
+    }
+
+    if (!verifyAuth_(action, auth.ts, auth.sig)) {
+      return jsonOut_({ ok: false, error: "UNAUTHORIZED" });
+    }
+
+    var response = { ok: true, action: action, timestamp: timestamp, result: null };
 
     if (action === "ping" || action === "autopilot_heartbeat") {
-      PropertiesService.getScriptProperties().setProperty("LAST_AUTOPILOT_SYNC", timestamp);
-      response.result = {
-        message: "SARI Autopilot Heartbeat ACK",
-        system: "SARI_SUPREME",
-        healed: true
-      };
-    } else if (action === "ai_infer") {
-      var promptText = payload.prompt || "Hello SARI";
-      var apiKey = PropertiesService.getScriptProperties().getProperty("MALLIK_API_KEY") ||
-                   PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY") ||
-                   payload.apiKey || "";
-
-      if (apiKey) {
-        try {
-          var options = {
-            method: "post",
-            contentType: "application/json",
-            payload: JSON.stringify({
-              systemInstruction: { parts: [{ text: "You are SARI Personal Intelligence 11.2 for Divyanshi Capital. Owner is MD. Answer in 4 blocks: UNDERSTAND, PLAN, ACT, LEARN." }] },
-              contents: [{ parts: [{ text: promptText }] }],
-              generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
-            }),
-            muteHttpExceptions: true
-          };
-
-          var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
-          var apiRes = null;
-          for (var mi = 0; mi < models.length; mi++) {
-            try {
-              var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey;
-              var tempRes = UrlFetchApp.fetch(url, options);
-              if (tempRes.getResponseCode() === 200) {
-                apiRes = tempRes;
-                break;
-              }
-            } catch (errLoop) {}
-          }
-          if (!apiRes) {
-            var fallbackUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-            apiRes = UrlFetchApp.fetch(fallbackUrl, options);
-          }
-
-          var resData = JSON.parse(apiRes.getContentText());
-          var reply = (resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts && resData.candidates[0].content.parts[0]) ? resData.candidates[0].content.parts[0].text : "";
-          response.result = { text: reply, source: "AppsScript_Gemini_UrlFetch" };
-        } catch (fetchErr) {
-          response.result = { text: "UNDERSTAND: Request received\nPLAN: Apps Script AI UrlFetch exception\nACT: Check Script Properties for valid MALLIK_API_KEY.\nLEARN: Resilient fallback active.", source: "AppsScript_Error" };
-        }
-      } else {
-        response.result = {
-          text: "UNDERSTAND: Request processed by Apps Script Sovereign Brain\nPLAN: 1) Verified script ID 1ru_EB... 2) Ingested Divyanshi OS memory\nACT: SARI Sovereign Brain is live and operational.\nLEARN: Set MALLIK_API_KEY in Script Properties for cloud inference.",
-          source: "AppsScript_Offline"
-        };
-      }
-    } else if (action === "sync_memory" || action === "autopilot_learn") {
-      var vault = payload.vault || {};
-      PropertiesService.getScriptProperties().setProperty("SARI_MEMORY_VAULT", JSON.stringify(vault));
-      response.result = { synced: true, keysCount: Object.keys(vault).length };
-    } else if (action === "notion_sync") {
-      response.result = { notionConfigured: isNotionConfigured(), syncedCases: 0 };
-    } else if (action === "notebooklm_sync") {
-      var folderId = payload.folderId || "";
-      if (folderId) PropertiesService.getScriptProperties().setProperty("NOTEBOOKLM_FOLDER_ID", folderId);
-      response.result = {
-        notebooklmConfigured: true,
-        folderId: folderId ? folderId.slice(0, 6) + "..." : "unset"
-      };
-    } else {
-      response.result = { received: payload };
+      props_().setProperty("LAST_AUTOPILOT_SYNC", timestamp);
+      response.result = { message: "SARI Autopilot Heartbeat ACK", system: "SARI_SUPREME", healed: true };
+      return jsonOut_(response);
     }
 
-    var replyText = (response.result && response.result.text) ? response.result.text : (response.result && response.result.message ? response.result.message : JSON.stringify(response.result));
-    return ContentService.createTextOutput(JSON.stringify({
-      ok: true,
-      reply: replyText,
-      ...response
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "error",
-      message: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+    if (action === "ai_infer") {
+      var promptText = String(payload.prompt || "Hello SARI").slice(0, 8000);
+      var apiKey = props_().getProperty("MALLIK_API_KEY") ||
+                   props_().getProperty("GEMINI_API_KEY") || "";
 
-/**
- * Native Apps Script google.script.run bridge for SARI HTML clients
- */
-function handleSariSupreme(payload) {
-  var query = (payload && payload.message) ? payload.message : "Status check";
-  var apiKey = PropertiesService.getScriptProperties().getProperty("MALLIK_API_KEY") ||
-               PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY") || "";
+      if (!apiKey) {
+        return jsonOut_({ ok: false, error: "NO_MODEL_KEY_CONFIGURED" });
+      }
 
-  if (apiKey) {
-    try {
-      var options = {
-        method: "post",
-        contentType: "application/json",
-        payload: JSON.stringify({
-          systemInstruction: { parts: [{ text: "You are SARI Personal Intelligence 11.2 for Divyanshi Capital. Address user as Malik. Answer in 4 blocks: UNDERSTAND, PLAN, ACT, LEARN." }] },
-          contents: [{ parts: [{ text: query }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
-        }),
-        muteHttpExceptions: true
-      };
-
-      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
-      var apiRes = null;
+      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
       for (var mi = 0; mi < models.length; mi++) {
         try {
-          var url = "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent?key=" + apiKey;
-          var tempRes = UrlFetchApp.fetch(url, options);
-          if (tempRes.getResponseCode() === 200) {
-            apiRes = tempRes;
-            break;
+          var res = UrlFetchApp.fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/" + models[mi] + ":generateContent",
+            {
+              method: "post",
+              contentType: "application/json",
+              headers: { "x-goog-api-key": apiKey },
+              muteHttpExceptions: true,
+              payload: JSON.stringify({
+                systemInstruction: {
+                  parts: [{
+                    text: "You are SARI Personal Intelligence for Divyanshi Capital. Owner is MD. Answer in 4 blocks: UNDERSTAND, PLAN, ACT, LEARN."
+                  }]
+                },
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+              })
+            }
+          );
+
+          if (res.getResponseCode() === 200) {
+            var data = JSON.parse(res.getContentText());
+            var candidate = data.candidates && data.candidates[0];
+            var parts = candidate && candidate.content && candidate.content.parts;
+            var text = parts && parts[0] ? parts[0].text : "";
+            if (text) {
+              response.result = { text: text, source: "AppsScript_Gemini_UrlFetch", model: models[mi] };
+              return jsonOut_(response);
+            }
           }
-        } catch (errLoop) {}
-      }
-      if (!apiRes) {
-        var fallbackUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-        apiRes = UrlFetchApp.fetch(fallbackUrl, options);
+        } catch (ignored) {
+          // try the next model
+        }
       }
 
-      var resData = JSON.parse(apiRes.getContentText());
-      var text = (resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts && resData.candidates[0].content.parts[0]) ? resData.candidates[0].content.parts[0].text : "";
-      if (text) {
-        return { reply: text, status: "success" };
+      return jsonOut_({ ok: false, error: "UPSTREAM_MODEL_FAILED" });
+    }
+
+    if (action === "sync_memory") {
+      var vault = sanitizeVault_(payload.vault);
+      var serialized = JSON.stringify(vault);
+      if (serialized.length > MAX_VAULT_BYTES) {
+        return jsonOut_({ ok: false, error: "VAULT_TOO_LARGE" });
       }
-    } catch (e) {}
+      props_().setProperty("SARI_MEMORY_VAULT", serialized);
+      response.result = { synced: true, keysCount: Object.keys(vault).length };
+      return jsonOut_(response);
+    }
+
+    if (action === "autopilot_learn") {
+      var existingRaw = props_().getProperty("SARI_MEMORY_VAULT");
+      var existing = existingRaw ? JSON.parse(existingRaw) : {};
+      var lessons = Array.isArray(payload.lessons) ? payload.lessons.slice(0, 20) : [];
+      var skills = Array.isArray(payload.skills) ? payload.skills.slice(0, 50) : [];
+      var priorLessons = Array.isArray(existing.lessons) ? existing.lessons : [];
+      var mergedLessons = lessons
+        .filter(function (l) { return typeof l === "string"; })
+        .map(function (l) { return l.slice(0, 300); })
+        .concat(priorLessons)
+        .slice(0, 50);
+
+      existing.lessons = mergedLessons;
+      existing.skills = skills;
+      var nextSerialized = JSON.stringify(sanitizeVault_(existing));
+      if (nextSerialized.length <= MAX_VAULT_BYTES) {
+        props_().setProperty("SARI_MEMORY_VAULT", nextSerialized);
+      }
+      response.result = { learned: mergedLessons.length, skills: skills.length };
+      return jsonOut_(response);
+    }
+
+    if (action === "notion_sync") {
+      response.result = { notionConfigured: isNotionConfigured(), syncedCases: 0 };
+      return jsonOut_(response);
+    }
+
+    if (action === "notebooklm_sync") {
+      var folderId = String(payload.folderId || "").slice(0, 100);
+      if (folderId) props_().setProperty("NOTEBOOKLM_FOLDER_ID", folderId);
+      response.result = { notebooklmConfigured: true, folderSet: Boolean(folderId) };
+      return jsonOut_(response);
+    }
+
+    return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
+  } catch (err) {
+    return jsonOut_({ ok: false, error: "INTERNAL_ERROR" });
   }
-
-  return {
-    reply: "UNDERSTAND: " + query + "\nPLAN: 1) Processed via SARI 11.2 Supreme Bridge 2) Verified Divyanshi OS state.\nACT: Pranam Malik! All systems operational.\nLEARN: Google Apps Script native run bridge active.",
-    status: "success"
-  };
 }
 
 function isNotionConfigured() {
-  return !!PropertiesService.getScriptProperties().getProperty("NOTION_API_KEY");
+  return !!props_().getProperty("NOTION_API_KEY");
 }
 
 function isNotebookLMConfigured() {
-  return !!PropertiesService.getScriptProperties().getProperty("NOTEBOOKLM_FOLDER_ID");
+  return !!props_().getProperty("NOTEBOOKLM_FOLDER_ID");
 }

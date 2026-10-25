@@ -1,24 +1,21 @@
-version: '3.8'
-
 services:
   sari-app:
     build: .
     container_name: sari-sovereign-app
     ports:
-      - "80:80"
+      - "8080:8080"
     environment:
       - NODE_ENV=production
     restart: always
-
-  kepler-telemetry:
-    image: quay.io/sustainable_computing_io/kepler:latest
-    container_name: sari-kepler-telemetry
-    privileged: true
-    pid: host
-    ports:
-      - "9103:9103"
-    volumes:
-      - /sys/kernel/debug:/sys/kernel/debug:ro
-      - /sys/class/powercap:/sys/class/powercap:ro
-      - /lib/modules:/lib/modules:ro
-    restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

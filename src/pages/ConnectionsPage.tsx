@@ -1,76 +1,76 @@
 import { useState, useEffect } from "react";
-import { Key, Database, Cpu, Upload, ExternalLink, RefreshCw, Code2, ShieldCheck, Zap, BookOpen, Layers, FileJson, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Database,
+  Cpu,
+  Upload,
+  RefreshCw,
+  Code2,
+  ShieldCheck,
+  Zap,
+  BookOpen,
+  FileJson,
+  CheckCircle2,
+  AlertCircle,
+  Lock,
+} from "lucide-react";
 import { loadDynamicConfig, saveDynamicConfig, pingAppsScript } from "../lib/config";
-import { importUniversalConfigJson, resolveActiveGeminiKey, validateGeminiKey } from "../lib/key-resolver";
+import { importUniversalConfigJson } from "../lib/key-resolver";
+
+interface ServerStatus {
+  configured: boolean;
+  ok: boolean;
+}
 
 export default function ConnectionsPage() {
   const [config, setConfig] = useState(loadDynamicConfig());
-
-  // Key Validation & Status
-  const [keyHealth, setKeyHealth] = useState<{ valid: boolean; message: string; source: string }>({
-    valid: false,
-    message: "Validating active keys...",
-    source: "init",
-  });
-  const [testingGemini, setTestingGemini] = useState(false);
-
-  // JSON Import Status
   const [importStatus, setImportStatus] = useState<string>("");
-
-  // Apps Script Dynamic Mind State
   const [scriptStatus, setScriptStatus] = useState<"checking" | "connected" | "error">("checking");
   const [scriptMsg, setScriptMsg] = useState("");
   const [testingScript, setTestingScript] = useState(false);
-
-  // Memory Vault State
   const [vaultEntries, setVaultEntries] = useState(0);
   const [lastSync, setLastSync] = useState<string>("Never");
-  const [vaultMsg, setVaultMsg] = useState("Manual sync — download SARI_MEMORY.json from Drive and drop here");
-
-  // Ollama State
+  const [vaultMsg, setVaultMsg] = useState("Upload the SARI_MEMORY.json export to stage it locally");
   const [ollamaStatus, setOllamaStatus] = useState<"checking" | "connected" | "offline">("checking");
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [checkingOllama, setCheckingOllama] = useState(false);
-
-  // Notion & NotebookLM State
-  const [notionSaved, setNotionSaved] = useState(false);
-  const [notebookSaved, setNotebookSaved] = useState(false);
+  const [server, setServer] = useState<ServerStatus | null>(null);
 
   useEffect(() => {
     const current = loadDynamicConfig();
     setConfig(current);
-    if (current.notionToken) setNotionSaved(true);
-    if (current.notebooklmFolderId) setNotebookSaved(true);
 
     if (typeof window !== "undefined") {
-      const v = localStorage.getItem("sari_memory_vault");
-      if (v) {
+      const stored = localStorage.getItem("sari_memory_vault");
+      if (stored) {
         try {
-          const parsed = JSON.parse(v);
+          const parsed = JSON.parse(stored);
           setVaultEntries(Object.keys(parsed).length);
           setLastSync(localStorage.getItem("sari_memory_sync_time") || "Recently");
-        } catch {}
+        } catch {
+          // ignore malformed local export
+        }
       }
     }
 
-    checkKeyHealth();
-    checkAppsScript(current.deploymentId);
-    checkOllama(current.ollamaUrl);
+    void checkServer();
+    void checkAppsScript(current.deploymentId);
+    void checkOllama(current.ollamaUrl);
+
     const interval = setInterval(() => {
-      checkOllama(config.ollamaUrl);
+      void checkOllama(current.ollamaUrl);
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  async function checkKeyHealth() {
-    setTestingGemini(true);
-    const res = await resolveActiveGeminiKey();
-    setKeyHealth({
-      valid: res.valid,
-      message: res.message,
-      source: res.source,
-    });
-    setTestingGemini(false);
+  async function checkServer() {
+    try {
+      const res = await fetch("/api/session", { credentials: "same-origin" });
+      const data: unknown = await res.json();
+      const obj = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+      setServer({ configured: obj.configured === true, ok: obj.ok === true });
+    } catch {
+      setServer({ configured: false, ok: false });
+    }
   }
 
   async function checkAppsScript(depId?: string) {
@@ -78,7 +78,7 @@ export default function ConnectionsPage() {
     const res = await pingAppsScript(depId || config.deploymentId);
     if (res.ok) {
       setScriptStatus("connected");
-      setScriptMsg("✓ Google Apps Script Autopilot Core live and responding");
+      setScriptMsg("✓ Apps Script web app responded");
     } else {
       setScriptStatus("error");
       setScriptMsg(`✗ ${res.message}`);
@@ -92,9 +92,14 @@ export default function ConnectionsPage() {
     try {
       const res = await fetch(`${target}/api/tags`, { signal: AbortSignal.timeout(3000) });
       if (!res.ok) throw new Error("Offline");
-      const data = await res.json();
-      const names = (data.models || []).map((m: { name?: string }) => m.name || "").filter(Boolean);
-      setOllamaModels(names);
+      const data: unknown = await res.json();
+      const models = (data && typeof data === "object" && Array.isArray((data as { models?: unknown }).models)
+        ? ((data as { models: Array<{ name?: string }> }).models)
+        : []
+      )
+        .map((m) => m.name || "")
+        .filter(Boolean);
+      setOllamaModels(models);
       setOllamaStatus("connected");
     } catch {
       setOllamaStatus("offline");
@@ -105,27 +110,20 @@ export default function ConnectionsPage() {
   }
 
   function handleSaveConfig() {
-    const saved = saveDynamicConfig(config);
-    setConfig(saved);
-    if (saved.notionToken) setNotionSaved(true);
-    if (saved.notebooklmFolderId) setNotebookSaved(true);
-    checkKeyHealth();
-    checkAppsScript(saved.deploymentId);
+    setConfig(saveDynamicConfig(config));
+    void checkAppsScript(config.deploymentId);
   }
 
   function handleUniversalJsonDrop(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
         const result = importUniversalConfigJson(text);
-        const updated = loadDynamicConfig();
-        setConfig(updated);
-        setImportStatus(`✓ Successfully extracted ${result.entriesCount} parameters from ${file.name}!`);
-        await checkKeyHealth();
-        await checkAppsScript(updated.deploymentId);
+        setConfig(loadDynamicConfig());
+        setImportStatus(`✓ Extracted ${result.entriesCount} routing identifiers from ${file.name}`);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         setImportStatus(`✗ Import failed: ${message}`);
@@ -141,14 +139,14 @@ export default function ConnectionsPage() {
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        const parsed = JSON.parse(text);
-        const count = Object.keys(parsed).length;
+        const parsed: unknown = JSON.parse(text);
+        const count = parsed && typeof parsed === "object" ? Object.keys(parsed).length : 0;
         const now = new Date().toLocaleString();
         localStorage.setItem("sari_memory_vault", text);
         localStorage.setItem("sari_memory_sync_time", now);
         setVaultEntries(count);
         setLastSync(now);
-        setVaultMsg(`Successfully imported ${count} entries from SARI_MEMORY.json`);
+        setVaultMsg(`Staged ${count} entries from ${file.name}`);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         setVaultMsg(`Import failed: ${message}`);
@@ -157,28 +155,65 @@ export default function ConnectionsPage() {
     reader.readAsText(file);
   }
 
-  const scriptBadgeColor = scriptStatus === "connected" ? "var(--green)" : "#ef4444";
-  const ollamaBadgeColor = ollamaStatus === "connected" ? "var(--green)" : "#ef4444";
-
   return (
     <div className="page" style={{ maxWidth: 900, margin: "0 auto" }}>
       <h1 className="page-title">Connections & Sovereign Mind</h1>
-      <p className="page-sub">Auto-resolve keys via JSON import, Script ID, Deployment ID, and Cloud/Local Runtimes</p>
+      <p className="page-sub">Routing identifiers, local runtime health and server-managed credentials</p>
 
-      {/* 1-Click Universal JSON Import Card */}
-      <div className="card" style={{ padding: 24, marginTop: 24, border: "1px dashed rgba(59,130,246,0.5)", background: "rgba(59,130,246,0.03)" }}>
+      {/* Server-managed credentials */}
+      <div className="card" style={{ padding: 24, marginTop: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(34,197,94,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Lock size={20} style={{ color: "var(--green)" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Server Credentials</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                API keys and tokens are held in deployment environment variables — never in this browser
+              </div>
+            </div>
+          </div>
+          <span
+            className="badge"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              color: server?.configured ? "var(--green)" : "#ef4444",
+              borderColor: server?.configured ? "var(--green)" : "#ef4444",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            {server?.configured ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+            {server?.configured ? "Server configured" : "Server incomplete"}
+          </span>
+        </div>
+        <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.7 }}>
+          Required: <code>SARI_SESSION_SECRET</code>, <code>SARI_PASSWORD_HASH</code>.
+          Optional: <code>GEMINI_API_KEY</code>, <code>SARI_SHARED_SECRET</code>,{" "}
+          <code>SARI_APPS_SCRIPT_URL</code>, <code>SARI_TELEGRAM_BOT_TOKEN</code>,{" "}
+          <code>SARI_TELEGRAM_CHAT_ID</code>, <code>SARI_SUPABASE_URL</code>, <code>SARI_SUPABASE_KEY</code>.
+          Set these in the Vercel project (and Google Apps Script properties), never in the UI.
+        </div>
+      </div>
+
+      {/* Universal JSON import */}
+      <div className="card" style={{ padding: 24, marginTop: 20, border: "1px dashed rgba(59,130,246,0.5)", background: "rgba(59,130,246,0.03)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <FileJson size={22} style={{ color: "#3b82f6" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Universal 1-Click JSON Configuration Import</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Drop any JSON file (apps-script-properties.json, SARI_CONFIG.json, .mcp.json)</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Universal JSON Configuration Import</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                Imports Script ID, Deployment ID and Drive folder only — API keys in the file are ignored
+              </div>
             </div>
           </div>
           <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#3b82f6", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
-            <Upload size={16} /> Choose or Drop JSON
+            <Upload size={16} /> Choose JSON
             <input type="file" accept=".json" onChange={handleUniversalJsonDrop} style={{ display: "none" }} />
           </label>
         </div>
@@ -189,45 +224,7 @@ export default function ConnectionsPage() {
         )}
       </div>
 
-      {/* Pre-Validated Cloud Brain (Gemini 2.0 / MALLIK_API_KEY) Card */}
-      <div className="card" style={{ padding: 24, marginTop: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Key size={20} style={{ color: "#3b82f6" }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Cloud Brain (Gemini 2.0 Flash / MALLIK_API_KEY)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Pre-flight validated key resolver with automatic failover</div>
-            </div>
-          </div>
-          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: keyHealth.valid ? "var(--green)" : "#ef4444", borderColor: keyHealth.valid ? "var(--green)" : "#ef4444", display: "flex", alignItems: "center", gap: 4 }}>
-            {keyHealth.valid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-            {keyHealth.valid ? "Validated Active" : "No Valid Key"}
-          </span>
-        </div>
-        <div style={{ fontSize: 13, marginBottom: 12, color: "var(--muted)" }}>
-          API key auto-resolves from <code>MALLIK_API_KEY</code>, <code>GEMINI_API_KEY</code>, or manual input below:
-        </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            type="password"
-            value={config.geminiKey}
-            onChange={(e) => setConfig({ ...config, geminiKey: e.target.value })}
-            placeholder="AIzaSy... or MALLIK_API_KEY"
-            style={{ flex: 1, minWidth: 260, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
-          />
-          <button onClick={handleSaveConfig} className="btn-secondary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }}>Save</button>
-          <button onClick={checkKeyHealth} className="btn-primary" style={{ padding: "10px 18px", borderRadius: 10, fontWeight: 500 }} disabled={testingGemini}>
-            {testingGemini ? "Probing..." : "Test Key Health"}
-          </button>
-        </div>
-        <div style={{ marginTop: 12, fontSize: 12.5, color: keyHealth.valid ? "var(--green)" : "#ef4444" }}>
-          {keyHealth.message}
-        </div>
-      </div>
-
-      {/* Dynamic Mind / Google Apps Script Autopilot Card */}
+      {/* Dynamic Mind */}
       <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -235,12 +232,12 @@ export default function ConnectionsPage() {
               <Code2 size={20} style={{ color: "var(--green)" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Dynamic Mind (Google Apps Script Autopilot)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Zero-touch background sync via Script ID & Deployment ID</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Dynamic Mind (Google Apps Script)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Health probe only — writes are signature-gated server-side</div>
             </div>
           </div>
-          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: scriptBadgeColor, borderColor: scriptBadgeColor }}>
-            {scriptStatus === "connected" ? "Autopilot Live" : scriptStatus === "checking" ? "Checking..." : "Offline / Unreachable"}
+          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: scriptStatus === "connected" ? "var(--green)" : "#ef4444", borderColor: scriptStatus === "connected" ? "var(--green)" : "#ef4444" }}>
+            {scriptStatus === "connected" ? "Reachable" : scriptStatus === "checking" ? "Checking..." : "Unreachable"}
           </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -250,7 +247,6 @@ export default function ConnectionsPage() {
               type="text"
               value={config.scriptId}
               onChange={(e) => setConfig({ ...config, scriptId: e.target.value })}
-              placeholder="1ru_EBflLmasLfZ7..."
               style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
             />
           </div>
@@ -260,7 +256,6 @@ export default function ConnectionsPage() {
               type="text"
               value={config.deploymentId}
               onChange={(e) => setConfig({ ...config, deploymentId: e.target.value })}
-              placeholder="AKfycbwzdhZF3..."
               style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", color: "inherit", fontSize: 13 }}
             />
           </div>
@@ -270,78 +265,36 @@ export default function ConnectionsPage() {
             Save Properties
           </button>
           <button onClick={() => checkAppsScript()} className="btn-primary" style={{ padding: "8px 16px", borderRadius: 10, fontWeight: 500 }} disabled={testingScript}>
-            {testingScript ? "Testing..." : "Test Mind Endpoint"}
+            {testingScript ? "Testing..." : "Test Endpoint"}
           </button>
         </div>
         {scriptMsg && <div style={{ marginTop: 10, fontSize: 12.5, color: scriptStatus === "connected" ? "var(--green)" : "#ef4444" }}>{scriptMsg}</div>}
       </div>
 
-      {/* Notion & NotebookLM Dual Integrations */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 20 }}>
-        {/* Notion Connector */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(236,72,153,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Layers size={18} style={{ color: "#ec4899" }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>Notion Database</div>
-              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Tasks, policies & lead records</div>
-            </div>
+      {/* Drive pack */}
+      <div className="card" style={{ padding: 24, marginTop: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(249,115,22,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <BookOpen size={18} style={{ color: "#f97316" }} />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Notion API Token</label>
-            <input
-              type="password"
-              value={config.notionToken || ""}
-              onChange={(e) => setConfig({ ...config, notionToken: e.target.value })}
-              placeholder="secret_..."
-              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
-            />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 15 }}>NotebookLM Drive Pack</div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Credit manuals & circulars index</div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Database ID</label>
-            <input
-              type="text"
-              value={config.notionDatabaseId || ""}
-              onChange={(e) => setConfig({ ...config, notionDatabaseId: e.target.value })}
-              placeholder="32-character ID..."
-              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
-            />
-          </div>
-          <button onClick={handleSaveConfig} className="btn-secondary" style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12 }}>
-            {notionSaved ? "✓ Notion Linked" : "Save Notion"}
-          </button>
         </div>
-
-        {/* NotebookLM Drive Pack */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(249,115,22,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <BookOpen size={18} style={{ color: "#f97316" }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>NotebookLM Drive Pack</div>
-              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Credit manuals & circulars index</div>
-            </div>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 2 }}>Google Drive Folder ID / Pack</label>
-            <input
-              type="text"
-              value={config.notebooklmFolderId || ""}
-              onChange={(e) => setConfig({ ...config, notebooklmFolderId: e.target.value })}
-              placeholder="SARI_SUPREME Drive Folder ID..."
-              style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12 }}
-            />
-          </div>
-          <button onClick={handleSaveConfig} className="btn-secondary" style={{ width: "100%", padding: "8px", borderRadius: 8, fontSize: 12, marginTop: 28 }}>
-            {notebookSaved ? "✓ NotebookLM Linked" : "Save NotebookLM"}
-          </button>
-        </div>
+        <label style={{ fontSize: 11.5, color: "var(--muted)", display: "block", marginBottom: 4 }}>Google Drive Folder ID</label>
+        <input
+          type="text"
+          value={config.notebooklmFolderId || ""}
+          onChange={(e) => setConfig({ ...config, notebooklmFolderId: e.target.value })}
+          style={{ width: "100%", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "inherit", fontSize: 12, marginBottom: 12 }}
+        />
+        <button onClick={handleSaveConfig} className="btn-secondary" style={{ width: "100%", padding: 8, borderRadius: 8, fontSize: 12 }}>
+          Save Folder
+        </button>
       </div>
 
-      {/* Self-Healing & Self-Learning Sentinel Status */}
+      {/* Autopilot status */}
       <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -349,27 +302,27 @@ export default function ConnectionsPage() {
               <ShieldCheck size={20} style={{ color: "#eab308" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Self-Healing & Zero-Touch Autopilot</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Continuous background sync with zero Apps Script maintenance required</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Self-Healing & Autopilot</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Client-side failover; sync is proxied through the authenticated API</div>
             </div>
           </div>
           <span className="badge" style={{ background: "rgba(34,197,94,0.1)", color: "var(--green)", borderColor: "var(--green)" }}>
-            <Zap size={12} style={{ marginRight: 4 }} /> Autopilot Active
+            <Zap size={12} style={{ marginRight: 4 }} /> Failover active
           </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 12.5, color: "var(--muted)" }}>
           <div style={{ padding: 12, background: "rgba(255,255,255,0.03)", borderRadius: 8, border: "1px solid var(--border)" }}>
-            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Self-Healing Safeguards</div>
-            Auto-detects 401 (Auth Expiry), 429 (Rate Limits), and 503 (Outages) with sub-second failover to local runtime.
+            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Self-Healing</div>
+            Cloud proxy → local Ollama → explicit offline state. No fabricated answers.
           </div>
           <div style={{ padding: 12, background: "rgba(255,255,255,0.03)", borderRadius: 8, border: "1px solid var(--border)" }}>
-            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Continuous Self-Learning</div>
-            Automatically syncs interaction lessons and dynamic skill cards to Apps Script Memory Vault.
+            <div style={{ fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Self-Learning</div>
+            Lessons and generated skills are stored locally and synced via <code>/api/autopilot</code>.
           </div>
         </div>
       </div>
 
-      {/* Memory Vault (Google Drive) */}
+      {/* Memory vault staging */}
       <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -377,8 +330,8 @@ export default function ConnectionsPage() {
               <Database size={20} style={{ color: "#a855f7" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>Memory Vault (Google Drive)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>SARI_SUPREME_COMMAND sync state</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Memory Vault (staging)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Local preview of the Drive export</div>
             </div>
           </div>
           <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: vaultEntries > 0 ? "var(--green)" : "var(--muted)" }}>
@@ -389,12 +342,12 @@ export default function ConnectionsPage() {
           {vaultMsg} · Last sync: {lastSync}
         </div>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "rgba(255,255,255,0.06)", border: "1px dashed var(--border)", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
-          <Upload size={16} /> Drop or Upload SARI_MEMORY.json
+          <Upload size={16} /> Upload SARI_MEMORY.json
           <input type="file" accept=".json" onChange={handleMemoryFileDrop} style={{ display: "none" }} />
         </label>
       </div>
 
-      {/* Local AI (Ollama) */}
+      {/* Ollama */}
       <div className="card" style={{ padding: 24, marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -403,11 +356,11 @@ export default function ConnectionsPage() {
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: 16 }}>Local AI Runtime (Ollama)</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-2 air-gapped local fallback ({config.ollamaUrl})</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Tier-2 local fallback ({config.ollamaUrl})</div>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: ollamaBadgeColor, borderColor: ollamaBadgeColor }}>
+            <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: ollamaStatus === "connected" ? "var(--green)" : "#ef4444", borderColor: ollamaStatus === "connected" ? "var(--green)" : "#ef4444" }}>
               {ollamaStatus === "connected" ? "Online" : "Offline"}
             </span>
             <button onClick={() => checkOllama()} style={{ background: "transparent", color: "var(--muted)", padding: 4 }} title="Refresh Ollama status">
@@ -421,7 +374,7 @@ export default function ConnectionsPage() {
           </div>
         ) : (
           <div style={{ fontSize: 13, color: "#ef4444" }}>
-            Ollama offline on this device — Vercel chat uses Gemini Cloud Brain automatically
+            Ollama is not reachable on this device — the cloud proxy is the primary brain.
           </div>
         )}
       </div>

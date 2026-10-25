@@ -1,22 +1,45 @@
-const SESSION_KEY = "sari_session_token";
+/**
+ * Session state lives on the server (HttpOnly cookie). Nothing is persisted
+ * in localStorage, so an XSS cannot read or replay the session.
+ */
 
-export function getSessionId(): string | null {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem(SESSION_KEY);
-  if (!token) return null;
-  // Token format: "<expiryMs>.<hmac>" — expiry embedded, checked client-side;
-  // signature is always verified server-side on every API call.
-  const dot = token.indexOf(".");
-  if (dot < 1) {
-    clearSession();
-    return null;
+type Listener = (authenticated: boolean) => void;
+
+let authenticated = false;
+let resolved = false;
+const listeners = new Set<Listener>();
+
+function notify(): void {
+  resolved = true;
+  for (const listener of listeners) listener(authenticated);
+}
+
+export function subscribeAuth(listener: Listener): () => void {
+  listeners.add(listener);
+  if (resolved) listener(authenticated);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export async function checkSession(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/session", { method: "GET", credentials: "same-origin" });
+    if (!res.ok) {
+      authenticated = false;
+    } else {
+      const data: unknown = await res.json();
+      authenticated =
+        data !== null &&
+        typeof data === "object" &&
+        "ok" in data &&
+        (data as { ok: unknown }).ok === true;
+    }
+  } catch {
+    authenticated = false;
   }
-  const expiry = parseInt(token.slice(0, dot), 10);
-  if (!expiry || Date.now() > expiry) {
-    clearSession();
-    return null;
-  }
-  return token;
+  notify();
+  return authenticated;
 }
 
 export async function loginWithServer(
@@ -26,36 +49,37 @@ export async function loginWithServer(
   try {
     const res = await fetch("/api/login", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), password }),
     });
-    if (res.ok) {
-      const data: unknown = await res.json();
-      if (data && typeof data === "object" && "token" in data && typeof data.token === "string") {
-        setSessionId(data.token);
-        return { ok: true };
-      }
-      return { ok: false, error: "Authentication failed" };
+
+    const data: unknown = await res.json().catch(() => null);
+    const obj = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+
+    if (res.ok && obj.ok === true) {
+      authenticated = true;
+      notify();
+      return { ok: true };
     }
-    const errData: unknown = await res.json().catch(() => null);
-    const msg =
-      errData && typeof errData === "object" && "error" in errData && typeof errData.error === "string"
-        ? errData.error
-        : "Authentication failed";
-    return { ok: false, error: msg };
+
+    const message = typeof obj.error === "string" ? obj.error : "Authentication failed";
+    return { ok: false, error: message };
   } catch {
     return { ok: false, error: "Network error — connection failed" };
   }
 }
 
-export function setSessionId(token: string): void {
-  localStorage.setItem(SESSION_KEY, token);
-}
-
-export function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY);
+export async function logout(): Promise<void> {
+  try {
+    await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+  } catch {
+    // Clearing local state still happens below.
+  }
+  authenticated = false;
+  notify();
 }
 
 export function isAuthenticated(): boolean {
-  return !!getSessionId();
+  return authenticated;
 }

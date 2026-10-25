@@ -1,14 +1,9 @@
 export interface DynamicConfig {
   scriptId: string;
   deploymentId: string;
-  geminiKey: string;
   ollamaUrl: string;
   ollamaModel: string;
   empCode: string;
-  /** Purely optional: Notion is retired and consolidated into Google Drive. Absence never causes validation errors. */
-  notionToken?: string;
-  /** Purely optional: Notion is retired and consolidated into Google Drive. Absence never causes validation errors. */
-  notionDatabaseId?: string;
   notebooklmFolderId?: string;
   googleDriveFolderId?: string;
   autopilotEnabled: boolean;
@@ -23,87 +18,86 @@ export const DEFAULT_OLLAMA_MODEL = "qwen2.5-coder:latest";
 export const DEFAULT_EMP_CODE = "DC001";
 export const DEFAULT_NOTEBOOKLM_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
 export const DEFAULT_GOOGLE_DRIVE_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
+
+/**
+ * Only non-secret routing configuration belongs here. API keys, session
+ * tokens and integration credentials live in the server environment.
+ */
 export function loadDynamicConfig(): DynamicConfig {
-  if (typeof window === "undefined") {
-    return {
-      scriptId: DEFAULT_SCRIPT_ID,
-      deploymentId: DEFAULT_DEPLOYMENT_ID,
-      geminiKey: "",
-      ollamaUrl: DEFAULT_OLLAMA_URL,
-      ollamaModel: DEFAULT_OLLAMA_MODEL,
-      empCode: DEFAULT_EMP_CODE,
-      // Notion properties are purely optional (consolidated to Google Drive)
-      notionToken: "",
-      notionDatabaseId: "",
-      notebooklmFolderId: DEFAULT_NOTEBOOKLM_FOLDER_ID,
-      googleDriveFolderId: DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
-      autopilotEnabled: true,
-    };
-  }
+  const defaults: DynamicConfig = {
+    scriptId: DEFAULT_SCRIPT_ID,
+    deploymentId: DEFAULT_DEPLOYMENT_ID,
+    ollamaUrl: DEFAULT_OLLAMA_URL,
+    ollamaModel: DEFAULT_OLLAMA_MODEL,
+    empCode: DEFAULT_EMP_CODE,
+    notebooklmFolderId: DEFAULT_NOTEBOOKLM_FOLDER_ID,
+    googleDriveFolderId: DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
+    autopilotEnabled: true,
+  };
+
+  if (typeof window === "undefined") return defaults;
 
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
+    const parsed: Record<string, unknown> = raw ? JSON.parse(raw) : {};
     return {
       scriptId: typeof parsed.scriptId === "string" && parsed.scriptId.trim() ? parsed.scriptId.trim() : DEFAULT_SCRIPT_ID,
-      deploymentId: typeof parsed.deploymentId === "string" && parsed.deploymentId.trim() ? parsed.deploymentId.trim() : DEFAULT_DEPLOYMENT_ID,
-      geminiKey: typeof parsed.geminiKey === "string" ? parsed.geminiKey.trim() : (localStorage.getItem("sari_gemini_key") || ""),
-      ollamaUrl: typeof parsed.ollamaUrl === "string" && parsed.ollamaUrl.trim() ? parsed.ollamaUrl.trim().replace(/\/$/, "") : DEFAULT_OLLAMA_URL,
-      ollamaModel: typeof parsed.ollamaModel === "string" && parsed.ollamaModel.trim() ? parsed.ollamaModel.trim() : DEFAULT_OLLAMA_MODEL,
+      deploymentId:
+        typeof parsed.deploymentId === "string" && parsed.deploymentId.trim()
+          ? parsed.deploymentId.trim()
+          : DEFAULT_DEPLOYMENT_ID,
+      ollamaUrl:
+        typeof parsed.ollamaUrl === "string" && parsed.ollamaUrl.trim()
+          ? parsed.ollamaUrl.trim().replace(/\/$/, "")
+          : DEFAULT_OLLAMA_URL,
+      ollamaModel:
+        typeof parsed.ollamaModel === "string" && parsed.ollamaModel.trim()
+          ? parsed.ollamaModel.trim()
+          : DEFAULT_OLLAMA_MODEL,
       empCode: typeof parsed.empCode === "string" && parsed.empCode.trim() ? parsed.empCode.trim() : DEFAULT_EMP_CODE,
-      // Notion properties are purely optional (consolidated to Google Drive) and never cause validation errors
-      notionToken: typeof parsed.notionToken === "string" ? parsed.notionToken.trim() : (localStorage.getItem("sari_notion_token") || ""),
-      notionDatabaseId: typeof parsed.notionDatabaseId === "string" ? parsed.notionDatabaseId.trim() : (localStorage.getItem("sari_notion_database_id") || ""),
-      notebooklmFolderId: typeof parsed.notebooklmFolderId === "string" && parsed.notebooklmFolderId.trim() ? parsed.notebooklmFolderId.trim() : (localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID),
-      googleDriveFolderId: typeof parsed.googleDriveFolderId === "string" && parsed.googleDriveFolderId.trim() ? parsed.googleDriveFolderId.trim() : (localStorage.getItem("sari_google_drive_folder") || DEFAULT_GOOGLE_DRIVE_FOLDER_ID),
+      notebooklmFolderId:
+        typeof parsed.notebooklmFolderId === "string" && parsed.notebooklmFolderId.trim()
+          ? parsed.notebooklmFolderId.trim()
+          : DEFAULT_NOTEBOOKLM_FOLDER_ID,
+      googleDriveFolderId:
+        typeof parsed.googleDriveFolderId === "string" && parsed.googleDriveFolderId.trim()
+          ? parsed.googleDriveFolderId.trim()
+          : DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
       autopilotEnabled: parsed.autopilotEnabled !== false,
     };
   } catch {
-    return {
-      scriptId: DEFAULT_SCRIPT_ID,
-      deploymentId: DEFAULT_DEPLOYMENT_ID,
-      geminiKey: localStorage.getItem("sari_gemini_key") || "",
-      ollamaUrl: DEFAULT_OLLAMA_URL,
-      ollamaModel: DEFAULT_OLLAMA_MODEL,
-      empCode: DEFAULT_EMP_CODE,
-      // Notion properties are purely optional (consolidated to Google Drive)
-      notionToken: localStorage.getItem("sari_notion_token") || "",
-      notionDatabaseId: localStorage.getItem("sari_notion_database_id") || "",
-      notebooklmFolderId: localStorage.getItem("sari_notebooklm_folder") || DEFAULT_NOTEBOOKLM_FOLDER_ID,
-      googleDriveFolderId: localStorage.getItem("sari_google_drive_folder") || DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
-      autopilotEnabled: true,
-    };
+    return defaults;
   }
 }
 
 export function saveDynamicConfig(config: Partial<DynamicConfig>): DynamicConfig {
-  const current = loadDynamicConfig();
-  const next: DynamicConfig = {
-    ...current,
-    ...config,
-  };
+  const next: DynamicConfig = { ...loadDynamicConfig(), ...config };
   if (typeof window !== "undefined") {
     localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(next));
-    if (config.geminiKey !== undefined) localStorage.setItem("sari_gemini_key", config.geminiKey);
-    if (config.notionToken !== undefined) localStorage.setItem("sari_notion_token", config.notionToken);
-    if (config.notionDatabaseId !== undefined) localStorage.setItem("sari_notion_database_id", config.notionDatabaseId);
-    if (config.notebooklmFolderId !== undefined) localStorage.setItem("sari_notebooklm_folder", config.notebooklmFolderId);
-    if (config.googleDriveFolderId !== undefined) localStorage.setItem("sari_google_drive_folder", config.googleDriveFolderId);
   }
   return next;
 }
 
 /**
- * Validates dynamic configuration.
- * Notion properties (notionToken, notionDatabaseId) are purely optional
- * (retired & consolidated into Google Drive) and NEVER cause validation errors.
+ * Real validation: deployment IDs must look like Apps Script IDs and URLs must
+ * be http(s). Secrets are deliberately not validated here — they are not stored
+ * in the browser.
  */
 export function validateConfig(config?: Partial<DynamicConfig>): { valid: boolean; errors: string[] } {
-  return {
-    valid: true,
-    errors: [],
-  };
-  return next;
+  const current: DynamicConfig = { ...loadDynamicConfig(), ...(config || {}) };
+  const errors: string[] = [];
+
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(current.deploymentId)) {
+    errors.push("Deployment ID looks invalid (expected a long Apps Script ID).");
+  }
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(current.scriptId)) {
+    errors.push("Script ID looks invalid.");
+  }
+  if (!/^https?:\/\/[^\s]+$/.test(current.ollamaUrl)) {
+    errors.push("Ollama URL must be an http(s) URL.");
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 export function getScriptExecUrl(deploymentId?: string): string {
@@ -116,41 +110,38 @@ export async function pingAppsScript(deploymentId?: string): Promise<{ ok: boole
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, {
-      method: "GET",
-      signal: controller.signal,
-    });
+    const res = await fetch(url, { method: "GET", signal: controller.signal });
     clearTimeout(timeout);
     return {
       ok: res.ok,
       status: res.status,
-      message: res.ok ? "Apps Script Web App live and responding" : `HTTP ${res.status}`,
+      message: res.ok ? "Apps Script web app responded" : `HTTP ${res.status}`,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Connection failed";
-    return {
-      ok: false,
-      status: 0,
-      message,
-    };
+    return { ok: false, status: 0, message };
   }
 }
 
-export async function triggerAutopilotSync(payload: { vault?: Record<string, unknown>; lessons?: string[]; skills?: unknown[] }): Promise<boolean> {
+/**
+ * Autopilot sync is routed through the authenticated server endpoint so the
+ * browser never needs the Apps Script shared secret.
+ */
+export async function triggerAutopilotSync(payload: {
+  lessons?: string[];
+  skills?: unknown[];
+}): Promise<boolean> {
   const cfg = loadDynamicConfig();
   if (!cfg.autopilotEnabled) return false;
 
-  const url = getScriptExecUrl(cfg.deploymentId);
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(url, {
+    const res = await fetch("/api/autopilot", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "autopilot_learn",
-        ...payload,
-      }),
+      body: JSON.stringify({ lessons: payload.lessons, skills: payload.skills }),
       signal: controller.signal,
     });
     clearTimeout(timeout);

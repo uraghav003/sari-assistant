@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+node_modules
+dist
+.vercel
+.env
+.env.*
+*.log
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+nginx.conf
+AUDIT.md
+SECURITY.md
+*.ps1
