@@ -4,7 +4,25 @@ import { applyApiHeaders, authConfigured, sessionFromRequest, verifyToken } from
 /**
  * Session probe. The SPA calls this on boot instead of trusting localStorage:
  * the session cookie is HttpOnly, so the server is the only source of truth.
+ *
+ * `checks` reports only whether each variable exists — never a value. It is
+ * here so a misconfigured deployment can be diagnosed without server access.
  */
+function configChecks(): Record<string, boolean> {
+  const secret = process.env.SARI_SESSION_SECRET;
+  return {
+    sessionSecret: Boolean(secret && secret.trim().length >= 32),
+    passwordCredential: Boolean(process.env.SARI_PASSWORD_HASH || process.env.SARI_PASSWORD),
+    sharedSecret: Boolean(process.env.SARI_SHARED_SECRET && process.env.SARI_SHARED_SECRET.trim().length >= 32),
+    modelKey: Boolean(
+      process.env.GEMINI_API_KEY ||
+        process.env.MALLIK_API_KEY ||
+        process.env.GOOGLE_API_KEY ||
+        process.env.AI_STUDIO_API_KEY
+    ),
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);
 
@@ -13,11 +31,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
+  const checks = configChecks();
+
   if (!authConfigured()) {
-    res.status(503).json({ ok: false, configured: false });
+    res.status(503).json({ ok: false, configured: false, checks });
     return;
   }
 
   const authenticated = verifyToken(sessionFromRequest(req));
-  res.status(200).json({ ok: authenticated, configured: true });
+  res.status(200).json({ ok: authenticated, configured: true, checks });
 }
