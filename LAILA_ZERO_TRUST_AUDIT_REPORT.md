@@ -25,7 +25,7 @@ Under the direct mandate of MD Upendra Singh Raghav and SARI Master Sovereign AI
 ## 2. Authentication Gate Verification Details
 Live probes were conducted against both production Google Apps Script deployments:
 - **Deployment @95:** `AKfycbw8JfQeC8Yz3vlYASjH6sBYz_aYyzbZh9_ANRcm4NCzjZJgCmdFHTmxsakAfyOpf0AmHg`
-- **Canonical Production Deployment:** `AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc`
+- **Canonical Production Deployment:** `AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3`
 
 ### Probe Results
 1. **Unauthenticated Access Probe (No Token):**
@@ -86,7 +86,7 @@ Emitted from LAILA System Auditor to SARI Master Sovereign AI:
       "tamper_resistance": "PASS"
     },
     "canonical_production": {
-      "deployment_id": "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc",
+      "deployment_id": "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3",
       "auth_gate": "[REDACTED-ROTATED]",
       "status": "ZERO_TRUST_ENFORCED",
       "tamper_resistance": "PASS"

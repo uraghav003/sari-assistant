@@ -35,7 +35,7 @@ if (-not (Test-Path "$RepoRoot\package.json")) {
 }
 Set-Location $RepoRoot
 
-$CanonicalDeploymentId = "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
+$CanonicalDeploymentId = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3"
 $CanonicalAppsScriptUrl = "https://script.google.com/macros/s/$CanonicalDeploymentId/exec"
 $CanonicalVercelUrl = "https://sari-supreme-command.vercel.app"
 
@@ -145,7 +145,7 @@ function Get-PluginConfig {
                 dossierExportPath = "notebooklm-dossier.md"
             }
             appsScript = [ordered]@{
-                scriptId = "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM"
+                scriptId = "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3"
                 deploymentId = $CanonicalDeploymentId
             }
         }

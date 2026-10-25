@@ -11,7 +11,7 @@ import {
 } from "./_security.js";
 
 const CANONICAL_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
+  "https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec";
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 10;

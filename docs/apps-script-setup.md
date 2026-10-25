@@ -42,29 +42,39 @@ presence flags only:
 }
 ```
 
-## 3. Deploy
+## 3. Project and deployment
 
-> **Status (checked 2026-10-25):** the project *files* already contain v4.0.0 —
-> `clasp push` was run from this repo. What is still live at `/exec` is the old
-> **v3.2.0** deployment. A new version has to be created for the fix to take effect.
+> **Status (2026-10-25):** a dedicated project now exists —
+> `15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3` — containing
+> v4.0.0, deployed as
+> `AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3`
+> (version 1). It is not yet serving anonymous traffic: the owner has to
+> authorize the script once.
 
-**Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.**
-Then archive the previous deployment so its URL stops working.
+The previous URL in this repo (`AKfycbwzdhZF…`) belonged to a **different**
+Apps Script project — the Bulbhul Operating System — which is why deploying
+SARI code never changed it.
 
-Equivalent CLI (updates the existing deployment URL):
+### One-time owner authorization (required)
+
+A freshly created script has no OAuth grant, so `ANYONE_ANONYMOUS` web apps
+return *"You need access"* until the owner runs it once:
+
+1. Open <https://script.google.com/d/15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3/edit>
+2. Select `checkConfiguration` in the function dropdown → **Run**.
+3. **Review permissions → choose the account → Allow.**
+
+After that, the deployment starts answering anonymously.
+
+### Re-deploying after changes
 
 ```bash
-clasp deploy -i AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc \
+clasp push -f
+clasp deploy -i AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3 \
   -d "hardened v4.0.0: HMAC-gated bridge"
 ```
 
-Do this **after** setting `SARI_SHARED_SECRET` in Script Properties. Deploying
-first would make every request fail closed (`UNAUTHORIZED`) — correct, but the
-app would look broken.
-
-The existing deployment ID can stay if you only add a version, but the audit
-recommendation is a **new deployment** plus archiving the old one — the old ID
-appeared in five documents and a public page.
+`clasp deploy -i` keeps the URL stable by updating the existing deployment.
 
 ## 4. Probe
 

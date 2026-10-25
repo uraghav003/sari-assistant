@@ -21,7 +21,7 @@ if (Test-Path "api/chat.ts") {
 # ── 2. Check & Validate src/lib/agent.ts & dynamic-mind ─────
 Write-Host "`n[2/5] Verifying Dynamic AI Mind and Self-Healing Cascade..." -ForegroundColor Yellow
 if ((Test-Path "src/lib/agent.ts") -and (Test-Path "dynamic-mind.cjs")) {
-    Write-Host "  [OK] src/lib/agent.ts and dynamic-mind.cjs linked to Script ID: 1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM" -ForegroundColor Green
+    Write-Host "  [OK] src/lib/agent.ts and dynamic-mind.cjs linked to Script ID: 15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3" -ForegroundColor Green
 } else {
     Write-Host "  [FAIL] Core mind files missing!" -ForegroundColor Red
 }

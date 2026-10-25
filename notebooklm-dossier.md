@@ -8,8 +8,8 @@
 **Head of Human Resources:** Khushboo (HR Head / DC013)  
 **Headquarters:** District Centre, Janakpuri, New Delhi, India  
 **Corporate Portal:** https://sari-assistant.vercel.app  
-**Canonical Google Apps Script Backend ID:** `1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM`  
-**Deployment ID:** `AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc`  
+**Canonical Google Apps Script Backend ID:** `15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3`  
+**Deployment ID:** `AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3`  
 **Canonical NotebookLM Folder ID:** `1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu`  
 
 ---
@@ -350,8 +350,8 @@ The SARI Sovereign Master Control Plane is operated via the global PowerShell CL
     "dossierExportPath": "notebooklm-dossier.md"
   },
   "appsScript": {
-    "scriptId": "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM",
-    "deploymentId": "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc"
+    "scriptId": "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3",
+    "deploymentId": "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3"
   }
 }
 ```

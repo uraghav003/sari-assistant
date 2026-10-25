@@ -11,8 +11,8 @@ export interface DynamicConfig {
 
 const CONFIG_STORAGE_KEY = "sari_dynamic_config_v1";
 
-export const DEFAULT_SCRIPT_ID = "1ru_EBflLmasLfZ7TBIpMp8xyKuHsX9QnQod3X5FZchHT4JHx3aiEuxEM";
-export const DEFAULT_DEPLOYMENT_ID = "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
+export const DEFAULT_SCRIPT_ID = "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3";
+export const DEFAULT_DEPLOYMENT_ID = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
 export const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434";
 export const DEFAULT_OLLAMA_MODEL = "qwen2.5-coder:latest";
 export const DEFAULT_EMP_CODE = "DC001";

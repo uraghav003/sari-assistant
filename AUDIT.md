@@ -318,9 +318,13 @@ credential-pattern scan over the tracked tree.
    Apps Script Script Properties (`SARI_SHARED_SECRET` must match). Until then the app
    fails closed with 503 by design. Note: a model key in Script Properties is **not**
    the bridge secret.
-3. **Deploy an Apps Script version** — the project files already contain v4.0.0
-   (`clasp push` run on 2026-10-25); the live `/exec` URL still serves v3.2.0. Set
-   `SARI_SHARED_SECRET` first, then Deploy → New version.
+3. **Apps Script** — a dedicated project
+   (`15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3`) now holds v4.0.0 and
+   is deployed as
+   `AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3` (v1).
+   Two owner actions remain: authorize the script once (Run → Allow) and add
+   `SARI_SHARED_SECRET` + `MALLIK_API_KEY` in Script Properties. The old deployment ID
+   in earlier revisions belonged to the Bulbhul Operating System, not to SARI.
 
 4. ~~Commit and push~~ — done in `d8aed4a`. Device-side cleanup of credentials left by
    older builds is automatic (`src/lib/privacy.ts`); server-side values still need
