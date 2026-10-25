@@ -5,6 +5,7 @@ import {
   Shield, Activity, LogOut, Wand2, Zap, Bell
 } from "lucide-react";
 import { logout } from "../lib/auth";
+import { clearLocalData } from "../lib/privacy";
 import { subscribeAlerts, unreadCount } from "../lib/notifications";
 
 const nav = [
@@ -55,6 +56,7 @@ export default function Layout() {
             className="nav-item"
             style={{ width: "100%" }}
             onClick={() => {
+              clearLocalData();
               void logout().then(() => navigate("/login"));
             }}
           >

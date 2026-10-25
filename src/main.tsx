@@ -4,6 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
+import { purgeLegacySecrets } from "./lib/privacy";
+
+// Old builds stored API keys and tokens in localStorage — remove them.
+purgeLegacySecrets();
 
 const queryClient = new QueryClient();
 

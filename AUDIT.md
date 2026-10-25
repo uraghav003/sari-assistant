@@ -318,5 +318,6 @@ credential-pattern scan over the tracked tree.
    Apps Script Script Properties (`SARI_SHARED_SECRET` must match). Until then the app
    fails closed with 503 by design.
 3. **Redeploy Apps Script** under a new deployment and archive the old one.
-4. **Commit and push** — this working tree is not committed. CI will now gate on
-   typecheck, contract tests and build.
+4. ~~Commit and push~~ — done in `d8aed4a`. Device-side cleanup of credentials left by
+   older builds is automatic (`src/lib/privacy.ts`); server-side values still need
+   rotating.

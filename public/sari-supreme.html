@@ -403,6 +403,15 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+/* Buttons used as cards must not inherit the browser's button chrome. */
+button.card-btn {
+  width: 100%;
+  border: inherit;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+button.dot { padding: 0; border: none; cursor: pointer; }
 </style>
 </head>
 <body data-theme="hologram">
@@ -462,14 +471,14 @@ body {
   <div class="right-panel">
     <!-- TOP SHORTCUT CARDS -->
     <div class="top-cards">
-      <div class="card-btn" onclick="sendQuick('Find my focus')">
+      <button type="button" class="card-btn" onclick="sendQuick('Find my focus')">
         <div class="card-title">↗ Find my focus</div>
         <div class="card-desc">Make room for what matters today</div>
-      </div>
-      <div class="card-btn" onclick="sendQuick('Read my inbox')">
+      </button>
+      <button type="button" class="card-btn" onclick="sendQuick('Read my inbox')">
         <div class="card-title">✉ Read my inbox</div>
         <div class="card-desc">Gmail summaries & high-priority mails</div>
-      </div>
+      </button>
     </div>
 
     <!-- CHAT INTERFACE -->
@@ -521,9 +530,9 @@ body {
             <option value="pa">Punjabi (ਪੰਜਾਬੀ)</option>
           </select>
           <div class="theme-dots">
-            <div class="dot dot-teal" title="Hologram Theme" onclick="setTheme('hologram')"></div>
-            <div class="dot dot-gold" title="Premium Gold Theme" onclick="setTheme('premium')"></div>
-            <div class="dot dot-slate" title="Deep Dark Theme" onclick="setTheme('dark')"></div>
+            <button type="button" class="dot dot-teal" title="Hologram Theme" aria-label="Hologram theme" onclick="setTheme('hologram')"></button>
+            <button type="button" class="dot dot-gold" title="Premium Gold Theme" aria-label="Premium gold theme" onclick="setTheme('premium')"></button>
+            <button type="button" class="dot dot-slate" title="Deep Dark Theme" aria-label="Deep dark theme" onclick="setTheme('dark')"></button>
           </div>
           <div style="font-size: 10px; letter-spacing: 1px; color: var(--muted);">DIVYANSHI CAPITAL</div>
         </div>

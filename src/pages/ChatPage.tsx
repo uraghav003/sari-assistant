@@ -47,8 +47,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window === "undefined") return seedMessages;
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : seedMessages;
+      // sessionStorage: the conversation does not survive a browser restart.
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      return stored ? (JSON.parse(stored) as Message[]) : seedMessages;
     } catch {
       return seedMessages;
     }
@@ -95,7 +96,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      } catch {
+        // Quota or private mode — the conversation still works in memory.
+      }
     }
   }, [messages]);
 
@@ -463,7 +468,7 @@ export default function ChatPage() {
     ];
     setMessages(reset);
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(reset));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(reset));
     }
   }
 
@@ -480,7 +485,7 @@ export default function ChatPage() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 11, color: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>
+          <span aria-live="polite" style={{ fontSize: 11, color: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", boxShadow: `0 0 10px ${speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981"}` }} />
             {speaking ? "SARI IS SPEAKING..." : typing ? "SARI IS THINKING..." : "PRIVATE SESSION CONNECTED"}
           </span>
@@ -511,7 +516,7 @@ export default function ChatPage() {
 
             {/* Cybernetic Animated Canvas Avatar */}
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "10px 0" }}>
-              <canvas ref={canvasRef} width={380} height={340} style={{ width: "100%", maxWidth: 360, height: "auto" }} />
+              <canvas ref={canvasRef} width={380} height={340} aria-hidden="true" style={{ width: "100%", maxWidth: 360, height: "auto" }} />
             </div>
 
             <div>
@@ -548,25 +553,27 @@ export default function ChatPage() {
 
             {/* Quick Focus Action Chips */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div
+              <button
+                type="button"
                 onClick={() => handleCommand("Find my focus: optimize loan pipeline")}
-                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s", textAlign: "left", width: "100%" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#00ffd5" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#00ffd5" }}>
                   <Compass size={14} /> Find my focus
-                </div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Make room for what matters</div>
-              </div>
+                </span>
+                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Make room for what matters</span>
+              </button>
 
-              <div
+              <button
+                type="button"
                 onClick={() => handleCommand("Read my inbox and summarize pending approvals")}
-                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", transition: "all 0.2s", textAlign: "left", width: "100%" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#a855f7" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#a855f7" }}>
                   <Mail size={14} /> Read my inbox
-                </div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Authorized account only</div>
-              </div>
+                </span>
+                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Authorized account only</span>
+              </button>
             </div>
           </div>
 
@@ -613,6 +620,8 @@ export default function ChatPage() {
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <button
                 onClick={toggleAutoListening}
+                aria-label={autoListening ? "Mute microphone" : "Enable voice input"}
+                aria-pressed={autoListening}
                 style={{
                   width: 42,
                   height: 42,
@@ -633,6 +642,7 @@ export default function ChatPage() {
               <input
                 type="text"
                 value={input}
+                aria-label="Message SARI"
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {

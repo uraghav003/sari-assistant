@@ -22,10 +22,7 @@ param(
     [string]$DatabaseId,
 
     [Parameter(Mandatory=$false)]
-    [string]$FolderId,
-
-    [Parameter(ValueFromRemainingArguments=$true)]
-    [string[]]$RemainingArgs
+    [string]$FolderId
 )
 
 $ErrorActionPreference = "Stop"
