@@ -57,3 +57,30 @@ Connections page or imported from a JSON bundle. Secrets are environment variabl
 only — see [.env.example](.env.example).
 
 Do not commit `sari-plugins.json`, `.env*`, `SARI_CONFIG.json`, or memory exports.
+
+## npm warnings
+
+**`install-scripts … not yet covered by allowScripts`** — npm ≥ 11.6 blocks
+dependency lifecycle scripts unless the project opts in. `package.json` approves
+`esbuild` (needed by Vite/tsx) with an unpinned entry so it keeps working across
+version bumps:
+
+```json
+"allowScripts": { "esbuild": true }
+```
+
+Check the current state with `npm install-scripts ls` (expected:
+"No packages with unreviewed install scripts"). npm 10 on CI ignores the field.
+
+**`Unknown env config "cache-dir"`** — this comes from an environment variable,
+not from this repository. `npm_config_cache_dir` is not a valid npm key; the
+supported one is `cache`. Find and remove the stray variable with:
+
+```powershell
+pwsh ./scripts/npm-doctor.ps1        # report
+pwsh ./scripts/npm-doctor.ps1 -Fix   # remove user-scope npm_config_* entries
+```
+
+If the doctor finds nothing, the variable is injected by whichever tool launches
+npm (an IDE agent, a task runner, another Node install); update that launcher to
+use `npm_config_cache` or drop the variable.
