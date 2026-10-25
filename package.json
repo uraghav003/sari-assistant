@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:api": "npx tsx test-endpoints.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "prepush": "npm run lint && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
