@@ -2,6 +2,7 @@ import { audit } from "./storage";
 import { loadDynamicConfig } from "./config";
 import { withSelfHeal } from "./self-heal";
 import { learnFromInteraction } from "./self-learn";
+import { checkSession } from "./auth";
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
 export type AgentResult = { content: string; mode: "cloud" | "ollama" | "offline" };
@@ -64,6 +65,11 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
             return { content: text, mode: "cloud" };
           }
         }
+      }
+      if (res.status === 401) {
+        // The cookie expired or was revoked — surface it and bounce to login.
+        void checkSession();
+        throw new Error("SESSION_EXPIRED");
       }
       throw new Error(`Edge API returned ${res.status}`);
     },

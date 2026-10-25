@@ -74,10 +74,16 @@ export function sessionFromRequest(req: VercelRequest): string | null {
   return cookies[SESSION_COOKIE] || null;
 }
 
+export function sessionCookieAttributes(): string {
+  const isDev = process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "development";
+  const secure = isDev ? "" : " Secure;";
+  return `HttpOnly;${secure} SameSite=Strict; Path=/`;
+}
+
 export function setSessionCookie(res: VercelResponse, token: string): void {
   res.setHeader(
     "Set-Cookie",
-    `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${Math.floor(
+    `${SESSION_COOKIE}=${encodeURIComponent(token)}; ${sessionCookieAttributes()}; Max-Age=${Math.floor(
       SESSION_DURATION_MS / 1000
     )}`
   );
@@ -86,7 +92,7 @@ export function setSessionCookie(res: VercelResponse, token: string): void {
 export function clearSessionCookie(res: VercelResponse): void {
   res.setHeader(
     "Set-Cookie",
-    `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
+    `${SESSION_COOKIE}=; ${sessionCookieAttributes()}; Max-Age=0`
   );
 }
 
