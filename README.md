@@ -38,7 +38,8 @@ pwsh ./scripts/rotate-secrets.ps1 -Email md@divyanshicapital.com
 ```
 
 It writes `.env.production.local` (gitignored) and prints the exact Vercel and
-Apps Script steps, including the generated login password.
+Apps Script steps, including the generated login password. Backend configuration
+and probe commands: [docs/apps-script-setup.md](docs/apps-script-setup.md).
 
 ## Mobile
 

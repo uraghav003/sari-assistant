@@ -227,3 +227,21 @@ function isNotionConfigured() {
 function isNotebookLMConfigured() {
   return !!props_().getProperty("NOTEBOOKLM_FOLDER_ID");
 }
+
+/**
+ * Run this from the Apps Script editor (Run → checkConfiguration) after setting
+ * Script Properties. It reports presence only — never the values.
+ */
+function checkConfiguration() {
+  var p = props_();
+  var report = {
+    sharedSecretConfigured: Boolean(p.getProperty("SARI_SHARED_SECRET")),
+    sharedSecretLength: (p.getProperty("SARI_SHARED_SECRET") || "").length,
+    modelKeyConfigured: Boolean(p.getProperty("MALLIK_API_KEY") || p.getProperty("GEMINI_API_KEY")),
+    vaultBytes: (p.getProperty("SARI_MEMORY_VAULT") || "").length,
+    lastAutopilotSync: p.getProperty("LAST_AUTOPILOT_SYNC") || "never",
+    webAppAccess: "ANYONE_ANONYMOUS (requests must carry a valid HMAC signature)"
+  };
+  Logger.log(JSON.stringify(report, null, 2));
+  return report;
+}
