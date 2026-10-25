@@ -64,10 +64,13 @@ if ($LASTEXITCODE -ne 0 -or -not $hash) {
 
 $lines = @(
     "# Generated $(Get-Date -Format o) — do not commit. Rotate via SECURITY.md.",
+    "# The server uses SARI_PASSWORD_HASH; SARI_PASSWORD below is the plaintext copy",
+    "# for your first login only. Delete that line once it is in your password manager.",
     "SARI_SESSION_SECRET=$sessionSecret",
     "SARI_SHARED_SECRET=$sharedSecret",
     "SARI_LOGIN_EMAIL=$Email",
-    "SARI_PASSWORD_HASH=$hash"
+    "SARI_PASSWORD_HASH=$hash",
+    "SARI_PASSWORD=$Password"
 )
 Set-Content -Path $outFile -Value $lines -Encoding UTF8
 
