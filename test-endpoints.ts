@@ -27,6 +27,7 @@ import logoutHandler from "./api/logout.js";
 import sessionHandler from "./api/session.js";
 import chatHandler from "./api/chat.js";
 import leadsHandler from "./api/leads.js";
+import auditHandler from "./api/audit.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 interface MockResponse {
@@ -261,7 +262,22 @@ async function run(): Promise<void> {
     check("lead dispatch falls back to the in-app channel", payload.channel === "in_app");
   }
 
-  // 10. Logout clears the cookie
+  // 10. Audit sink requires a session and accepts bounded events
+  {
+    const res = createMockResponse();
+    await auditHandler(request("POST", { action: "chat", status: "allowed", detail: "x" }), res.res);
+    check("audit sink rejects anonymous events", res.statusCode === 401);
+  }
+  {
+    const res = createMockResponse();
+    await auditHandler(
+      request("POST", { action: "chat", status: "allowed", detail: "unit test" }, { cookie }),
+      res.res
+    );
+    check("audit sink accepts an authenticated event", res.statusCode === 202);
+  }
+
+  // 11. Logout clears the cookie
   {
     const res = createMockResponse();
     await logoutHandler(request("POST", {}, { cookie }), res.res);

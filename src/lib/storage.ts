@@ -29,6 +29,18 @@ export function audit(action: string, status: string, detail: string): void {
   } catch {
     // Fail-safe: ignore local storage errors
   }
+
+  // Mirror the event to the server sink (Vercel logs). Best effort only.
+  try {
+    void fetch("/api/audit", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, status, detail }),
+    }).catch(() => {});
+  } catch {
+    // Offline or blocked — the local entry already exists.
+  }
 }
 
 export function getAuditLogs(): AuditEntry[] {

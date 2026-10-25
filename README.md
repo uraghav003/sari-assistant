@@ -31,6 +31,15 @@ npm run test:api
 npm run build
 ```
 
+Generate the required secrets with:
+
+```powershell
+pwsh ./scripts/rotate-secrets.ps1 -Email md@divyanshicapital.com
+```
+
+It writes `.env.production.local` (gitignored) and prints the exact Vercel and
+Apps Script steps, including the generated login password.
+
 ## Mobile
 
 The app installs as a standalone PWA: open the site on a phone and choose

@@ -85,8 +85,10 @@ Telegram is **optional**. The dispatch path works with no bot token:
   and rely on Gemini + Ollama only.
 - Rate limiting is per serverless instance and in-memory. Add Vercel WAF / Upstash for
   global enforcement.
-- The Audit page is a **local browser log**, not a tamper-evident trail. Compliance
-  evidence must come from Vercel logs or a server-side store.
+- The Audit page is a **local browser log**, not a tamper-evident trail. Every
+  `audit()` call also POSTs to `/api/audit`, which writes a single-line JSON record to
+  the Vercel function log (`type: "sari.audit"`). That server log is the durable
+  evidence; the page is only a convenience view.
 - `sari-master.ps1` and `audit-integrity.ps1` are operator tools. `audit-integrity.ps1`
   is read-only unless you pass `-AllowPush`.
 
