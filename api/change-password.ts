@@ -35,13 +35,13 @@ function updateLocalEnv(newPassword: string, newHash: string): boolean {
     for (const filePath of targetFiles) {
       let content = fs.readFileSync(filePath, "utf8");
       if (/^SARI_PASSWORD=/m.test(content)) {
-        content = content.replace(/^SARI_PASSWORD=.*$/m, `SARI_PASSWORD=${newPassword}`);
+        content = content.replace(/^SARI_PASSWORD=.*$/m, () => `SARI_PASSWORD=${newPassword}`);
       } else {
         content += `\nSARI_PASSWORD=${newPassword}`;
       }
 
       if (/^SARI_PASSWORD_HASH=/m.test(content)) {
-        content = content.replace(/^SARI_PASSWORD_HASH=.*$/m, `SARI_PASSWORD_HASH=${newHash}`);
+        content = content.replace(/^SARI_PASSWORD_HASH=.*$/m, () => `SARI_PASSWORD_HASH=${newHash}`);
       } else {
         content += `\nSARI_PASSWORD_HASH=${newHash}`;
       }

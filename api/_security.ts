@@ -27,7 +27,8 @@ function sessionSecret(): string | null {
   return trimmed.length >= MIN_SECRET_LENGTH ? trimmed : null;
 }
 
-export function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string | undefined | null, b: string | undefined | null): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
   const ba = Buffer.from(a);
   const bb = Buffer.from(b);
   if (ba.length !== bb.length) return false;
@@ -55,12 +56,12 @@ export function issueToken(): string | null {
 
 export function verifyToken(token: string | undefined | null): boolean {
   const secret = sessionSecret();
-  if (!secret || !token) return false;
+  if (!secret || !token || typeof token !== "string" || token.length > 500) return false;
   const dot = token.indexOf(".");
   if (dot < 1) return false;
   const expiry = token.slice(0, dot);
   const sig = token.slice(dot + 1);
-  if (!/^\d+$/.test(expiry) || Date.now() > parseInt(expiry, 10)) return false;
+  if (!/^\d{1,15}$/.test(expiry) || Date.now() > parseInt(expiry, 10)) return false;
   const expected = crypto.createHmac("sha256", secret).update(expiry).digest("hex");
   return safeEqual(sig, expected);
 }
@@ -73,11 +74,16 @@ function parseCookies(header: string | undefined): Record<string, string> {
     if (eq < 1) continue;
     const key = part.slice(0, eq).trim();
     const value = part.slice(eq + 1).trim();
-    if (key) out[key] = decodeURIComponent(value);
+    if (key) {
+      try {
+        out[key] = decodeURIComponent(value);
+      } catch {
+        out[key] = value;
+      }
+    }
   }
   return out;
 }
-
 export function sessionFromRequest(req: VercelRequest): string | null {
   const cookies = parseCookies(req.headers?.cookie);
   return cookies[SESSION_COOKIE] || null;
@@ -121,8 +127,9 @@ export function isSameOrigin(req: VercelRequest): boolean {
   const origin = req.headers?.origin;
   if (!origin || origin === "null") return !origin; // no Origin: same-origin fetch or curl
   try {
-    const originHost = new URL(origin).host;
-    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const originHost = new URL(origin).host.toLowerCase();
+    const rawHost = req.headers?.["x-forwarded-host"] || req.headers?.host;
+    const host = (Array.isArray(rawHost) ? rawHost[0] : rawHost)?.split(",")[0]?.trim()?.toLowerCase();
     return typeof host === "string" && originHost === host;
   } catch {
     return false;
@@ -130,9 +137,16 @@ export function isSameOrigin(req: VercelRequest): boolean {
 }
 
 export function clientIp(req: VercelRequest): string {
-  const forwarded = req.headers["x-forwarded-for"];
+  const forwarded = req.headers?.["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.length > 0) {
     return forwarded.split(",")[0].trim();
+  }
+  if (Array.isArray(forwarded) && forwarded.length > 0) {
+    return forwarded[0].trim();
+  }
+  const remoteAddr = req.socket?.remoteAddress;
+  if (typeof remoteAddr === "string" && remoteAddr.length > 0) {
+    return remoteAddr;
   }
   return "unknown";
 }
@@ -147,6 +161,11 @@ const buckets = new Map<string, Bucket>();
 /** Fixed-window, in-memory limiter. Per-instance only — pair with a WAF at scale. */
 export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfter: number } {
   const now = Date.now();
+  if (buckets.size > 1000) {
+    for (const [k, b] of buckets.entries()) {
+      if (now > b.resetAt) buckets.delete(k);
+    }
+  }
   const current = buckets.get(key);
   if (!current || now > current.resetAt) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });
@@ -158,7 +177,6 @@ export function rateLimit(key: string, limit: number, windowMs: number): { ok: b
   }
   return { ok: true, retryAfter: 0 };
 }
-
 export function tooManyRequests(res: VercelResponse, retryAfter: number): void {
   res.setHeader("Retry-After", String(retryAfter));
   res.status(429).json({ ok: false, error: "Too many requests. Try again shortly." });
@@ -186,25 +204,27 @@ export function requireSession(req: VercelRequest, res: VercelResponse): boolean
 }
 
 export function readBody(req: VercelRequest): Record<string, unknown> {
-  if (typeof req.body === "object" && req.body !== null) {
+  if (typeof req.body === "object" && req.body !== null && !Array.isArray(req.body)) {
     return req.body as Record<string, unknown>;
   }
   if (typeof req.body === "string" && req.body.trim().length > 0) {
     try {
       const parsed: unknown = JSON.parse(req.body);
-      if (typeof parsed === "object" && parsed !== null) return parsed as Record<string, unknown>;
+      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
     } catch {
       // unparseable body is treated as empty
     }
   }
   return {};
 }
-
 /**
  * Credential check. Prefers `SARI_PASSWORD_HASH` (scrypt:<saltHex>:<hashHex>,
  * or a legacy 64-char SHA-256 hex digest), then `SARI_PASSWORD`. No fallbacks.
  */
 export function checkCredentials(email: string, password: string): boolean {
+  if (typeof email !== "string" || typeof password !== "string" || password.length > 512) return false;
   const expectedEmail = (
     process.env.SARI_LOGIN_EMAIL ||
     CANONICAL_LOGIN_EMAIL
@@ -219,10 +239,16 @@ export function checkCredentials(email: string, password: string): boolean {
   const hash = (process.env.SARI_PASSWORD_HASH || CANONICAL_PASSWORD_HASH)?.trim();
   if (hash) {
     if (hash.startsWith("scrypt:")) {
-      const [, saltHex, digestHex] = hash.split(":");
+      const parts = hash.split(":");
+      const saltHex = parts[1];
+      const digestHex = parts[2];
       if (!saltHex || !digestHex) return false;
-      const derived = crypto.scryptSync(password, Buffer.from(saltHex, "hex"), 64).toString("hex");
-      return safeEqual(derived, digestHex.toLowerCase());
+      try {
+        const derived = crypto.scryptSync(password, Buffer.from(saltHex, "hex"), 64).toString("hex");
+        return safeEqual(derived, digestHex.toLowerCase());
+      } catch {
+        return false;
+      }
     }
     const givenHash = crypto.createHash("sha256").update(password).digest("hex");
     return safeEqual(givenHash, hash.toLowerCase());

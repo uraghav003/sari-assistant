@@ -68,6 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, auth, lessons, skills }),
+      signal: AbortSignal.timeout(15000),
     });
     if (!upstream.ok) {
       res.status(502).json({ ok: false, error: `Apps Script returned HTTP ${upstream.status}.` });

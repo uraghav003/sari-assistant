@@ -74,12 +74,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const trimmedPrompt = prompt.slice(0, MAX_PROMPT_CHARS);
 
     // ─── TIER 1: GOOGLE GEMINI (server-side keys only) ─────────────────────
-    const candidateKeys = [
+    const rawKeys = [
       process.env.GEMINI_API_KEY,
       process.env.MALLIK_API_KEY,
       process.env.GOOGLE_API_KEY,
       process.env.AI_STUDIO_API_KEY,
-    ].filter((k): k is string => typeof k === "string" && k.trim().length > 10);
+    ]
+      .filter((k): k is string => typeof k === "string" && k.trim().length > 10)
+      .map((k) => k.trim());
+    const candidateKeys = Array.from(new Set(rawKeys));
 
     const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
     for (const apiKey of candidateKeys) {
@@ -91,13 +94,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-goog-api-key": apiKey.trim(),
+                "x-goog-api-key": apiKey,
               },
               body: JSON.stringify({
                 systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
                 contents: [{ parts: [{ text: trimmedPrompt }] }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
               }),
+              signal: AbortSignal.timeout(15000),
             }
           );
 
@@ -125,6 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action, prompt: trimmedPrompt, auth }),
+          signal: AbortSignal.timeout(15000),
         });
         if (scriptRes.ok) {
           const scriptData: unknown = await scriptRes.json();

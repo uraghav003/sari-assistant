@@ -53,6 +53,7 @@ async function sendTelegram(text: string): Promise<{ ok: boolean; detail: string
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: config.chatId, text: text.slice(0, 3800) }),
+      signal: AbortSignal.timeout(10000),
     });
     const data: unknown = await res.json().catch(() => null);
     const obj = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
@@ -85,74 +86,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const body = readBody(req);
-  const action = clean(body.action, 40);
+  try {
+    const body = readBody(req);
+    const action = clean(body.action, 40);
 
-  switch (action) {
-    case "status": {
-      res.status(200).json({
-        ok: true,
-        telegramConfigured: telegramConfig() !== null,
-        supabaseConfigured: supabaseConfig() !== null,
-      });
-      return;
-    }
-
-    case "test_telegram": {
-      const result = await sendTelegram("SARI alert channel test — dispatch path is live.");
-      res.status(200).json({ ok: result.ok, detail: result.detail });
-      return;
-    }
-
-    case "test_supabase": {
-      const config = supabaseConfig();
-      if (!config) {
-        res.status(200).json({ ok: false, detail: "Supabase is not configured on the server." });
-        return;
-      }
-      try {
-        const probe = await fetch(`${config.url}/rest/v1/`, {
-          headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
-        });
-        // 401/404 still prove the endpoint exists and answered.
-        res.status(200).json({ ok: true, detail: `Endpoint reachable (HTTP ${probe.status}).` });
-      } catch {
-        res.status(200).json({ ok: false, detail: "Could not reach the Supabase endpoint." });
-      }
-      return;
-    }
-
-    case "dispatch": {
-      const lead = (body.lead && typeof body.lead === "object" ? body.lead : {}) as LeadPayload;
-      const name = clean(lead.name) || "Unnamed lead";
-      const source = clean(lead.source) || "unknown";
-      const intent = clean(lead.intent) || "unspecified";
-      const message = `New lead\nName: ${name}\nSource: ${source}\nIntent: ${intent}`;
-      const configured = telegramConfig() !== null;
-      const result = await sendTelegram(message);
-
-      // Telegram is optional: an unconfigured channel is not an error. The client
-      // records the alert in its in-app feed instead.
-      if (!configured) {
+    switch (action) {
+      case "status": {
         res.status(200).json({
           ok: true,
-          delivered: false,
-          channel: "in_app",
-          detail: "Telegram is not configured — the alert was kept in the in-app feed.",
+          telegramConfigured: telegramConfig() !== null,
+          supabaseConfigured: supabaseConfig() !== null,
         });
         return;
       }
 
-      res.status(200).json({
-        ok: result.ok,
-        delivered: result.ok,
-        channel: result.ok ? "telegram" : "in_app",
-        detail: result.detail,
-      });
-      return;
-    }
+      case "test_telegram": {
+        const result = await sendTelegram("SARI alert channel test — dispatch path is live.");
+        res.status(200).json({ ok: result.ok, detail: result.detail });
+        return;
+      }
 
-    default:
-      res.status(400).json({ ok: false, error: "Unknown action." });
+      case "test_supabase": {
+        const config = supabaseConfig();
+        if (!config) {
+          res.status(200).json({ ok: false, detail: "Supabase is not configured on the server." });
+          return;
+        }
+        try {
+          const probe = await fetch(`${config.url}/rest/v1/`, {
+            headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+            signal: AbortSignal.timeout(10000),
+          });
+          // 401/404 still prove the endpoint exists and answered.
+          res.status(200).json({ ok: true, detail: `Endpoint reachable (HTTP ${probe.status}).` });
+        } catch {
+          res.status(200).json({ ok: false, detail: "Could not reach the Supabase endpoint." });
+        }
+        return;
+      }
+
+      case "dispatch": {
+        const lead = (body.lead && typeof body.lead === "object" && !Array.isArray(body.lead) ? body.lead : {}) as LeadPayload;
+        const name = clean(lead.name) || "Unnamed lead";
+        const source = clean(lead.source) || "unknown";
+        const intent = clean(lead.intent) || "unspecified";
+        const message = `New lead\nName: ${name}\nSource: ${source}\nIntent: ${intent}`;
+        const configured = telegramConfig() !== null;
+        const result = await sendTelegram(message);
+
+        // Telegram is optional: an unconfigured channel is not an error. The client
+        // records the alert in its in-app feed instead.
+        if (!configured) {
+          res.status(200).json({
+            ok: true,
+            delivered: false,
+            channel: "in_app",
+            detail: "Telegram is not configured — the alert was kept in the in-app feed.",
+          });
+          return;
+        }
+
+        res.status(200).json({
+          ok: result.ok,
+          delivered: result.ok,
+          channel: result.ok ? "telegram" : "in_app",
+          detail: result.detail,
+        });
+        return;
+      }
+
+      default:
+        res.status(400).json({ ok: false, error: "Unknown action." });
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal leads error";
+    res.status(500).json({ ok: false, error: message });
   }
 }

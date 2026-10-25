@@ -40,30 +40,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const body = readBody(req);
-  const text = (value: unknown, max: number): string =>
-    typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, max) : "";
+  try {
+    const body = readBody(req);
+    const text = (value: unknown, max: number): string =>
+      typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, max) : "";
 
-  const action = text(body.action, 80);
-  const status = text(body.status, 40);
-  const detail = text(body.detail, 300);
+    const action = text(body.action, 80);
+    const status = text(body.status, 40);
+    const detail = text(body.detail, 300);
 
-  if (!action) {
-    res.status(400).json({ ok: false, error: "action is required" });
-    return;
+    if (!action) {
+      res.status(400).json({ ok: false, error: "action is required" });
+      return;
+    }
+
+    // Single-line JSON: greppable in `vercel logs`, no PII beyond what the caller sent.
+    console.log(
+      JSON.stringify({
+        type: "sari.audit",
+        at: new Date().toISOString(),
+        action,
+        status,
+        detail,
+        ip: clientIp(req),
+      })
+    );
+
+    res.status(202).json({ ok: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal audit error";
+    res.status(500).json({ ok: false, error: message });
   }
-
-  // Single-line JSON: greppable in `vercel logs`, no PII beyond what the caller sent.
-  console.log(
-    JSON.stringify({
-      type: "sari.audit",
-      at: new Date().toISOString(),
-      action,
-      status,
-      detail,
-      ip: clientIp(req),
-    })
-  );
-
-  res.status(202).json({ ok: true });
 }

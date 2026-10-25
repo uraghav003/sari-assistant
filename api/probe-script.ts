@@ -1,22 +1,54 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { applyApiHeaders } from "./_security.js";
+import {
+  applyApiHeaders,
+  clientIp,
+  isSameOrigin,
+  rateLimit,
+  tooManyRequests,
+} from "./_security.js";
+
+const PROBE_WINDOW_MS = 60 * 1000;
+const PROBE_MAX_REQUESTS = 20;
+const CANONICAL_DEPLOYMENT_ID =
+  "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);
 
-  const deploymentId = typeof req.query.deploymentId === "string" ? req.query.deploymentId.trim() : "";
-  const targetId = deploymentId || "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
+  if (!isSameOrigin(req)) {
+    res.status(403).json({ ok: false, error: "Cross-origin requests are not permitted." });
+    return;
+  }
+
+  if (req.method !== "GET") {
+    res.status(405).json({ ok: false, error: "Method not allowed. Use GET." });
+    return;
+  }
+
+  const limit = rateLimit(`probe:${clientIp(req)}`, PROBE_MAX_REQUESTS, PROBE_WINDOW_MS);
+  if (!limit.ok) {
+    tooManyRequests(res, limit.retryAfter);
+    return;
+  }
+
+  const rawId = typeof req.query?.deploymentId === "string" ? req.query.deploymentId.trim() : "";
+  if (rawId && !/^[A-Za-z0-9_-]{20,100}$/.test(rawId)) {
+    res.status(400).json({ ok: false, error: "Invalid deploymentId format." });
+    return;
+  }
+
+  const targetId = rawId || CANONICAL_DEPLOYMENT_ID;
   const url = `https://script.google.com/macros/s/${targetId}/exec?action=status`;
 
+  let timeout: NodeJS.Timeout | undefined;
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    timeout = setTimeout(() => controller.abort(), 10000);
     const upstream = await fetch(url, {
       method: "GET",
       signal: controller.signal,
-      headers: { "Accept": "application/json" }
+      headers: { Accept: "application/json" },
     });
-    clearTimeout(timeout);
 
     if (!upstream.ok) {
       res.status(upstream.status).json({ ok: false, error: `Apps Script HTTP ${upstream.status}` });
@@ -32,5 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Connection failed";
     res.status(502).json({ ok: false, error: message });
+  } finally {
+    clearTimeout(timeout);
   }
 }

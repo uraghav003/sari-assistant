@@ -9,12 +9,12 @@ import { applyApiHeaders, authConfigured, sessionFromRequest, verifyToken } from
  * here so a misconfigured deployment can be diagnosed without server access.
  */
 function configChecks(): Record<string, boolean> {
+  const customShared = process.env.SARI_SHARED_SECRET?.trim();
+  const validShared = customShared !== undefined ? customShared.length >= 32 : true;
   return {
     sessionSecret: authConfigured(),
     passwordCredential: authConfigured(),
-    sharedSecret: Boolean(
-      (process.env.SARI_SHARED_SECRET && process.env.SARI_SHARED_SECRET.trim().length >= 32) || true
-    ),
+    sharedSecret: validShared,
     modelKey: Boolean(
       process.env.GEMINI_API_KEY ||
         process.env.MALLIK_API_KEY ||
@@ -32,13 +32,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const checks = configChecks();
+  try {
+    const checks = configChecks();
 
-  if (!authConfigured()) {
-    res.status(503).json({ ok: false, configured: false, checks });
-    return;
+    if (!authConfigured()) {
+      res.status(503).json({ ok: false, configured: false, checks });
+      return;
+    }
+
+    const authenticated = verifyToken(sessionFromRequest(req));
+    res.status(200).json({ ok: authenticated, configured: true, checks });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal session error";
+    res.status(500).json({ ok: false, error: message });
   }
-
-  const authenticated = verifyToken(sessionFromRequest(req));
-  res.status(200).json({ ok: authenticated, configured: true, checks });
 }

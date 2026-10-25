@@ -13,7 +13,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(405).json({ ok: false, error: "Method not allowed. Use POST." });
     return;
   }
-
-  clearSessionCookie(res);
-  res.status(200).json({ ok: true });
+  try {
+    clearSessionCookie(res);
+    res.status(200).json({ ok: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal logout error";
+    res.status(500).json({ ok: false, error: message });
+  }
 }
