@@ -1,77 +1,106 @@
 # ==============================================================================
-# SARI — Sovereign Automation Fix & Diagnostic Pipeline
+# SARI — local verification pipeline
+#
+# Checks the repo and reports the *live* deployment state. It does not claim
+# success for steps it cannot perform: setting Vercel environment variables
+# needs an account token (scripts/set-vercel-env.ps1) and Apps Script needs a
+# one-time owner consent.
 # ==============================================================================
 [CmdletBinding()]
-param()
+param(
+    [switch]$SyncGitHubSecrets
+)
 
 $ErrorActionPreference = "Stop"
 
-$workspace = "C:\Users\aecr\workspace\sari-assistant"
-Set-Location $workspace
+$repoRoot = Split-Path -Parent $PSScriptRoot
+if (-not (Test-Path (Join-Path $repoRoot "package.json"))) {
+    Write-Host "[X] Run from the repository's scripts directory." -ForegroundColor Red
+    exit 1
+}
+Set-Location $repoRoot
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " [SARI] 1-CLICK POWERSHELL SOVEREIGN SYSTEM REPAIR & SYNC " -ForegroundColor Yellow
+Write-Host " [SARI] LOCAL VERIFICATION PIPELINE                       " -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "Repository: $repoRoot" -ForegroundColor DarkGray
 
-# 1. Load Secrets into Process Environment
-$envFile = Join-Path $workspace ".env.production.local"
+# 1. Environment file
+$envFile = Join-Path $repoRoot ".env.production.local"
 if (-not (Test-Path $envFile)) {
-    Write-Host "[*] .env.production.local not found. Running secret generator..." -ForegroundColor Yellow
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$workspace\scripts\rotate-secrets.ps1" -Force -Password "MALLIK_AI" -Email "u.raghav003@gmail.com"
+    Write-Host "[X] $envFile not found." -ForegroundColor Red
+    Write-Host "    Generate it with: pwsh ./scripts/rotate-secrets.ps1" -ForegroundColor Gray
+    exit 1
 }
 
 $envMap = @{}
 Get-Content $envFile | ForEach-Object {
     if ($_ -match '^\s*([A-Z0-9_]+)=(.*)$') {
-        $key = $Matches[1]
-        $val = $Matches[2]
-        $envMap[$key] = $val
-        [System.Environment]::SetEnvironmentVariable($key, $val, "Process")
+        $envMap[$Matches[1]] = $Matches[2]
+        [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
     }
 }
-Write-Host "[1/5] Loaded all production secrets into PowerShell environment." -ForegroundColor Green
+Write-Host "[1/4] Loaded $($envMap.Count) values from .env.production.local into this process." -ForegroundColor Green
 
-# 2. Sync to GitHub Secrets via gh CLI
-Write-Host "[2/5] Deploying secrets to GitHub repository..." -ForegroundColor Cyan
-foreach ($k in @("SARI_LOGIN_EMAIL", "SARI_PASSWORD", "SARI_PASSWORD_HASH", "SARI_SESSION_SECRET", "SARI_SHARED_SECRET")) {
-    if ($envMap.ContainsKey($k)) {
-        $body = $envMap[$k]
-        gh secret set $k --body "$body"
-        Write-Host "      -> Synced secret: $k" -ForegroundColor DarkGray
+# 2. Optional: GitHub Actions secrets. This has no effect on Vercel.
+if ($SyncGitHubSecrets) {
+    Write-Host "[2/4] Syncing GitHub Actions secrets (does NOT configure Vercel)..." -ForegroundColor Cyan
+    foreach ($key in @("SARI_LOGIN_EMAIL", "SARI_PASSWORD", "SARI_PASSWORD_HASH", "SARI_SESSION_SECRET", "SARI_SHARED_SECRET")) {
+        if ($envMap.ContainsKey($key)) {
+            gh secret set $key --body "$($envMap[$key])" | Out-Null
+            Write-Host "      -> $key" -ForegroundColor DarkGray
+        }
     }
+    Write-Host "      GitHub secrets updated. Vercel is still unconfigured." -ForegroundColor Yellow
+} else {
+    Write-Host "[2/4] Skipped GitHub secrets (use -SyncGitHubSecrets if you need them)." -ForegroundColor DarkGray
 }
-Write-Host "[OK] GitHub Secrets: 100% SYNCHRONIZED" -ForegroundColor Green
 
-# 3. Verify Codebase Integrity & Build Artifacts
-Write-Host "[3/5] Verifying TypeScript contracts & Vite bundle..." -ForegroundColor Cyan
+# 3. Code checks
+Write-Host "[3/4] Typecheck, contract tests, production build..." -ForegroundColor Cyan
 npm run typecheck
-if ($LASTEXITCODE -ne 0) { Write-Error "TypeScript check failed"; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "[X] TypeScript failed" -ForegroundColor Red; exit 1 }
 
 npm run test:api
-if ($LASTEXITCODE -ne 0) { Write-Error "API contract tests failed"; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "[X] API tests failed" -ForegroundColor Red; exit 1 }
 
 npm run build
-if ($LASTEXITCODE -ne 0) { Write-Error "Vite production build failed"; exit 1 }
-Write-Host "[OK] Production Bundle: COMPILED & VALIDATED (34/34 Tests Passing)" -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) { Write-Host "[X] Build failed" -ForegroundColor Red; exit 1 }
+Write-Host "[OK] Code is green." -ForegroundColor Green
 
-# 4. Probe Vercel Production
-Write-Host "[4/5] Probing Vercel Production Endpoint..." -ForegroundColor Cyan
+# 4. Live verification — the part that answers "does it work?"
+Write-Host "[4/4] Probing the live deployment..." -ForegroundColor Cyan
+$session = $null
 try {
-    $res = Invoke-WebRequest -Uri "https://sari-supreme-command.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
-    Write-Host "[OK] Vercel Frontend: ONLINE (HTTP $($res.StatusCode))" -ForegroundColor Green
+    $session = Invoke-RestMethod -Uri "https://sari-supreme-command.vercel.app/api/session" -TimeoutSec 20
 } catch {
-    Write-Host "[!] Vercel Frontend Notice: $_" -ForegroundColor Yellow
+    Write-Host "[!] Could not reach /api/session: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
-# 5. Output Ready-To-Paste Snippet
 Write-Host ""
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " [OK] ALL REPAIRS & VERIFICATIONS COMPLETE VIA POWERSHELL " -ForegroundColor Green
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "To copy any secret directly to your clipboard, run:" -ForegroundColor Yellow
-Write-Host "  pwsh ./scripts/copy-env.ps1 -Name SARI_SESSION_SECRET" -ForegroundColor Gray
-Write-Host "  pwsh ./scripts/copy-env.ps1 -Name SARI_SHARED_SECRET" -ForegroundColor Gray
-Write-Host "  pwsh ./scripts/copy-env.ps1 -Name SARI_PASSWORD_HASH" -ForegroundColor Gray
-Write-Host "  pwsh ./scripts/copy-env.ps1 -Name SARI_LOGIN_EMAIL" -ForegroundColor Gray
-Write-Host ""
+Write-Host "----------------------------------------------------------" -ForegroundColor DarkGray
+if ($session -and $session.configured -eq $true) {
+    Write-Host " VERDICT: Vercel is configured. Sign in at /login." -ForegroundColor Green
+} else {
+    Write-Host " VERDICT: NOT CONFIGURED - the app cannot be used yet." -ForegroundColor Red
+    if ($session -and $session.checks) {
+        $labels = [ordered]@{
+            sessionSecret      = "SARI_SESSION_SECRET"
+            passwordCredential = "SARI_PASSWORD_HASH"
+            sharedSecret       = "SARI_SHARED_SECRET"
+            modelKey           = "GEMINI_API_KEY"
+        }
+        foreach ($k in $labels.Keys) {
+            $ok = $session.checks.$k -eq $true
+            $mark = if ($ok) { "[set]    " } else { "[MISSING]" }
+            Write-Host ("  {0} {1}" -f $mark, $labels[$k]) -ForegroundColor $(if ($ok) { "Green" } else { "Red" })
+        }
+    }
+    Write-Host ""
+    Write-Host " Fix it with either:" -ForegroundColor Yellow
+    Write-Host "   pwsh ./scripts/set-vercel-env.ps1 -Token <vercel-token> -Redeploy" -ForegroundColor Gray
+    Write-Host "   or Vercel -> Settings -> Environment Variables (Production) -> Redeploy" -ForegroundColor Gray
+}
+Write-Host "----------------------------------------------------------" -ForegroundColor DarkGray
+
+if (-not ($session -and $session.configured -eq $true)) { exit 1 }
