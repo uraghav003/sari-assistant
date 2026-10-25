@@ -28,6 +28,7 @@ import sessionHandler from "./api/session.js";
 import chatHandler from "./api/chat.js";
 import leadsHandler from "./api/leads.js";
 import auditHandler from "./api/audit.js";
+import changePasswordHandler from "./api/change-password.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 interface MockResponse {
@@ -284,6 +285,33 @@ async function run(): Promise<void> {
     check("logout returns 200", res.statusCode === 200);
     check("logout expires the cookie", /Max-Age=0/.test(res.headers["set-cookie"] || ""));
   }
+  // 12. Change password rejects invalid credentials and accepts valid rotation
+  {
+    const res = createMockResponse();
+    await changePasswordHandler(
+      request("POST", {
+        email: "md@divyanshicapital.com",
+        currentPassword: "wrong-password",
+        newPassword: "new-secret-password-123",
+      }),
+      res.res
+    );
+    check("change password rejects wrong current password", res.statusCode === 401);
+  }
+  {
+    const res = createMockResponse();
+    await changePasswordHandler(
+      request("POST", {
+        email: "md@divyanshicapital.com",
+        currentPassword: "test-password",
+        newPassword: "new-secret-password-123",
+      }),
+      res.res
+    );
+    const payload = res.data as Record<string, unknown>;
+    check("change password succeeds with valid current password", res.statusCode === 200 && payload.ok === true);
+  }
+
 
   console.log(`\nPASS — ${checks.length} assertions`);
 }

@@ -22,14 +22,16 @@ $outFile = Join-Path $repoRoot ".env.production.local"
 
 function New-Secret([int]$Bytes = 32) {
     $buffer = [byte[]]::new($Bytes)
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $rng.GetBytes($buffer)
     return ($buffer | ForEach-Object { $_.ToString("x2") }) -join ""
 }
 
 function New-Password([int]$Length = 24) {
     $alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*-_=+"
     $bytes = [byte[]]::new($Length)
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $rng.GetBytes($bytes)
     $chars = for ($i = 0; $i -lt $Length; $i++) {
         $alphabet[$bytes[$i] % $alphabet.Length]
     }
@@ -63,7 +65,7 @@ if ($LASTEXITCODE -ne 0 -or -not $hash) {
 }
 
 $lines = @(
-    "# Generated $(Get-Date -Format o) — do not commit. Rotate via SECURITY.md.",
+    "# Generated $(Get-Date -Format o) - do not commit. Rotate via SECURITY.md.",
     "# The server uses SARI_PASSWORD_HASH; SARI_PASSWORD below is the plaintext copy",
     "# for your first login only. Delete that line once it is in your password manager.",
     "SARI_SESSION_SECRET=$sessionSecret",
@@ -79,26 +81,26 @@ Write-Host "Wrote $outFile" -ForegroundColor Green
 Write-Host ""
 if ($generated) {
     Write-Host "  LOGIN PASSWORD: $Password" -ForegroundColor Cyan
-    Write-Host "  Store this in your password manager now — it is only shown here." -ForegroundColor Yellow
+    Write-Host "  Store this in your password manager now - it is only shown here." -ForegroundColor Yellow
 } else {
     Write-Host "  Login password: the value you supplied." -ForegroundColor Cyan
 }
 Write-Host "  Login email:    $Email" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps" -ForegroundColor Yellow
-Write-Host "1. Vercel → Project → Settings → Environment Variables (Production + Preview):"
+Write-Host "1. Vercel -> Project -> Settings -> Environment Variables (Production + Preview):"
 Write-Host "     SARI_SESSION_SECRET  = value from $outFile"
 Write-Host "     SARI_SHARED_SECRET   = value from $outFile"
 Write-Host "     SARI_LOGIN_EMAIL     = $Email"
 Write-Host "     SARI_PASSWORD_HASH   = value from $outFile"
 Write-Host "     GEMINI_API_KEY       = your AI Studio key (optional)"
-Write-Host "2. Apps Script → Project Settings → Script Properties:"
+Write-Host "2. Apps Script -> Project Settings -> Script Properties:"
 Write-Host "     SARI_SHARED_SECRET   = same value as Vercel"
 Write-Host "     MALLIK_API_KEY       = your AI Studio key"
-Write-Host "3. Apps Script → Deploy → Manage deployments → New version → Deploy, then archive the old deployment."
-Write-Host "4. Vercel → Deployments → Redeploy (env changes apply on a new build)."
+Write-Host "3. Apps Script -> Deploy -> Manage deployments -> New version -> Deploy, then archive the old deployment."
+Write-Host "4. Vercel -> Deployments -> Redeploy (env changes apply on a new build)."
 Write-Host "5. Verify:"
 Write-Host "     curl -s https://sari-supreme-command.vercel.app/api/session"
-Write-Host "     expected: {`"ok`":false,`"configured`":true}"
+Write-Host '     expected: {"ok":false,"configured":true}'
 Write-Host ""
 Write-Host "Until step 4 completes, the app fails closed with 503 by design." -ForegroundColor DarkGray

@@ -70,6 +70,33 @@ export async function loginWithServer(
   }
 }
 
+export async function changePasswordWithServer(
+  email: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ ok: boolean; error?: string; message?: string }> {
+  try {
+    const res = await fetch("/api/change-password", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), currentPassword, newPassword }),
+    });
+
+    const data: unknown = await res.json().catch(() => null);
+    const obj = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+
+    if (res.ok && obj.ok === true) {
+      return { ok: true, message: typeof obj.message === "string" ? obj.message : "Password changed successfully" };
+    }
+
+    const message = typeof obj.error === "string" ? obj.error : "Failed to change password";
+    return { ok: false, error: message };
+  } catch {
+    return { ok: false, error: "Network error — failed to reach server" };
+  }
+}
+
 export async function logout(): Promise<void> {
   try {
     await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
