@@ -11,6 +11,7 @@ import { subscribeAlerts, unreadCount } from "../lib/notifications";
 const nav = [
   { to: "/", icon: LayoutDashboard, label: "Command" },
   { to: "/chat", icon: MessageSquare, label: "Chat" },
+  { to: "/sari-supreme.html", icon: Sparkles, label: "Supreme Voice", external: true },
   { to: "/skills", icon: Wand2, label: "Skills" },
   { to: "/connections", icon: Link2, label: "Connect" },
   { to: "/leads", icon: Zap, label: "Leads" },
@@ -36,20 +37,34 @@ export default function Layout() {
           </div>
         </div>
         <nav className="nav">
-          {nav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
-            >
-              <span className="nav-icon">
-                <item.icon size={17} />
-                {item.badge && unread > 0 && <span className="nav-badge">{unread > 9 ? "9+" : unread}</span>}
-              </span>
-              <span className="nav-label">{item.label}</span>
-            </NavLink>
-          ))}
+          {nav.map((item) =>
+            item.external ? (
+              <a
+                key={item.to}
+                href={item.to}
+                className="nav-item"
+                title="SARI Supreme Presence Voice Portal"
+              >
+                <span className="nav-icon">
+                  <item.icon size={17} />
+                </span>
+                <span className="nav-label">{item.label}</span>
+              </a>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
+              >
+                <span className="nav-icon">
+                  <item.icon size={17} />
+                  {item.badge && unread > 0 && <span className="nav-badge">{unread > 9 ? "9+" : unread}</span>}
+                </span>
+                <span className="nav-label">{item.label}</span>
+              </NavLink>
+            )
+          )}
         </nav>
         <div className="sidebar-foot">
           <button
