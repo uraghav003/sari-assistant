@@ -37,7 +37,7 @@ Set-Location $RepoRoot
 
 $CanonicalDeploymentId = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3"
 $CanonicalAppsScriptUrl = "https://script.google.com/macros/s/$CanonicalDeploymentId/exec"
-$CanonicalVercelUrl = "https://sari-supreme-command.vercel.app"
+$CanonicalVercelUrl = "https://sari-assistant.vercel.app"
 
 function Show-Header {
     param([string]$Title)
@@ -261,7 +261,7 @@ switch ($Action) {
         $statMsg = if ($sariStat) { $sariStat } else { "CLEAN" }
         Write-Host "   Status:    $statMsg" -ForegroundColor Gray
         try {
-            $sariWeb = Invoke-WebRequest -Uri "https://sari-supreme-command.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
+            $sariWeb = Invoke-WebRequest -Uri "https://sari-assistant.vercel.app" -Method Head -TimeoutSec 10 -UseBasicParsing
             Write-Host "-> SARI Vercel Interface: ONLINE (HTTP $($sariWeb.StatusCode))" -ForegroundColor Green
         } catch {
             Write-Host "-> SARI Vercel Notice: $($_.Exception.Message)" -ForegroundColor Yellow

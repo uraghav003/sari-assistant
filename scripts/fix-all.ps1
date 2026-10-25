@@ -72,7 +72,7 @@ Write-Host "[OK] Code is green." -ForegroundColor Green
 Write-Host "[4/4] Probing the live deployment..." -ForegroundColor Cyan
 $session = $null
 try {
-    $session = Invoke-RestMethod -Uri "https://sari-supreme-command.vercel.app/api/session" -TimeoutSec 20
+    $session = Invoke-RestMethod -Uri "https://sari-assistant.vercel.app/api/session" -TimeoutSec 20
 } catch {
     Write-Host "[!] Could not reach /api/session: $($_.Exception.Message)" -ForegroundColor Yellow
 }

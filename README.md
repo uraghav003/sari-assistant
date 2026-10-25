@@ -4,17 +4,18 @@ Frontend: SARI · Brain: Gemini + signed Apps Script bridge + local Ollama
 Workers: BULBHUL | LAILA
 
 ## Live
-https://sari-supreme-command.vercel.app
+https://sari-assistant.vercel.app
 
-Git-linked: this repo → Vercel project `sari-supreme-command`.
+Git-linked: this repo → Vercel project `sari-assistant` (the one in daily use).
 
 ## Project topology
 
-One repository → **one** Vercel project. A second project, `sari-assistant`,
-deploys the same repo on every push and is redundant; delete it (or disconnect
-its Git integration) so there is no ambiguity about production.
-`scripts/merge-vercel.ps1` performs that merge with an API token, including a
-308 redirect from the old domain.
+One repository → **one** Vercel project: `sari-assistant`.
+
+A second project, `sari-supreme-command`, deploys the same repo on every push and
+is redundant; delete it (or disconnect its Git integration) so there is no
+ambiguity about production. `scripts/merge-vercel.ps1` performs that merge with
+an API token, including a 308 redirect from the retired domain.
 
 One local checkout as well. A second clone under `C:\Users\aecr\workspace` was
 retired to `sari-assistant.DUPLICATE-20261025`; two clones with two

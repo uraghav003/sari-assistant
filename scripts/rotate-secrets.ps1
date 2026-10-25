@@ -100,7 +100,7 @@ Write-Host "     MALLIK_API_KEY       = your AI Studio key"
 Write-Host "3. Apps Script -> Deploy -> Manage deployments -> New version -> Deploy, then archive the old deployment."
 Write-Host "4. Vercel -> Deployments -> Redeploy (env changes apply on a new build)."
 Write-Host "5. Verify:"
-Write-Host "     curl -s https://sari-supreme-command.vercel.app/api/session"
+Write-Host "     curl -s https://sari-assistant.vercel.app/api/session"
 Write-Host '     expected: {"ok":false,"configured":true}'
 Write-Host ""
 Write-Host "Until step 4 completes, the app fails closed with 503 by design." -ForegroundColor DarkGray

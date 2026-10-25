@@ -1,7 +1,7 @@
 # ==============================================================================
 # SARI — collapse two Vercel projects into one
 #
-# Both `sari-supreme-command` and `sari-assistant` deploy the same repository on
+# Both `sari-assistant` and `sari-supreme-command` deploy the same repository on
 # every push. This script:
 #
 #   1. writes the four environment variables to the surviving project
@@ -18,8 +18,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Token,
-    [string]$Survivor = "sari-supreme-command",
-    [string]$Redundant = "sari-assistant",
+    [string]$Survivor = "sari-assistant",
+    [string]$Redundant = "sari-supreme-command",
     [string]$TeamId,
     [switch]$ConfirmDelete,
     [switch]$Redeploy

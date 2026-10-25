@@ -271,7 +271,7 @@ git grep -nE "[REDACTED]|sari_sovereign_secure_hmac_secret|divyanshi2026|admin78
 
 ---
 
-*Static audit only. The live deployment (`sari-supreme-command.vercel.app`) was not reachable from this environment (TLS blocked), so C1/C2 were proven by code path, not by request. The proofs are unconditional: `isAuthorized` is unused, and `doPost` has no guard.*
+*Static audit only. The live deployment (`sari-assistant.vercel.app`) was not reachable from this environment (TLS blocked), so C1/C2 were proven by code path, not by request. The proofs are unconditional: `isAuthorized` is unused, and `doPost` has no guard.*
 
 ---
 

@@ -12,7 +12,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Token,
-    [string]$ProjectName = "sari-supreme-command",
+    [string]$ProjectName = "sari-assistant",
     [string]$TeamId,
     [switch]$Redeploy
 )
@@ -138,5 +138,5 @@ if ($Redeploy) {
 
 Write-Host ""
 Write-Host "Verify in ~60s:" -ForegroundColor Cyan
-Write-Host "  curl -s https://sari-supreme-command.vercel.app/api/session" -ForegroundColor Gray
+Write-Host "  curl -s https://sari-assistant.vercel.app/api/session" -ForegroundColor Gray
 Write-Host '  expected: {"ok":false,"configured":true,"checks":{...all true...}}' -ForegroundColor DarkGray
