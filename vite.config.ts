@@ -5,15 +5,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/')) {
-              return 'vendor';
-            }
-            if (id.includes('html2canvas')) {
-              return 'canvas';
-            }
-          }
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
         },
       },
     },
