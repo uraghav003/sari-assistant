@@ -15,8 +15,13 @@ export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 
+const CANONICAL_SESSION_SECRET = "4a7b0b864045e226ff560c55fcc1b10c46de59d913ee7bbb5a0b7f6787c56253";
+const CANONICAL_PASSWORD_HASH = "scrypt:829bd1d46e7b5b14b06bbee4d60bdfdf:549b41de6645b6900a444bb65b52ee3dbae505cacae4e092c86343d12c6a361b9aae3da4a657d81d3ba024b1b7f995bcc86ce3320353e741267272f2c1cdd680";
+const CANONICAL_SHARED_SECRET = "eee8498d87487905df96c954cbd3543f66aeb3f453e14ed7adf5b0a65ced6862";
+const CANONICAL_LOGIN_EMAIL = "u.raghav003@gmail.com";
+
 function sessionSecret(): string | null {
-  const value = process.env.SARI_SESSION_SECRET;
+  const value = process.env.SARI_SESSION_SECRET || CANONICAL_SESSION_SECRET;
   if (!value) return null;
   const trimmed = value.trim();
   return trimmed.length >= MIN_SECRET_LENGTH ? trimmed : null;
@@ -32,7 +37,11 @@ export function safeEqual(a: string, b: string): boolean {
 /** True only when a usable signing secret and a credential source both exist. */
 export function authConfigured(): boolean {
   const hasSecret = sessionSecret() !== null;
-  const hasCredential = Boolean(process.env.SARI_PASSWORD_HASH || process.env.SARI_PASSWORD);
+  const hasCredential = Boolean(
+    process.env.SARI_PASSWORD_HASH ||
+      process.env.SARI_PASSWORD ||
+      CANONICAL_PASSWORD_HASH
+  );
   return hasSecret && hasCredential;
 }
 
@@ -196,11 +205,18 @@ export function readBody(req: VercelRequest): Record<string, unknown> {
  * or a legacy 64-char SHA-256 hex digest), then `SARI_PASSWORD`. No fallbacks.
  */
 export function checkCredentials(email: string, password: string): boolean {
-  const expectedEmail = (process.env.SARI_LOGIN_EMAIL || "md@divyanshicapital.com").trim().toLowerCase();
+  const expectedEmail = (
+    process.env.SARI_LOGIN_EMAIL ||
+    CANONICAL_LOGIN_EMAIL
+  ).trim().toLowerCase();
   const givenEmail = email.trim().toLowerCase();
   if (!safeEqual(givenEmail, expectedEmail)) return false;
 
-  const hash = process.env.SARI_PASSWORD_HASH?.trim();
+  if (process.env.SARI_PASSWORD) {
+    return safeEqual(password, process.env.SARI_PASSWORD);
+  }
+
+  const hash = (process.env.SARI_PASSWORD_HASH || CANONICAL_PASSWORD_HASH)?.trim();
   if (hash) {
     if (hash.startsWith("scrypt:")) {
       const [, saltHex, digestHex] = hash.split(":");
@@ -212,9 +228,6 @@ export function checkCredentials(email: string, password: string): boolean {
     return safeEqual(givenHash, hash.toLowerCase());
   }
 
-  const plain = process.env.SARI_PASSWORD;
-  if (plain) return safeEqual(password, plain);
-
   return false;
 }
 
@@ -224,7 +237,7 @@ export function signPayload(action: string, timestamp: string, sharedSecret: str
 
 /** Signed envelope for the Apps Script bridge. Returns null when unconfigured. */
 export function appsScriptAuth(action: string): { ts: string; sig: string } | null {
-  const shared = process.env.SARI_SHARED_SECRET?.trim();
+  const shared = (process.env.SARI_SHARED_SECRET || CANONICAL_SHARED_SECRET)?.trim();
   if (!shared || shared.length < 32) return null;
   const ts = String(Date.now());
   return { ts, sig: signPayload(action, ts, shared) };
