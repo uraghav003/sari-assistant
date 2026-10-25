@@ -316,8 +316,12 @@ credential-pattern scan over the tracked tree.
    still in git history; they are only harmless once rotated.
 2. **Configure the deployment** — set the variables in `.env.example` in Vercel and in
    Apps Script Script Properties (`SARI_SHARED_SECRET` must match). Until then the app
-   fails closed with 503 by design.
-3. **Redeploy Apps Script** under a new deployment and archive the old one.
+   fails closed with 503 by design. Note: a model key in Script Properties is **not**
+   the bridge secret.
+3. **Deploy an Apps Script version** — the project files already contain v4.0.0
+   (`clasp push` run on 2026-10-25); the live `/exec` URL still serves v3.2.0. Set
+   `SARI_SHARED_SECRET` first, then Deploy → New version.
+
 4. ~~Commit and push~~ — done in `d8aed4a`. Device-side cleanup of credentials left by
    older builds is automatic (`src/lib/privacy.ts`); server-side values still need
    rotating.
