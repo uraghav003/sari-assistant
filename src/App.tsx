@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { checkSession, subscribeAuth } from "./lib/auth";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
@@ -47,7 +48,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route
@@ -71,6 +72,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <SpeedInsights />
-    </>
+    </ErrorBoundary>
   );
 }

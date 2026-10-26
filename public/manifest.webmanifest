@@ -16,8 +16,11 @@
   ],
   "shortcuts": [
     { "name": "Supreme Voice", "short_name": "Voice", "url": "/sari-supreme.html" },
+    { "name": "Chat with SARI", "short_name": "Chat", "url": "/chat" },
+    { "name": "Mini Terminal", "short_name": "Terminal", "url": "/terminal" },
     { "name": "Alerts", "short_name": "Alerts", "url": "/alerts" },
-    { "name": "Chat", "short_name": "Chat", "url": "/chat" },
     { "name": "Leads", "short_name": "Leads", "url": "/leads" }
-  ]
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "prefer_related_applications": false
 }
