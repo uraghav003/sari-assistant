@@ -4,6 +4,7 @@ dist/
 .env
 .env.local
 .env.*.local
+.env*.bak
 *.log
 .npm-cache/
 
@@ -16,3 +17,8 @@ apps-script-properties.json
 *control*.json
 sari-control.json
 src/knowledge/*control*.json
+
+# Ruflo local secrets and runtime data
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/

@@ -10,6 +10,7 @@ import {
   isSameOrigin,
   rateLimit,
   readBody,
+  requireSession,
   resetRateLimit,
   tooManyRequests,
 } from "./_security.js";
@@ -23,7 +24,7 @@ function hashPassword(password: string): string {
   return `scrypt:${salt.toString("hex")}:${hash.toString("hex")}`;
 }
 
-function updateLocalEnv(newPassword: string, newHash: string): boolean {
+function updateLocalEnv(newHash: string): boolean {
   try {
     const cwd = process.cwd();
     const envProdPath = path.resolve(cwd, ".env.production.local");
@@ -34,18 +35,11 @@ function updateLocalEnv(newPassword: string, newHash: string): boolean {
 
     for (const filePath of targetFiles) {
       let content = fs.readFileSync(filePath, "utf8");
-      if (/^SARI_PASSWORD=/m.test(content)) {
-        content = content.replace(/^SARI_PASSWORD=.*$/m, () => `SARI_PASSWORD=${newPassword}`);
-      } else {
-        content += `\nSARI_PASSWORD=${newPassword}`;
-      }
-
       if (/^SARI_PASSWORD_HASH=/m.test(content)) {
         content = content.replace(/^SARI_PASSWORD_HASH=.*$/m, () => `SARI_PASSWORD_HASH=${newHash}`);
       } else {
         content += `\nSARI_PASSWORD_HASH=${newHash}`;
       }
-
       fs.writeFileSync(filePath, content, "utf8");
     }
     return true;
@@ -80,6 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
+  if (!requireSession(req, res)) return;
+
   try {
     const body = readBody(req);
     const email = typeof body.email === "string" ? body.email.trim() : "";
@@ -91,8 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
 
-    if (newPassword.length < 6) {
-      res.status(400).json({ ok: false, error: "New password must be at least 6 characters long" });
+    if (newPassword.length < 12) {
+      res.status(400).json({ ok: false, error: "New password must be at least 12 characters long" });
       return;
     }
 
@@ -112,15 +108,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const newHash = hashPassword(newPassword);
 
-    process.env.SARI_PASSWORD = newPassword;
     process.env.SARI_PASSWORD_HASH = newHash;
+    delete process.env.SARI_PASSWORD;
 
-    const persistedLocally = updateLocalEnv(newPassword, newHash);
+    const persistedLocally = updateLocalEnv(newHash);
 
     res.status(200).json({
       ok: true,
       message: "Password changed successfully",
-      newHash,
       persistedLocally,
     });
   } catch (err: unknown) {

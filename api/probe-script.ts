@@ -4,6 +4,7 @@ import {
   clientIp,
   isSameOrigin,
   rateLimit,
+  requireSession,
   tooManyRequests,
 } from "./_security.js";
 
@@ -24,6 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(405).json({ ok: false, error: "Method not allowed. Use GET." });
     return;
   }
+
+  if (!requireSession(req, res)) return;
 
   const limit = rateLimit(`probe:${clientIp(req)}`, PROBE_MAX_REQUESTS, PROBE_WINDOW_MS);
   if (!limit.ok) {
