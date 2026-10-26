@@ -1,5 +1,5 @@
 /**
- * SARI Supreme Command — Apps Script Autopilot Core v4.0.0
+ * SARI Supreme Command — Apps Script Autopilot Core v4.1.0
  *
  * Every write path is gated by an HMAC signature over `<action>.<timestamp>`
  * using SARI_SHARED_SECRET (Script Properties). There is no caller-supplied
@@ -13,7 +13,8 @@ var ALLOWED_ACTIONS = [
   "sync_memory",
   "autopilot_learn",
   "notion_sync",
-  "notebooklm_sync"
+  "notebooklm_sync",
+  "terminal_status"
 ];
 
 var AUTH_WINDOW_MS = 5 * 60 * 1000;
@@ -68,7 +69,7 @@ function doGet(e) {
     return jsonOut_({
       status: "ok",
       system: "SARI_SUPREME_COMMAND_AUTOPILOT",
-      version: "4.0.0",
+      version: "4.1.0",
       time: new Date().toISOString()
     });
   }
@@ -211,6 +212,16 @@ function doPost(e) {
       var folderId = String(payload.folderId || "").slice(0, 100);
       if (folderId) props_().setProperty("NOTEBOOKLM_FOLDER_ID", folderId);
       response.result = { notebooklmConfigured: true, folderSet: Boolean(folderId) };
+      return jsonOut_(response);
+    }
+    if (action === "terminal_status") {
+      var cfg = checkConfiguration();
+      response.result = {
+        system: "SARI_SUPREME_COMMAND",
+        version: "4.1.0",
+        configuration: cfg,
+        uptime: new Date().toISOString()
+      };
       return jsonOut_(response);
     }
 

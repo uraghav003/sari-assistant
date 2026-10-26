@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Lock, Mail, KeyRound, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Sparkles, Lock, Mail, KeyRound, ArrowLeft, CheckCircle2, Fingerprint, Bell } from "lucide-react";
 import { loginWithServer, changePasswordWithServer } from "../lib/auth";
+import {
+  isBiometricAvailable,
+  hasStoredCredential,
+  registerBiometric,
+  authenticateWithBiometric,
+  getStoredEmail,
+} from "../lib/webauthn";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +20,47 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [biometricReady, setBiometricReady] = useState(false);
+  const [hasCred, setHasCred] = useState(false);
+
+  useEffect(() => {
+    isBiometricAvailable().then((ok) => {
+      setBiometricReady(ok);
+      setHasCred(hasStoredCredential());
+      const storedEmail = getStoredEmail();
+      if (storedEmail) setEmail(storedEmail);
+    });
+    // Request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  async function handleBiometricLogin() {
+    setError("");
+    setLoading(true);
+    try {
+      const bioEmail = await authenticateWithBiometric();
+      if (!bioEmail) {
+        setError("Biometric verification failed. Use password.");
+        return;
+      }
+      // After biometric success, do a session-based login via server
+      // Use a special biometric token flow
+      const result = await loginWithServer(bioEmail, "__biometric_verified__");
+      if (result.ok) {
+        navigate("/");
+      } else {
+        // Biometric verified locally but server needs password — fallback
+        setEmail(bioEmail);
+        setError("Biometric OK. Enter password to complete server login.");
+      }
+    } catch {
+      setError("Biometric error. Try password login.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,6 +76,10 @@ export default function LoginPage() {
         }
         const result = await loginWithServer(email, password);
         if (result.ok) {
+          // Offer to register biometric if available and not yet registered
+          if (biometricReady && !hasCred) {
+            await registerBiometric(email);
+          }
           navigate("/");
         } else {
           setError(result.error || "Authentication failed");
@@ -276,6 +328,34 @@ export default function LoginPage() {
               ? "Enter SARI"
               : "Update & Save Password"}
           </button>
+
+          {/* Biometric login */}
+          {mode === "login" && biometricReady && hasCred && (
+            <button
+              type="button"
+              onClick={handleBiometricLogin}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "10px 16px",
+                marginTop: 10,
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                background: "transparent",
+                color: "var(--accent, #a855f7)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              <Fingerprint size={18} />
+              Face ID / Fingerprint
+            </button>
+          )}
 
           <div style={{ textAlign: "center", marginTop: 18 }}>
             {mode === "login" ? (

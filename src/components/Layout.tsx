@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, MessageSquare, Sparkles, Link2,
-  Shield, Activity, LogOut, Wand2, Zap, Bell
+  Shield, Activity, LogOut, Wand2, Zap, Bell, Terminal
 } from "lucide-react";
 import { logout } from "../lib/auth";
 import { clearLocalData } from "../lib/privacy";
@@ -18,6 +18,7 @@ const nav = [
   { to: "/alerts", icon: Bell, label: "Alerts", badge: true },
   { to: "/policies", icon: Shield, label: "Policies" },
   { to: "/audit", icon: Activity, label: "Log" },
+  { to: "/terminal", icon: Terminal, label: "Terminal" },
 ];
 
 export default function Layout() {

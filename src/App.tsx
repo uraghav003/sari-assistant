@@ -12,6 +12,7 @@ import PoliciesPage from "./pages/PoliciesPage";
 import AuditPage from "./pages/AuditPage";
 import LeadsPage from "./pages/LeadsPage";
 import AlertsPage from "./pages/AlertsPage";
+import TerminalPage from "./pages/TerminalPage";
 
 function ProtectedRoute({ authenticated, children }: { authenticated: boolean; children: ReactNode }) {
   if (!authenticated) return <Navigate to="/login" replace />;
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="alerts" element={<AlertsPage />} />
           <Route path="policies" element={<PoliciesPage />} />
           <Route path="audit" element={<AuditPage />} />
+          <Route path="terminal" element={<TerminalPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

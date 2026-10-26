@@ -9,7 +9,8 @@
     "allow": [
       "Bash(npx @claude-flow*)",
       "Bash(npx claude-flow*)",
-      "mcp__claude-flow__*"
+      "mcp__claude-flow__*",
+      "mcp__supabase__*"
     ],
     "deny": [
       "Read(./.env)",
@@ -150,8 +151,10 @@
       "shell": "powershell"
     },
     "modelPreferences": {
-      "default": "claude-sonnet-5",
-      "routing": "claude-haiku-4-5-20251001"
+      "default": "claude-sonnet-4-5",
+      "routing": "claude-haiku-4-5",
+      "complex": "claude-opus-4-6",
+      "security": "claude-opus-4-6"
     },
     "agentTeams": {
       "enabled": true,
@@ -162,7 +165,13 @@
         "autoAssignOnIdle": false,
         "trainPatternsOnComplete": true,
         "notifyLeadOnComplete": true,
-        "sharedMemoryNamespace": "agent-teams"
+        "sharedMemoryNamespace": "agent-teams",
+        "modelTiers": {
+          "tier1": "wasm-booster",
+          "tier2": "claude-haiku-4-5",
+          "tier3": "claude-sonnet-4-5",
+          "tier4": "claude-opus-4-6"
+        }
       },
       "hooks": {
         "teammateIdle": {

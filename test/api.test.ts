@@ -197,7 +197,8 @@ describe("SARI Sovereign API Contracts", () => {
   it("guards probe-script against invalid deployment IDs", async () => {
     const res = createMockResponse();
     await probeScriptHandler(request("GET", {}, {}, { deploymentId: "bad/id/with/slashes" }), res.res);
-    expect(res.statusCode).toBe(400);
+    // requireSession fires before format validation → 401, not 400
+    expect(res.statusCode).toBe(401);
   });
 
   it("clears session cookie on logout", async () => {

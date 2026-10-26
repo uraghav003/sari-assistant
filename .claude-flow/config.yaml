@@ -35,6 +35,16 @@ neural:
   enabled: true
   modelPath: .claude-flow/neural
 
+models:
+  tiers:
+    routing: claude-haiku-4-5
+    default: claude-sonnet-4-5
+    complex: claude-opus-4-6
+    security: claude-opus-4-6
+  fallback:
+    enabled: true
+    chain: [claude-sonnet-4-5, claude-haiku-4-5]
+
 hooks:
   enabled: true
   autoExecute: true

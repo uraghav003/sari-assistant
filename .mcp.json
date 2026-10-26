@@ -9,6 +9,13 @@
         "OLLAMA_URL": "http://127.0.0.1:11434",
         "OLLAMA_MODEL": "qwen2.5-coder:latest"
       }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest", "--project-ref", "hgbfbvtujatvwpjgibng"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
     }
   }
 }

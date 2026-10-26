@@ -1,10 +1,17 @@
 {
-  "version": 2,
-  "mode": "legacy",
-  "migratedFrom": "pre-ADR-324; capabilities=.swarm/memory.db",
-  "migratedAt": 1793020859641,
-  "rules": [],
-  "budgets": [],
+  "version": 3,
+  "mode": "active",
+  "migratedFrom": "legacy-v2",
+  "migratedAt": "2026-10-26T00:00:00.000Z",
+  "rules": [
+    {"id": "r-001", "type": "model-routing", "condition": "complexity >= high", "action": "route:claude-opus-4-6"},
+    {"id": "r-002", "type": "model-routing", "condition": "complexity < high", "action": "route:claude-sonnet-4-5"},
+    {"id": "r-003", "type": "security", "condition": "edit:sensitive-file", "action": "scan:pre-commit"},
+    {"id": "r-004", "type": "budget", "condition": "agent-count > 10", "action": "alert:lead"}
+  ],
+  "budgets": [
+    {"scope": "session", "maxAgents": 15, "maxTokensPerAgent": 100000}
+  ],
   "usage": [],
   "approvals": [],
   "receipts": []
