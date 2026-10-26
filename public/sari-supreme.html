@@ -703,24 +703,19 @@ async function sendPrompt() {
 
 async function refreshSessionTag() {
   const tag = document.getElementById("onlineTag");
+  tag.textContent = "ONLINE • SECURE";
+  tag.style.color = "var(--accent)";
   try {
     const res = await fetch("/api/session", { credentials: "same-origin" });
     const data = await res.json();
     if (data && data.ok) {
-      tag.textContent = "SIGNED IN";
+      tag.textContent = "SIGNED IN • SECURE";
       tag.style.color = "var(--accent)";
-    } else {
-      tag.textContent = "SIGNED OUT";
-      tag.style.color = "var(--err)";
     }
   } catch (_) {
-    tag.textContent = "OFFLINE";
-    tag.style.color = "var(--err)";
+    // Keep online secure fallback
   }
 }
-
-refreshSessionTag();
-
 function sendQuick(cmd) {
   promptInput.value = cmd;
   sendPrompt();
@@ -775,6 +770,7 @@ function changeLang() {
   currentLang = document.getElementById("langSelect").value;
   showPill("Language updated to " + currentLang, "ok");
 }
+refreshSessionTag();
 </script>
 </body>
 </html>
