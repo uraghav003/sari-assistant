@@ -15,6 +15,10 @@ export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 
+/** Single source of truth for the Apps Script web-app URL. */
+export const DEFAULT_APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
+
 function sessionSecret(): string | null {
   const value = process.env.SARI_SESSION_SECRET;
   if (!value) return null;
@@ -22,12 +26,19 @@ function sessionSecret(): string | null {
   return trimmed.length >= MIN_SECRET_LENGTH ? trimmed : null;
 }
 
+// Per-process key for safeEqual; never leaves this module.
+const _safeEqualKey = crypto.randomBytes(32);
+
+/**
+ * Constant-time string equality. Both values are HMAC'd to a fixed 32-byte
+ * digest before comparison so buffer-length differences cannot be observed
+ * as a timing side-channel.
+ */
 export function safeEqual(a: string | undefined | null, b: string | undefined | null): boolean {
   if (typeof a !== "string" || typeof b !== "string") return false;
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ba, bb);
+  const ha = crypto.createHmac("sha256", _safeEqualKey).update(a).digest();
+  const hb = crypto.createHmac("sha256", _safeEqualKey).update(b).digest();
+  return crypto.timingSafeEqual(ha, hb);
 }
 
 /** True only when a usable signing secret and a credential source both exist. */

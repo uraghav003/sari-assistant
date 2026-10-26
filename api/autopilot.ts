@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  DEFAULT_APPS_SCRIPT_URL,
   applyApiHeaders,
   appsScriptAuth,
   clientIp,
@@ -9,9 +10,6 @@ import {
   requireSession,
   tooManyRequests,
 } from "./_security.js";
-
-const CANONICAL_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 10;
@@ -64,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   try {
-    const upstream = await fetch(process.env.SARI_APPS_SCRIPT_URL || CANONICAL_APPS_SCRIPT_URL, {
+    const upstream = await fetch(process.env.SARI_APPS_SCRIPT_URL || DEFAULT_APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, auth, lessons, skills }),

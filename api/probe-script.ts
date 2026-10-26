@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  DEFAULT_APPS_SCRIPT_URL,
   applyApiHeaders,
   clientIp,
   isSameOrigin,
@@ -10,8 +11,6 @@ import {
 
 const PROBE_WINDOW_MS = 60 * 1000;
 const PROBE_MAX_REQUESTS = 20;
-const CANONICAL_DEPLOYMENT_ID =
-  "AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);
@@ -40,8 +39,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const targetId = rawId || CANONICAL_DEPLOYMENT_ID;
-  const url = `https://script.google.com/macros/s/${targetId}/exec?action=status`;
+  const url = rawId
+    ? `https://script.google.com/macros/s/${rawId}/exec?action=status`
+    : `${process.env.SARI_APPS_SCRIPT_URL || DEFAULT_APPS_SCRIPT_URL}?action=status`;
 
   let timeout: NodeJS.Timeout | undefined;
   try {

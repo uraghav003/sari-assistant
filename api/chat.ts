@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  DEFAULT_APPS_SCRIPT_URL,
   applyApiHeaders,
   appsScriptAuth,
   clientIp,
@@ -9,9 +10,6 @@ import {
   requireSession,
   tooManyRequests,
 } from "./_security.js";
-
-const CANONICAL_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
 
 const CHAT_WINDOW_MS = 60 * 1000;
 const CHAT_MAX_REQUESTS = 30;
@@ -122,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 2: SIGNED APPS SCRIPT BRIDGE ────────────────────────────────
     const action = "ai_infer";
     const auth = appsScriptAuth(action);
-    const scriptUrl = process.env.SARI_APPS_SCRIPT_URL || CANONICAL_APPS_SCRIPT_URL;
+    const scriptUrl = process.env.SARI_APPS_SCRIPT_URL || DEFAULT_APPS_SCRIPT_URL;
     if (auth) {
       try {
         const scriptRes = await fetch(scriptUrl, {
