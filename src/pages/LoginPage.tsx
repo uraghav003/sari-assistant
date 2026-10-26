@@ -184,7 +184,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
+            <label htmlFor="sari-email" style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
               Authorized Email
             </label>
             <div style={{ position: "relative" }}>
@@ -199,7 +199,10 @@ export default function LoginPage() {
                 }}
               />
               <input
+                id="sari-email"
+                name="email"
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="u.raghav003@gmail.com"
@@ -210,7 +213,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: mode === "login" ? 16 : 14 }}>
-            <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
+            <label htmlFor="sari-password" style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
               {mode === "login" ? "Password" : "Current Password"}
             </label>
             <div style={{ position: "relative" }}>
@@ -225,7 +228,10 @@ export default function LoginPage() {
                 }}
               />
               <input
+                id="sari-password"
+                name="password"
                 type="password"
+                autoComplete={mode === "login" ? "current-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -238,7 +244,7 @@ export default function LoginPage() {
           {mode === "change-password" && (
             <>
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
+                <label htmlFor="sari-new-password" style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
                   New Password
                 </label>
                 <div style={{ position: "relative" }}>
@@ -253,7 +259,10 @@ export default function LoginPage() {
                     }}
                   />
                   <input
+                    id="sari-new-password"
+                    name="new-password"
                     type="password"
+                    autoComplete="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min 6 characters"
@@ -264,7 +273,7 @@ export default function LoginPage() {
               </div>
 
               <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
+                <label htmlFor="sari-confirm-password" style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}>
                   Confirm New Password
                 </label>
                 <div style={{ position: "relative" }}>
@@ -279,7 +288,10 @@ export default function LoginPage() {
                     }}
                   />
                   <input
+                    id="sari-confirm-password"
+                    name="confirm-password"
                     type="password"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat new password"
