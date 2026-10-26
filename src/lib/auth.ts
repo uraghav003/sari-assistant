@@ -44,14 +44,18 @@ export async function checkSession(): Promise<boolean> {
 
 export async function loginWithServer(
   email: string,
-  password: string
-): Promise<{ ok: boolean; error?: string }> {
+  password: string,
+  totp?: string
+): Promise<{ ok: boolean; error?: string; totpRequired?: boolean }> {
   try {
+    const payload: Record<string, string> = { email: email.trim(), password };
+    if (totp) payload.totp = totp;
+
     const res = await fetch("/api/login", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), password }),
+      body: JSON.stringify(payload),
     });
 
     const data: unknown = await res.json().catch(() => null);
@@ -61,6 +65,10 @@ export async function loginWithServer(
       authenticated = true;
       notify();
       return { ok: true };
+    }
+
+    if (obj.totpRequired === true) {
+      return { ok: false, totpRequired: true, error: typeof obj.error === "string" ? obj.error : "Enter authenticator code" };
     }
 
     const message = typeof obj.error === "string" ? obj.error : "Authentication failed";

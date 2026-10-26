@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Lock, Mail, KeyRound, ArrowLeft, CheckCircle2, Fingerprint, Bell } from "lucide-react";
+import { Sparkles, Lock, Mail, KeyRound, ArrowLeft, CheckCircle2, Fingerprint, Bell, ShieldCheck } from "lucide-react";
 import { loginWithServer, changePasswordWithServer } from "../lib/auth";
 import {
   isBiometricAvailable,
@@ -21,6 +21,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [biometricReady, setBiometricReady] = useState(false);
+  const [totpRequired, setTotpRequired] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
   const [hasCred, setHasCred] = useState(false);
 
   useEffect(() => {
@@ -74,9 +76,17 @@ export default function LoginPage() {
           setError("Email and password required");
           return;
         }
-        const result = await loginWithServer(email, password);
+        if (totpRequired && !totpCode) {
+          setError("Enter 6-digit authenticator code");
+          return;
+        }
+        const result = await loginWithServer(email, password, totpRequired ? totpCode : undefined);
+        if (result.totpRequired) {
+          setTotpRequired(true);
+          setError("");
+          return;
+        }
         if (result.ok) {
-          // Offer to register biometric if available and not yet registered
           if (biometricReady && !hasCred) {
             await registerBiometric(email);
           }
@@ -240,6 +250,41 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
+          {mode === "login" && totpRequired && (
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="sari-totp" style={{ fontSize: 12, color: "var(--cyan)", display: "block", marginBottom: 6 }}>
+                🔐 Authenticator Code
+              </label>
+              <div style={{ position: "relative" }}>
+                <ShieldCheck
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 14,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--cyan)",
+                  }}
+                />
+                <input
+                  id="sari-totp"
+                  name="totp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="6-digit code"
+                  style={{ paddingLeft: 40, width: "100%", letterSpacing: 4, fontSize: 18, textAlign: "center" }}
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {mode === "change-password" && (
             <>
