@@ -23,6 +23,15 @@ interface GeminiApiResponse {
   candidates?: GeminiCandidate[];
 }
 
+interface OpenRouterChoice {
+  message?: { content?: string };
+}
+
+interface OpenRouterResponse {
+  choices?: OpenRouterChoice[];
+  model?: string;
+}
+
 const SYSTEM_INSTRUCTION = `You are SARI — Sentient Adaptive Responsive Intelligence & Supreme AI Operational Partner for Upendra Singh Raghav (MD) at Divyanshi Capital.
 Owner is MD. Never override HI.
 Always answer in this strict 4-block structure:
@@ -113,6 +122,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         } catch {
           // try next model / key
+        }
+      }
+    }
+
+    // ─── TIER 1.5: OPENROUTER (single key, 200+ models) ──────────────────
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    if (openRouterKey && openRouterKey.length > 10) {
+      const orModels = ["google/gemini-2.5-flash", "google/gemini-2.0-flash-001", "meta-llama/llama-3.3-70b-instruct"];
+      for (const orModel of orModels) {
+        try {
+          const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${openRouterKey}`,
+              "HTTP-Referer": "https://sari-assistant.vercel.app",
+              "X-Title": "SARI Sovereign AI",
+            },
+            body: JSON.stringify({
+              model: orModel,
+              messages: [
+                { role: "system", content: SYSTEM_INSTRUCTION },
+                { role: "user", content: trimmedPrompt },
+              ],
+              temperature: 0.7,
+              max_tokens: 1024,
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+
+          if (orRes.ok) {
+            const orData: OpenRouterResponse = await orRes.json();
+            const orText = orData.choices?.[0]?.message?.content?.trim();
+            if (orText) {
+              res.status(200).json({ ok: true, text: orText, tier: "OpenRouter", model: orData.model || orModel });
+              return;
+            }
+          }
+        } catch {
+          // try next model
         }
       }
     }

@@ -16,7 +16,8 @@ function configChecks(): Record<string, boolean> {
     passwordCredential: authConfigured(),
     sharedSecret: validShared,
     modelKey: Boolean(
-      process.env.GEMINI_API_KEY ||
+      process.env.OPENROUTER_API_KEY ||
+        process.env.GEMINI_API_KEY ||
         process.env.MALLIK_API_KEY ||
         process.env.GOOGLE_API_KEY ||
         process.env.AI_STUDIO_API_KEY
