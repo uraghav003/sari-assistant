@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "installedAt": "2026-10-26T13:15:55.941Z",
+  "files": {
+    "C:\\Users\\aecr\\Documents\\sari-assistant\\.claude\\settings.json": {
+      "plugins": [
+        "ruflo-mods@ruflo",
+        "ruflo-swarm@ruflo",
+        "ruflo-console@ruflo"
+      ],
+      "marketplace": true,
+      "env": true,
+      "claudeInstalled": [
+        "ruflo-mods@ruflo",
+        "ruflo-swarm@ruflo",
+        "ruflo-console@ruflo"
+      ]
+    }
+  }
+}
