@@ -129,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 1.5: OPENROUTER (single key, 200+ models) ──────────────────
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey && openRouterKey.length > 10) {
-      const orModels = ["google/gemini-2.0-flash-exp:free", "qwen/qwen-2.5-72b-instruct:free", "meta-llama/llama-3.2-3b-instruct:free"];
+      const orModels = ["nvidia/nemotron-3.5-lightning:free", "nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-31b-it:free"];
       for (const orModel of orModels) {
         try {
           const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -169,7 +169,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 1.6: GROQ (ultra-fast Llama/Mixtral) ───────────────────────
     const groqKey = process.env.GROQ_API_KEY?.trim();
     if (groqKey && groqKey.length > 10) {
-      const groqModels = ["llama-3.1-70b-versatile", "llama3-70b-8192", "llama-3.1-8b-instant"];
+      const groqModels = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "allam-2-7b"];
       for (const gModel of groqModels) {
         try {
           const gRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
