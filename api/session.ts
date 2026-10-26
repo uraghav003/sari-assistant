@@ -17,6 +17,7 @@ function configChecks(): Record<string, boolean> {
     sharedSecret: validShared,
     modelKey: Boolean(
       process.env.OPENROUTER_API_KEY ||
+        process.env.GROQ_API_KEY ||
         process.env.GEMINI_API_KEY ||
         process.env.MALLIK_API_KEY ||
         process.env.GOOGLE_API_KEY ||
