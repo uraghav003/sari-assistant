@@ -141,34 +141,38 @@ export default function LoginPage() {
           "radial-gradient(ellipse at 30% 20%, rgba(168,85,247,0.12), transparent 50%), var(--bg)",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
+      <div style={{ width: "100%", maxWidth: 440 }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div
             style={{
               display: "inline-flex",
-              width: 64,
-              height: 64,
-              borderRadius: 18,
-              background: "var(--grad)",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 16,
-              boxShadow: "0 0 40px rgba(168,85,247,0.4)",
+              padding: "6px 14px",
+              background: "rgba(168,85,247,0.15)",
+              borderRadius: 20,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              color: "var(--accent)",
+              marginBottom: 12,
+              border: "1px solid rgba(168,85,247,0.3)"
             }}
           >
-            <Sparkles size={30} color="#fff" />
+            🔒 DIVYANSHI CAPITAL · NET BANKING PORTAL
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700 }}>SARI</h1>
-          <p style={{ color: "var(--muted)", marginTop: 6, fontSize: 14 }}>
-            Sovereign AI Assistant · Lucy-grade
+          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>SARI Executive Login</h1>
+          <p style={{ color: "var(--muted)", marginTop: 4, fontSize: 13 }}>
+            Secure Corporate Authentication & Lending Desk
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card" style={{ padding: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600 }}>
-              {mode === "login" ? "Executive Login" : "Change Password"}
-            </h2>
+        <form onSubmit={handleSubmit} className="card" style={{ padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22, borderBottom: "1px solid var(--border)", paddingBottom: 14 }}>
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 600 }}>
+                {mode === "login" ? "Sign In" : "Change Password"}
+              </h2>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Enter your login ID and password below</p>
+            </div>
             {mode === "change-password" && (
               <button
                 type="button"
