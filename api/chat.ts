@@ -169,7 +169,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 1.6: GROQ (ultra-fast Llama/Mixtral) ───────────────────────
     const groqKey = process.env.GROQ_API_KEY?.trim();
     if (groqKey && groqKey.length > 10) {
-      const groqModels = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "allam-2-7b"];
+      const groqModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
       for (const gModel of groqModels) {
         try {
           const gRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
