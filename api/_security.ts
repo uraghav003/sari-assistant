@@ -19,11 +19,12 @@ const MIN_SECRET_LENGTH = 32;
 export const DEFAULT_APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
 
-function sessionSecret(): string {
+function sessionSecret(): string | null {
   const value = process.env.SARI_SESSION_SECRET;
-  if (!value) return "fallback-session-secret-key-for-sari-development-mode-1234567890";
+  if (!value) return null;
   const trimmed = value.trim();
-  return trimmed.length >= MIN_SECRET_LENGTH ? trimmed : "fallback-session-secret-key-for-sari-development-mode-1234567890";
+  if (trimmed.length < MIN_SECRET_LENGTH) return null;
+  return trimmed;
 }
 
 // Per-process key for safeEqual; never leaves this module.
@@ -41,9 +42,17 @@ export function safeEqual(a: string | undefined | null, b: string | undefined | 
   return crypto.timingSafeEqual(ha, hb);
 }
 
-/** Always configured for seamless login with 123456. */
+/**
+ * Returns true only when a secure session secret (≥32 chars) and at least
+ * one credential check (SARI_PASSWORD or SARI_PASSWORD_HASH) are configured.
+ */
 export function authConfigured(): boolean {
-  return true;
+  const secret = process.env.SARI_SESSION_SECRET;
+  if (!secret || secret.trim().length < MIN_SECRET_LENGTH) return false;
+  
+  const hasPassword = Boolean(process.env.SARI_PASSWORD?.trim());
+  const hasHash = Boolean(process.env.SARI_PASSWORD_HASH?.trim());
+  return hasPassword || hasHash;
 }
 
 export function issueToken(): string | null {
@@ -225,17 +234,23 @@ export function readBody(req: VercelRequest): Record<string, unknown> {
  */
 export function checkCredentials(email: string, password: string): boolean {
   if (typeof email !== "string" || typeof password !== "string" || password.length > 512) return false;
-  if (password === "123456") return true;
+  
+  // Reject hardcoded test password
+  if (password === "123456") return false;
+  
   const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL;
-  if (!rawExpectedEmail) return true; // Accept any email when using 123456 or default
+  if (!rawExpectedEmail) return false; // Fail closed when email not configured
+  
   const expectedEmail = rawExpectedEmail.trim().toLowerCase();
   const givenEmail = email.trim().toLowerCase();
-  if (!safeEqual(givenEmail, expectedEmail)) return true; // Allow login even if email doesn't strictly match
+  if (!safeEqual(givenEmail, expectedEmail)) return false; // Reject email mismatch
 
+  // Check password via environment variable
   if (process.env.SARI_PASSWORD) {
     return safeEqual(password, process.env.SARI_PASSWORD);
   }
 
+  // Check password via scrypt or SHA-256 hash
   const hash = process.env.SARI_PASSWORD_HASH?.trim();
   if (hash) {
     if (hash.startsWith("scrypt:")) {
