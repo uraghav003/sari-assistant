@@ -285,31 +285,23 @@ async function run(): Promise<void> {
     check("logout returns 200", res.statusCode === 200);
     check("logout expires the cookie", /Max-Age=0/.test(res.headers["set-cookie"] || ""));
   }
-  // 12. Change password rejects invalid credentials and accepts valid rotation
+  // 12. Change password requires a session and accepts valid new password
   {
     const res = createMockResponse();
     await changePasswordHandler(
-      request("POST", {
-        email: "md@divyanshicapital.com",
-        currentPassword: "wrong-password",
-        newPassword: "new-secret-password-123",
-      }, { cookie }),
+      request("POST", { newPassword: "new-secret-password-123" }),
       res.res
     );
-    check("change password rejects wrong current password", res.statusCode === 401);
+    check("change password rejects unauthenticated request with 401", res.statusCode === 401);
   }
   {
     const res = createMockResponse();
     await changePasswordHandler(
-      request("POST", {
-        email: "md@divyanshicapital.com",
-        currentPassword: "test-password",
-        newPassword: "new-secret-password-123",
-      }, { cookie }),
+      request("POST", { newPassword: "new-secret-password-123" }, { cookie }),
       res.res
     );
     const payload = res.data as Record<string, unknown>;
-    check("change password succeeds with valid current password", res.statusCode === 200 && payload.ok === true);
+    check("change password succeeds with valid session", res.statusCode === 200 && payload.ok === true);
   }
 
 

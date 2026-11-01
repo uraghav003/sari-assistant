@@ -79,8 +79,6 @@ export async function loginWithServer(
 }
 
 export async function changePasswordWithServer(
-  email: string,
-  currentPassword: string,
   newPassword: string
 ): Promise<{ ok: boolean; error?: string; message?: string }> {
   try {
@@ -88,7 +86,7 @@ export async function changePasswordWithServer(
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), currentPassword, newPassword }),
+      body: JSON.stringify({ newPassword }),
     });
 
     const data: unknown = await res.json().catch(() => null);
