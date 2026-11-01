@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070e10">
 <meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SARI Supreme">
@@ -471,7 +472,7 @@ button.dot { padding: 0; border: none; cursor: pointer; }
         </div>
         <span id="voiceStatusText">Ready when you are</span>
       </div>
-      <div style="font-size: 11px; color: var(--muted); cursor: pointer;" onclick="toggleVoice()">Mic Toggle ↗</div>
+      <div id="micToggleText" style="font-size: 11px; color: var(--muted); cursor: pointer;">Mic Toggle ↗</div>
     </div>
   </div>
 
@@ -479,11 +480,11 @@ button.dot { padding: 0; border: none; cursor: pointer; }
   <div class="right-panel">
     <!-- TOP SHORTCUT CARDS -->
     <div class="top-cards">
-      <button type="button" class="card-btn" onclick="sendQuick('Find my focus')">
+      <button type="button" class="card-btn" id="btnFocus">
         <div class="card-title">↗ Find my focus</div>
         <div class="card-desc">Make room for what matters today</div>
       </button>
-      <button type="button" class="card-btn" onclick="sendQuick('Read my inbox')">
+      <button type="button" class="card-btn" id="btnInbox">
         <div class="card-title">✉ Read my inbox</div>
         <div class="card-desc">Gmail summaries & high-priority mails</div>
       </button>
@@ -493,7 +494,7 @@ button.dot { padding: 0; border: none; cursor: pointer; }
     <div class="chat-section">
       <div class="chat-meta">
         <div>YOU + SARI &nbsp;•&nbsp; <span id="onlineTag" style="color:var(--accent);">ONLINE • SECURE</span></div>
-        <button class="clear-btn" onclick="clearChat()">Clear conversation</button>
+        <button class="clear-btn" id="clearChatBtn">Clear conversation</button>
       </div>
 
       <div class="chat-history" id="chatHistory">
@@ -505,18 +506,18 @@ button.dot { padding: 0; border: none; cursor: pointer; }
       <!-- INPUT WRAP -->
       <div class="input-wrap">
         <div class="status-pill" id="statusPill"></div>
-        <textarea id="promptInput" class="prompt-area" placeholder="Tell me, Malik..." rows="2" onkeydown="handleKey(event)"></textarea>
+        <textarea id="promptInput" class="prompt-area" placeholder="Tell me, Malik..." rows="2"></textarea>
         <div class="input-controls">
           <div class="ctrl-left">
-            <button class="icon-btn" id="micBtn" title="Toggle Microphone" onclick="toggleVoice()">
+            <button class="icon-btn" id="micBtn" title="Toggle Microphone">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
             </button>
-            <button class="icon-btn" id="ttsBtn" title="Toggle Voice Output" onclick="toggleTts()">
+            <button class="icon-btn" id="ttsBtn" title="Toggle Voice Output">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
             </button>
             <span class="mode-badge" id="modeBadge">TEXT / VOICE</span>
           </div>
-          <button class="send-btn" id="sendBtn" onclick="sendPrompt()">
+          <button class="send-btn" id="sendBtn">
             Send ↗
           </button>
         </div>
@@ -525,7 +526,7 @@ button.dot { padding: 0; border: none; cursor: pointer; }
       <div class="panel-footer">
         <div>Session-based access • Server-side model routing • Mic works natively</div>
         <div class="footer-right">
-          <select id="langSelect" class="lang-select" onchange="changeLang()">
+          <select id="langSelect" class="lang-select">
             <option value="hi" selected>Hindi (हिन्दी)</option>
             <option value="en">English</option>
             <option value="bn">Bengali (বাংলা)</option>
@@ -538,9 +539,9 @@ button.dot { padding: 0; border: none; cursor: pointer; }
             <option value="pa">Punjabi (ਪੰਜਾਬੀ)</option>
           </select>
           <div class="theme-dots">
-            <button type="button" class="dot dot-teal" title="Hologram Theme" aria-label="Hologram theme" onclick="setTheme('hologram')"></button>
-            <button type="button" class="dot dot-gold" title="Premium Gold Theme" aria-label="Premium gold theme" onclick="setTheme('premium')"></button>
-            <button type="button" class="dot dot-slate" title="Deep Dark Theme" aria-label="Deep dark theme" onclick="setTheme('dark')"></button>
+            <button type="button" class="dot dot-teal" title="Hologram Theme" aria-label="Hologram theme" data-theme-btn="hologram"></button>
+            <button type="button" class="dot dot-gold" title="Premium Gold Theme" aria-label="Premium gold theme" data-theme-btn="premium"></button>
+            <button type="button" class="dot dot-slate" title="Deep Dark Theme" aria-label="Deep dark theme" data-theme-btn="dark"></button>
           </div>
           <div style="font-size: 10px; letter-spacing: 1px; color: var(--muted);">DIVYANSHI CAPITAL</div>
         </div>
@@ -549,228 +550,6 @@ button.dot { padding: 0; border: none; cursor: pointer; }
   </div>
 </div>
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
-  });
-}
-// Same-origin, cookie-authenticated. No keys or deployment IDs reach the browser.
-const CHAT_ENDPOINT = "/api/chat";
-
-let isListening = false;
-let isTtsEnabled = true;
-let recognition = null;
-let currentLang = "hi";
-
-const chatHistory = document.getElementById("chatHistory");
-const promptInput = document.getElementById("promptInput");
-const sendBtn = document.getElementById("sendBtn");
-const statusPill = document.getElementById("statusPill");
-const micBtn = document.getElementById("micBtn");
-const ttsBtn = document.getElementById("ttsBtn");
-const voiceIndicator = document.getElementById("voiceIndicator");
-const voiceStatusText = document.getElementById("voiceStatusText");
-
-// SPEECH RECOGNITION SETUP (Direct, un-sandboxed)
-function initRecognition() {
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRec) {
-    showPill("Speech recognition not supported in this browser.", "warn");
-    return null;
-  }
-  const rec = new SpeechRec();
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.lang = currentLang === "en" ? "en-IN" : "hi-IN";
-
-  rec.onstart = () => {
-    isListening = true;
-    micBtn.classList.add("active");
-    voiceIndicator.classList.add("voice-active");
-    voiceStatusText.textContent = "Listening to Malik...";
-    showPill("Listening... Speak now", "ok");
-  };
-
-  rec.onresult = (e) => {
-    let transcript = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      transcript += e.results[i][0].transcript;
-    }
-    promptInput.value = transcript;
-    if (e.results[0].isFinal) {
-      setTimeout(() => {
-        if (promptInput.value.trim().length > 1) sendPrompt();
-      }, 600);
-    }
-  };
-
-  rec.onerror = (e) => {
-    console.warn("Speech error:", e.error);
-    isListening = false;
-    micBtn.classList.remove("active");
-    voiceIndicator.classList.remove("voice-active");
-    voiceStatusText.textContent = "Ready when you are";
-    if (e.error === 'not-allowed') {
-      showPill("Microphone permission was denied by browser settings.", "err");
-    } else {
-      showPill("Voice recognition paused (" + e.error + ").", "warn");
-    }
-  };
-
-  rec.onend = () => {
-    isListening = false;
-    micBtn.classList.remove("active");
-    voiceIndicator.classList.remove("voice-active");
-    voiceStatusText.textContent = "Ready when you are";
-  };
-
-  return rec;
-}
-
-function toggleVoice() {
-  if (isListening && recognition) {
-    recognition.stop();
-    return;
-  }
-  recognition = initRecognition();
-  if (recognition) {
-    try { recognition.start(); } catch (_) {}
-  }
-}
-
-function toggleTts() {
-  isTtsEnabled = !isTtsEnabled;
-  ttsBtn.style.opacity = isTtsEnabled ? "1" : "0.4";
-  if (!isTtsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
-}
-
-function speakText(text) {
-  if (!isTtsEnabled || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const clean = text.replace(/[*#_`]/g, '').slice(0, 2500);
-  const utter = new SpeechSynthesisUtterance(clean);
-  utter.lang = currentLang === "en" ? "en-IN" : "hi-IN";
-  utter.rate = 1.0;
-  window.speechSynthesis.speak(utter);
-}
-
-// SENDING TO SARI ENGINE
-async function sendPrompt() {
-  const text = promptInput.value.trim();
-  if (!text) return;
-
-  addMessage(text, "user");
-  promptInput.value = "";
-  sendBtn.disabled = true;
-  showPill("SARI is thinking...", "ok");
-  voiceStatusText.textContent = "SARI is thinking...";
-
-  try {
-    const res = await fetch(CHAT_ENDPOINT, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: text })
-    });
-
-    sendBtn.disabled = false;
-    hidePill();
-    voiceStatusText.textContent = "Ready when you are";
-
-    if (res.status === 401) {
-      addMessage("Session expired. Please sign in again at /login.", "bot");
-      showPill("Not authenticated.", "err");
-      return;
-    }
-
-    const data = await res.json();
-    if (data.ok && data.text) {
-      addMessage(data.text, "bot");
-      speakText(data.text);
-    } else {
-      addMessage(data.error || "No inference tier is available right now.", "bot");
-      showPill("Model unavailable.", "warn");
-    }
-  } catch (err) {
-    sendBtn.disabled = false;
-    hidePill();
-    voiceStatusText.textContent = "Ready when you are";
-    addMessage("Connection error: " + err.message, "bot");
-    showPill("Failed to reach SARI.", "err");
-  }
-}
-
-async function refreshSessionTag() {
-  const tag = document.getElementById("onlineTag");
-  tag.textContent = "ONLINE • SECURE";
-  tag.style.color = "var(--accent)";
-  try {
-    const res = await fetch("/api/session", { credentials: "same-origin" });
-    const data = await res.json();
-    if (data && data.ok) {
-      tag.textContent = "SIGNED IN • SECURE";
-      tag.style.color = "var(--accent)";
-    }
-  } catch (_) {
-    // Keep online secure fallback
-  }
-}
-function sendQuick(cmd) {
-  promptInput.value = cmd;
-  sendPrompt();
-}
-
-function addMessage(content, type) {
-  const div = document.createElement("div");
-  div.className = "msg " + (type === "user" ? "msg-user" : "msg-bot");
-  
-  // Format markdown lists and bold text
-  let formatted = escapeHtml(content)
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>');
-    
-  div.innerHTML = formatted;
-  chatHistory.appendChild(div);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
-}
-
-function escapeHtml(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function showPill(msg, type) {
-  statusPill.textContent = msg;
-  statusPill.style.display = "block";
-  statusPill.style.color = type === "err" ? "var(--err)" : type === "warn" ? "var(--warn)" : "var(--accent)";
-}
-
-function hidePill() {
-  statusPill.style.display = "none";
-}
-
-function handleKey(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendPrompt();
-  }
-}
-
-function clearChat() {
-  chatHistory.innerHTML = "";
-  addMessage("Chat cleared, Malik. Ready when you are.", "bot");
-}
-
-function setTheme(theme) {
-  document.body.setAttribute("data-theme", theme);
-}
-
-function changeLang() {
-  currentLang = document.getElementById("langSelect").value;
-  showPill("Language updated to " + currentLang, "ok");
-}
-refreshSessionTag();
-</script>
+<script src="/sari-supreme.js"></script>
 </body>
 </html>
