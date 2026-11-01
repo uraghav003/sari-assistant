@@ -12,6 +12,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
  */
 
 export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
+export const DEFAULT_APPS_SCRIPT_URL = process.env.SARI_APPS_SCRIPT_URL ?? "";
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 

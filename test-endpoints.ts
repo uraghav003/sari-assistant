@@ -16,6 +16,8 @@ delete process.env.GEMINI_API_KEY;
 delete process.env.MALLIK_API_KEY;
 delete process.env.GOOGLE_API_KEY;
 delete process.env.AI_STUDIO_API_KEY;
+delete process.env.OPENROUTER_API_KEY;
+delete process.env.GROQ_API_KEY;
 delete process.env.SARI_SHARED_SECRET;
 delete process.env.SARI_TELEGRAM_BOT_TOKEN;
 delete process.env.SARI_TELEGRAM_CHAT_ID;
