@@ -3,7 +3,14 @@ import { Wand2, Plus, CheckCircle2, Play, Sparkles, ChevronRight, X, FileText, L
 import { addSkill, loadSkills, saveSkills, setAutoMode, isAutoMode, type Skill } from "../lib/skills-engine";
 import { infer } from "../lib/brain";
 
-const INPUT_SKILLS = new Set(["meeting-summarizer", "doc-review-ai"]);
+const INPUT_SKILLS: Record<string, true> = {
+  "meeting-summarizer": true,
+  "doc-review-ai": true,
+  "autonomous-web-search": true,
+  "github-autonomous-ops": true,
+  "google-drive-autonomous": true,
+  "autonomous-self-learn": true,
+};
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>(() => loadSkills());
@@ -65,7 +72,7 @@ export default function SkillsPage() {
 
     let prompt = `RUN SKILL: ${sk.name}\nINSTRUCTION: ${sk.instruction}\n`;
 
-    if (INPUT_SKILLS.has(sk.id) && userInput) {
+    if (INPUT_SKILLS[sk.id] && userInput) {
       prompt += `\nUSER INPUT:\n${userInput}\n\nProduce the output now.`;
     } else if (sk.id === "daily-briefing") {
       // Pull live system context
@@ -105,7 +112,7 @@ export default function SkillsPage() {
   }
 
   function handleRunClick(sk: Skill) {
-    if (INPUT_SKILLS.has(sk.id)) {
+    if (INPUT_SKILLS[sk.id]) {
       setInputModal({ skill: sk, text: "" });
     } else {
       void runSkill(sk);
@@ -211,16 +218,34 @@ export default function SkillsPage() {
             <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
               {inputModal.skill.id === "meeting-summarizer"
                 ? "Meeting notes, transcript, ya discussion paste karo:"
-                : "Document text, agreement, ya circular paste karo:"}
+                : inputModal.skill.id === "doc-review-ai"
+                ? "Document text, agreement, ya circular paste karo:"
+                : inputModal.skill.id === "autonomous-web-search"
+                ? "Web search topic, news keyword, ya regulatory query daalo:"
+                : inputModal.skill.id === "github-autonomous-ops"
+                ? "GitHub repository URL, branch name, ya CI/CD issue objective daalo:"
+                : inputModal.skill.id === "google-drive-autonomous"
+                ? "Google Drive folder/file context ya loan policy topic daalo:"
+                : "Operational rule, borrower policy, ya lesson to record daalo:"}
             </p>
             <textarea
               autoFocus
               rows={8}
               value={inputModal.text}
               onChange={(e) => setInputModal({ ...inputModal, text: e.target.value })}
-              placeholder={inputModal.skill.id === "meeting-summarizer"
-                ? "Paste meeting notes or call transcript here..."
-                : "Paste document text, loan agreement, or circular here..."}
+              placeholder={
+                inputModal.skill.id === "meeting-summarizer"
+                  ? "Paste meeting notes or call transcript here..."
+                  : inputModal.skill.id === "doc-review-ai"
+                  ? "Paste document text, loan agreement, or circular here..."
+                  : inputModal.skill.id === "autonomous-web-search"
+                  ? "Enter search topic (e.g. RBI unsecured lending rules 2026, SBI home loan rates)..."
+                  : inputModal.skill.id === "github-autonomous-ops"
+                  ? "Enter GitHub repo / branch / PR or CI issue to audit..."
+                  : inputModal.skill.id === "google-drive-autonomous"
+                  ? "Enter Drive file name, folder ID, or lender policy question..."
+                  : "Enter rule or lesson to record in SARI memory vault..."
+              }
               style={{ resize: "vertical", marginBottom: 16, fontSize: 13 }}
             />
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -271,8 +296,8 @@ export default function SkillsPage() {
                 onClick={() => handleRunClick(sk)}
                 style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
               >
-                {INPUT_SKILLS.has(sk.id) ? <FileText size={12} /> : <Play size={12} />}
-                {INPUT_SKILLS.has(sk.id) ? "Paste & Run" : sk.id === "daily-briefing" ? "Live Brief" : "Run"}
+                {INPUT_SKILLS[sk.id] ? <FileText size={12} /> : <Play size={12} />}
+                {INPUT_SKILLS[sk.id] ? "Paste & Run" : sk.id === "daily-briefing" ? "Live Brief" : "Run"}
               </button>
             </div>
           </div>
