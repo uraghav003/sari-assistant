@@ -14,18 +14,16 @@ const TERMINAL_MAX_REQUESTS = 15;
 const MAX_OUTPUT = 8000;
 
 /** Whitelisted commands — only these can run from the mobile terminal. */
-const COMMANDS: Record<string, { cmd: string; label: string; danger?: boolean }> = {
-  status:       { cmd: "git status --short && echo --- && node -v && npm -v", label: "System Status" },
-  "git-log":    { cmd: "git log --oneline -10", label: "Recent Commits" },
-  test:         { cmd: "npx vitest run 2>&1", label: "Run Tests" },
-  build:        { cmd: "npm run build 2>&1", label: "Build Project" },
-  audit:        { cmd: "npm audit --omit=dev 2>&1", label: "Security Audit" },
-  "clasp-status": { cmd: "clasp status 2>&1", label: "Clasp Status" },
-  health:       { cmd: 'node -e "[\'package.json\',\'tsconfig.json\',\'.mcp.json\',\'.claude/settings.json\',\'vercel.json\'].forEach(f=>{try{JSON.parse(require(\'fs\').readFileSync(f,\'utf8\'));console.log(\'✓\',f)}catch(e){console.log(\'✗\',f,e.message)}})"', label: "Config Health" },
-  "cache-clean": { cmd: "npm cache verify 2>&1", label: "Cache Verify" },
-  "deps":       { cmd: "npm outdated 2>&1 || true", label: "Outdated Deps" },
-  "disk":       { cmd: 'node -e "const fs=require(\'fs\'),p=require(\'path\');function sz(d){let t=0;try{for(const f of fs.readdirSync(d)){const fp=p.join(d,f);const s=fs.statSync(fp);t+=s.isDirectory()?sz(fp):s.size}}catch{}return t}console.log(\'node_modules:\',Math.round(sz(\'node_modules\')/1048576)+\'MB\')"', label: "Disk Usage" },
-  "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'SARI_LOGIN_EMAIL\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars Check" },
+const COMMANDS: Record<string, { cmd: string; label: string }> = {
+  "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'SARI_LOGIN_EMAIL\',\'SARI_TOTP_SECRET\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars" },
+  health:       { cmd: 'node -e "[\'package.json\',\'tsconfig.json\',\'vercel.json\'].forEach(f=>{try{JSON.parse(require(\'fs\').readFileSync(f,\'utf8\'));console.log(\'✓\',f)}catch(e){console.log(\'✗\',f,e.message)}})"', label: "Config Health" },
+  "git-log":    { cmd: "git log --oneline -8", label: "Recent Commits" },
+  status:       { cmd: "git status --short && echo '---' && node -v", label: "System Status" },
+  "api-routes": { cmd: 'ls api/*.ts | grep -v "^api/_" | sed "s/api\\///;s/\\.ts$//" | sort', label: "API Routes" },
+  "env-region": { cmd: 'node -e "console.log(\'region:\',process.env.VERCEL_REGION||\'local\',\'env:\',process.env.VERCEL_ENV||\'development\')"', label: "Vercel Region" },
+  "mem-usage":  { cmd: 'node -e "const m=process.memoryUsage();console.log(\'rss:\',Math.round(m.rss/1048576)+\'MB\',\'heap:\',Math.round(m.heapUsed/1048576)+\'MB/\'+Math.round(m.heapTotal/1048576)+\'MB\')"', label: "Memory" },
+  uptime:       { cmd: 'node -e "const u=process.uptime();console.log(\'process uptime:\',u.toFixed(1)+\'s\')"', label: "Uptime" },
+  "security":   { cmd: 'node -e "const r=require; try{const s=r(\'./api/_security.js\');console.log(\'_security: loaded ok\')}catch(e){console.log(\'_security:\',e.message)}" 2>&1 || echo "run from deploy context"', label: "Security Check" },
 };
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);

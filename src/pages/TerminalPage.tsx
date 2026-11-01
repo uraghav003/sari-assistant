@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Terminal as TermIcon, Play, Loader2, Trash2 } from "lucide-react";
+import { Terminal as TermIcon, Play, Loader2, Trash2, RefreshCw } from "lucide-react";
 
 interface CommandDef {
   id: string;
@@ -44,7 +44,7 @@ export default function TerminalPage() {
       const res = await fetch("/api/terminal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        credentials: "same-origin",
         body: JSON.stringify({ command: id }),
       });
       const data = await res.json();
@@ -78,14 +78,35 @@ export default function TerminalPage() {
     }
   }
 
+  function reloadCommands() {
+    fetch("/api/terminal")
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setCommands(d.commands); })
+      .catch(() => {});
+  }
+
   return (
     <div style={{ padding: "1.2rem", maxWidth: 720, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "1rem" }}>
         <TermIcon size={20} />
-        <h2 style={{ margin: 0, fontSize: 18 }}>Mini Terminal</h2>
+        <h2 style={{ margin: 0, fontSize: 18 }}>SARI Terminal</h2>
         <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>
           {commands.length} commands
         </span>
+        <button
+          onClick={reloadCommands}
+          title="Refresh command list"
+          style={{
+            padding: "4px 8px",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            background: "transparent",
+            color: "var(--muted)",
+            cursor: "pointer",
+          }}
+        >
+          <RefreshCw size={13} />
+        </button>
       </div>
 
       {/* Command palette — mobile grid */}
@@ -115,6 +136,7 @@ export default function TerminalPage() {
               fontSize: 13,
               fontWeight: 500,
               transition: "all 0.15s",
+              textAlign: "left",
             }}
           >
             {running === cmd.id ? <Loader2 size={14} className="spin" /> : <Play size={14} />}

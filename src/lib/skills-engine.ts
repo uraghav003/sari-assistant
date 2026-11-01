@@ -194,49 +194,34 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
-    id: "telephony-calling-bridge",
-    name: "Telephony & Voice Call Intelligence Bridge",
-    description: "Automate calling desk queues, analyze voice call dispositions, parse call transcripts, and dispatch follow-up SMS/WhatsApp actions",
+    id: "voice-comms-bridge",
+    name: "Voice & Communication Intelligence Bridge",
+    description: "Analyze call transcripts, classify dispositions, draft Hinglish follow-ups, and trigger WhatsApp/SMS actions. Covers telephony + voice synthesis.",
     status: "live",
-    trigger: "call / dialer / calling desk / telephony / disposition / voice transcript / sms / whatsapp",
+    trigger: "call / dialer / telephony / disposition / voice transcript / sms / whatsapp / audio / tts / speech / speak / broadcast",
     steps: [
-      "Analyze call transcript / recording for customer intent and sentiment",
-      "Classify disposition (Interested, Callback, Rejection, Documentation Pending)",
-      "Draft personalized, context-aware Hinglish follow-up message",
-      "Schedule automatic dialer retry or escalation to senior loan manager",
-      "Sync call summary to central CRM"
+      "Analyze call transcript for customer intent, sentiment, and disposition",
+      "Classify outcome: Interested / Callback / Rejection / Docs Pending",
+      "Draft Hinglish follow-up message (WhatsApp or SMS)",
+      "Schedule dialer retry or escalate to senior loan manager",
+      "Sync call summary + communication log to CRM"
     ],
-    instruction: "Process telephony intelligence with rapid turnaround. Produce concise caller summaries, exact dispositions, and immediate follow-up SMS/WhatsApp triggers.",
+    instruction: "Handle all voice and communication workflows — call analysis, disposition classification, follow-up drafting, and voice synthesis. Never expose PII in outbound messages.",
     runs: 0,
   },
   {
-    id: "fish-audio-voice",
-    name: "Fish Audio Multilingual Voice Synthesis",
-    description: "Generate natural speech voiceovers, multilingual audio broadcasts, and real-time TTS streams via Fish Audio API",
+    id: "terminal-ops",
+    name: "SARI Live Terminal & System Ops",
+    description: "Run live server diagnostics: env vars, config health, git log, API routes, memory, and Vercel region — direct from the SARI Terminal page.",
     status: "live",
-    trigger: "audio / voice / tts / speech / fish audio / speak / broadcast",
+    trigger: "terminal / system check / env check / git log / server health / memory / api routes / vercel region / uptime / diagnose",
     steps: [
-      "Structure text into clean phonetic SSML / script chunks",
-      "Select optimal voice persona and language model (English / Hindi / Hinglish)",
-      "Transmit synthesis request to Fish Audio API endpoint",
-      "Stream high-fidelity audio buffer to client playback or export file"
+      "Navigate to Terminal page in SARI sidebar",
+      "Select the relevant command button (Env Vars, Config Health, System Status, etc.)",
+      "Read output in the dark terminal panel",
+      "Clear log when done"
     ],
-    instruction: "Convert assistant messages and announcements into high-quality natural voice audio with zero credential or PII leakage.",
-    runs: 0,
-  },
-  {
-    id: "self-instruct",
-    name: "Autonomous Skill Synthesizer & Compiler",
-    description: "Synthesize and activate dynamic, reusable skill modules on the fly from user descriptions",
-    status: "live",
-    trigger: "build skill / naya skill / create skill / synthesize / automate workflow",
-    steps: [
-      "Extract trigger phrases, execution intent, and boundary constraints",
-      "Generate structured 4-6 step deterministic execution recipe",
-      "Draft reusable system instruction with safety guardrails",
-      "Persist skill card to local storage and activate for immediate routing"
-    ],
-    instruction: "Turn user workflow descriptions into fully formed, production-grade reusable skill cards with clean step sequences and tight instructions.",
+    instruction: "Route all live server diagnostics and system health checks to the SARI Terminal page. Commands run in the Vercel serverless context and return real-time output.",
     runs: 0,
   },
   {
