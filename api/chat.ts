@@ -97,10 +97,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey && openRouterKey.length > 10) {
       const orModels = [
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemini-2.0-flash-exp:free",
+        "qwen/qwen-2.5-72b-instruct:free",
         "nvidia/nemotron-3.5-lightning:free",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
         "google/gemma-4-31b-it:free",
-        "liquid/lfm-2.5-2.6b:free",
       ];
       for (const orModel of orModels) {
         try {
