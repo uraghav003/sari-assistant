@@ -1,0 +1,126 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SARI Supreme AI — Gemini App Bridge & Sovereign Engine",
+    "description": "Direct API bridge connecting Google Gemini App, Gemini Gems, and external AI agents to SARI Supreme Intelligence at Divyanshi Capital. Backed by OpenRouter, Gemini, and Google Drive Workspace.",
+    "version": "4.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://sari-assistant.vercel.app",
+      "description": "Production SARI Sovereign Vercel Edge Serverless"
+    }
+  ],
+  "paths": {
+    "/api/chat": {
+      "post": {
+        "operationId": "chatWithSari",
+        "summary": "Send query to SARI Supreme AI Brain",
+        "description": "Routes user prompt through SARI's 4-block cognitive reasoning cascade (UNDERSTAND, PLAN, ACT, LEARN) and multi-model fallbacks.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "description": "The command or question for SARI"
+                  }
+                },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response from SARI Brain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "text": { "type": "string" },
+                    "tier": { "type": "string" },
+                    "model": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhook": {
+      "post": {
+        "operationId": "syncSariWebhook",
+        "summary": "Synchronize external agent telemetry and tasks to SARI Vault",
+        "description": "Accepts webhook events, task telemetry, and knowledge sync from Gemini App and external sovereign agents.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agent": { "type": "string", "description": "Agent name (e.g. GeminiApp)" },
+                  "event": { "type": "string", "description": "Event type (e.g. workspace_sync, query)" },
+                  "payload": { "type": "object", "description": "Arbitrary payload data" },
+                  "apiKey": { "type": "string", "description": "Bearer token or SARI Master API Key" }
+                },
+                "required": ["agent", "event"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook synced successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "supreme": { "type": "string" },
+                    "agent": { "type": "string" },
+                    "event": { "type": "string" },
+                    "synced": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "getSariHealth",
+        "summary": "Get live SARI system health and uptime",
+        "responses": {
+          "200": {
+            "description": "Health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "system": { "type": "string" },
+                    "version": { "type": "string" },
+                    "uptime": { "type": "string" },
+                    "auth": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

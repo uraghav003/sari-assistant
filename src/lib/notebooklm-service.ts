@@ -5,6 +5,7 @@
 
 export interface NotebookLMConfig {
   folderId: string;
+  workspaceName?: string;
   configured: boolean;
   dossierVersion: string;
   lenderCount: number;
@@ -14,6 +15,7 @@ export interface NotebookLMConfig {
 export function getNotebookLMConfig(): NotebookLMConfig {
   return {
     folderId: "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
+    workspaceName: "sari_supreme_command",
     configured: true,
     dossierVersion: "v4.1.0-enterprise",
     lenderCount: 52,

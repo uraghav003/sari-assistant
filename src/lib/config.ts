@@ -6,6 +6,7 @@ export interface DynamicConfig {
   empCode: string;
   notebooklmFolderId?: string;
   googleDriveFolderId?: string;
+  driveWorkspaceName?: string;
   autopilotEnabled: boolean;
 }
 
@@ -18,6 +19,7 @@ export const DEFAULT_OLLAMA_MODEL = "qwen2.5-coder:latest";
 export const DEFAULT_EMP_CODE = "DC001";
 export const DEFAULT_NOTEBOOKLM_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
 export const DEFAULT_GOOGLE_DRIVE_FOLDER_ID = "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu";
+export const DEFAULT_DRIVE_WORKSPACE_NAME = "sari_supreme_command";
 
 /**
  * Only non-secret routing configuration belongs here. API keys, session
@@ -32,6 +34,7 @@ export function loadDynamicConfig(): DynamicConfig {
     empCode: DEFAULT_EMP_CODE,
     notebooklmFolderId: DEFAULT_NOTEBOOKLM_FOLDER_ID,
     googleDriveFolderId: DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
+    driveWorkspaceName: DEFAULT_DRIVE_WORKSPACE_NAME,
     autopilotEnabled: true,
   };
 
@@ -63,6 +66,10 @@ export function loadDynamicConfig(): DynamicConfig {
         typeof parsed.googleDriveFolderId === "string" && parsed.googleDriveFolderId.trim()
           ? parsed.googleDriveFolderId.trim()
           : DEFAULT_GOOGLE_DRIVE_FOLDER_ID,
+      driveWorkspaceName:
+        typeof parsed.driveWorkspaceName === "string" && parsed.driveWorkspaceName.trim()
+          ? parsed.driveWorkspaceName.trim()
+          : DEFAULT_DRIVE_WORKSPACE_NAME,
       autopilotEnabled: parsed.autopilotEnabled !== false,
     };
   } catch {

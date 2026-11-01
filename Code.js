@@ -14,7 +14,8 @@ var ALLOWED_ACTIONS = [
   "autopilot_learn",
   "notion_sync",
   "notebooklm_sync",
-  "terminal_status"
+  "terminal_status",
+  "drive_workspace"
 ];
 
 var AUTH_WINDOW_MS = 5 * 60 * 1000;
@@ -224,6 +225,29 @@ function doPost(e) {
       };
       return jsonOut_(response);
     }
+    if (action === "drive_workspace") {
+      var folderName = String(payload.folderName || "sari_supreme_command").trim();
+      var folder = getOrCreateWorkspaceFolder_(folderName);
+      var fileCount = 0;
+      var fileList = [];
+      if (folder) {
+        var files = folder.getFiles();
+        while (files.hasNext() && fileList.length < 20) {
+          var f = files.next();
+          fileCount++;
+          fileList.push({ name: f.getName(), id: f.getId(), size: f.getSize(), updated: f.getLastUpdated().toISOString() });
+        }
+      }
+      response.result = {
+        folderName: folder ? folder.getName() : folderName,
+        folderId: folder ? folder.getId() : null,
+        url: folder ? folder.getUrl() : null,
+        fileCount: fileCount,
+        files: fileList,
+        synced: Boolean(folder)
+      };
+      return jsonOut_(response);
+    }
 
     return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
   } catch (err) {
@@ -255,4 +279,23 @@ function checkConfiguration() {
   };
   Logger.log(JSON.stringify(report, null, 2));
   return report;
+}
+
+function getOrCreateWorkspaceFolder_(name) {
+  try {
+    var targetName = name || "sari_supreme_command";
+    var query = 'title = "' + targetName + '" and mimeType = "application/vnd.google-apps.folder" and trashed = false';
+    var folders = DriveApp.searchFolders(query);
+    if (folders.hasNext()) {
+      return folders.next();
+    }
+    var altName = targetName === "sari_supreme_command" ? "sari_superme_commond" : "sari_supreme_command";
+    var altFolders = DriveApp.searchFolders('title = "' + altName + '" and mimeType = "application/vnd.google-apps.folder" and trashed = false');
+    if (altFolders.hasNext()) {
+      return altFolders.next();
+    }
+    return DriveApp.createFolder(targetName);
+  } catch (err) {
+    return null;
+  }
 }

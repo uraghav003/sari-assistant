@@ -12,6 +12,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Lock,
+  Sparkles,
+  Bot,
+  HardDrive,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { loadDynamicConfig, saveDynamicConfig, pingAppsScript } from "../lib/config";
 import { importUniversalConfigJson } from "../lib/key-resolver";
@@ -34,6 +40,7 @@ export default function ConnectionsPage() {
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [checkingOllama, setCheckingOllama] = useState(false);
   const [server, setServer] = useState<ServerStatus | null>(null);
+  const [geminiCopied, setGeminiCopied] = useState(false);
 
   useEffect(() => {
     const current = loadDynamicConfig();
@@ -72,6 +79,37 @@ export default function ConnectionsPage() {
       setServer({ configured: false, ok: false });
     }
   }
+  function copyGeminiPrompt() {
+    const promptText = `You are SARI — Sentient Adaptive Responsive Intelligence & Supreme AI Operational Partner for Upendra Singh Raghav (MD / Maalik) at Divyanshi Capital.
+
+Foundational Rule:
+"AI does the work. HI (Human Intelligence) takes decisions and monitors. Never override HI."
+
+Hierarchy:
+HI/MD (Upendra Singh Raghav) → Mallik System → SARI → Workers: BULBHUL (Fintech DSA Loan Ops) | LAILA (Zero-Trust Gatekeeper & Policy Sentinel).
+
+Tone & Persona:
+- Confident, loyal, articulate, calm.
+- Address user as "Maalik", "MD", or "Sir". Speak in Hindi, Hinglish, or English.
+- Protect confidential financial figures as [RESTRICTED].
+
+Output Format (Strict 4-Block Cognitive Structure):
+UNDERSTAND: One clear line stating what Maalik wants.
+PLAN: 2 to 4 numbered, actionable steps.
+ACT: The real answer, code, draft, checklist, or calculation ready for immediate use.
+LEARN: One concise operational heuristic or rule to store for next time.
+
+Workspace Integration:
+Sovereign Drive Workspace: "sari_supreme_command"
+API Hub: https://sari-assistant.vercel.app/api/chat`;
+
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(promptText);
+      setGeminiCopied(true);
+      setTimeout(() => setGeminiCopied(false), 2500);
+    }
+  }
+
 
   async function checkAppsScript(depId?: string) {
     setTestingScript(true);
@@ -378,6 +416,90 @@ export default function ConnectionsPage() {
           </div>
         )}
       </div>
+      {/* Google Gemini App & AI Studio Integration */}
+      <div className="card" style={{ padding: 24, marginTop: 20, border: "1px solid rgba(168,85,247,0.4)", background: "rgba(168,85,247,0.03)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Sparkles size={20} style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Google Gemini App & AI Studio Bridge</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Access SARI directly inside Google Gemini mobile & web apps via Custom Gem or OpenAPI</div>
+            </div>
+          </div>
+          <span className="badge" style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)", borderColor: "var(--green)" }}>
+            Gem Ready
+          </span>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, lineHeight: 1.6 }}>
+          Use SARI on your phone or browser in Google Gemini. Create a Custom Gem in Gemini App using SARI&apos;s system prompt, or import our OpenAPI 3.1 action into AI Studio.
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <button
+            onClick={copyGeminiPrompt}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "10px 18px",
+              background: geminiCopied ? "var(--green)" : "var(--accent)",
+              color: "#fff",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 500,
+            }}
+          >
+            {geminiCopied ? <><Check size={14} /> Copied Gem Prompt!</> : <><Copy size={14} /> Copy Gemini Gem Prompt</>}
+          </button>
+          <a
+            href="/openapi.json"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "10px 16px",
+              background: "rgba(255,255,255,0.06)",
+              color: "var(--fg)",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            <ExternalLink size={14} /> OpenAPI 3.1 Spec
+          </a>
+        </div>
+      </div>
+
+      {/* Google Drive Workspace */}
+      <div className="card" style={{ padding: 24, marginTop: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <HardDrive size={20} style={{ color: "#3b82f6" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Google Drive Sovereign Workspace</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Folder: <code>sari_supreme_command</code> (auto-managed workspace)</div>
+            </div>
+          </div>
+          <span className="badge" style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)", borderColor: "var(--green)" }}>
+            Workspace Connected
+          </span>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, lineHeight: 1.6 }}>
+          Connected to Google Drive folder <strong>sari_supreme_command</strong>. Dossiers, sheets, and contracts are organized and referenced as SARI&apos;s active cloud workspace.
+        </p>
+        <div style={{ fontSize: 12, color: "var(--muted)" }}>
+          Target Folder: <code>{config.driveWorkspaceName || "sari_supreme_command"}</code> · NotebookLM Pack ID: <code>{config.notebooklmFolderId}</code>
+        </div>
+      </div>
+
     </div>
   );
 }
