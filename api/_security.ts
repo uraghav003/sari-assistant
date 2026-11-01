@@ -220,10 +220,11 @@ export function readBody(req: VercelRequest): Record<string, unknown> {
  */
 export function checkCredentials(email: string, password: string): boolean {
   if (typeof email !== "string" || typeof password !== "string" || password.length > 512) return false;
-  const expectedEmail = (process.env.SARI_LOGIN_EMAIL || "").trim().toLowerCase();
-  if (!expectedEmail) return false;
+  const rawEmailEnv = (process.env.SARI_LOGIN_EMAIL || "").trim().toLowerCase();
+  if (!rawEmailEnv) return false;
   const givenEmail = email.trim().toLowerCase();
-  if (!safeEqual(givenEmail, expectedEmail)) return false;
+  const allowedEmails = rawEmailEnv.split(",").map(e => e.trim());
+  if (!allowedEmails.includes(givenEmail)) return false;
 
   if (process.env.SARI_PASSWORD) {
     return safeEqual(password, process.env.SARI_PASSWORD);
