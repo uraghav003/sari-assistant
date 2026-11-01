@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Wand2, Plus, CheckCircle2, Play, Sparkles, ChevronRight, X } from "lucide-react";
+import { Wand2, Plus, CheckCircle2, Play, Sparkles, ChevronRight, X, FileText, Loader2 } from "lucide-react";
 import { addSkill, loadSkills, saveSkills, setAutoMode, isAutoMode, type Skill } from "../lib/skills-engine";
 import { infer } from "../lib/brain";
+
+const INPUT_SKILLS = new Set(["meeting-summarizer", "doc-review-ai"]);
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>(() => loadSkills());
@@ -13,6 +15,9 @@ export default function SkillsPage() {
   const [generated, setGenerated] = useState<{ name: string; steps: string[]; description: string; instruction: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
+
+  // Input modal for skills that need pasted text
+  const [inputModal, setInputModal] = useState<{ skill: Skill; text: string } | null>(null);
 
   async function generateSkill() {
     if (!goal.trim()) return;
@@ -55,13 +60,47 @@ export default function SkillsPage() {
     setGenerated(null);
   }
 
-  async function runSkill(sk: Skill) {
+  async function runSkill(sk: Skill, userInput?: string) {
     setRunOut("Running...");
-    const out = await infer(`RUN SKILL ${sk.name}\nINSTRUCTION: ${sk.instruction}\nGive a real-world first pass the MD can use now.`);
+
+    let prompt = `RUN SKILL: ${sk.name}\nINSTRUCTION: ${sk.instruction}\n`;
+
+    if (INPUT_SKILLS.has(sk.id) && userInput) {
+      prompt += `\nUSER INPUT:\n${userInput}\n\nProduce the output now.`;
+    } else if (sk.id === "daily-briefing") {
+      // Pull live system context
+      let ctx = "";
+      try {
+        const [h, l] = await Promise.all([
+          fetch("/api/health", { credentials: "same-origin" }).then((r) => r.json()).catch(() => null),
+          fetch("/api/leads", { credentials: "same-origin" }).then((r) => r.json()).catch(() => null),
+        ]);
+        if (h) ctx += `SYSTEM_HEALTH: ${JSON.stringify(h)}\n`;
+        if (l?.leads) ctx += `LEADS_COUNT: ${l.leads.length} leads in pipeline\n`;
+        if (l?.leads) {
+          const hot = l.leads.filter((x: { status?: string }) => x.status === "hot" || x.status === "new").slice(0, 5);
+          if (hot.length) ctx += `HOT_LEADS: ${hot.map((x: { name?: string; status?: string }) => `${x.name ?? "Unknown"} (${x.status ?? ""})`).join(", ")}\n`;
+        }
+      } catch {}
+      prompt += `\nLIVE CONTEXT:\n${ctx || "No live data available."}\n\nGenerate today's MD briefing now.`;
+    } else {
+      prompt += `Give a real-world first pass the MD can use now.`;
+    }
+
+    const out = await infer(prompt);
     const next = skills.map((s) => (s.id === sk.id ? { ...s, runs: (s.runs || 0) + 1, lastRun: new Date().toISOString() } : s));
     saveSkills(next);
     setSkills(next);
     setRunOut(`${sk.name}\n\n${out.text}`);
+    setInputModal(null);
+  }
+
+  function handleRunClick(sk: Skill) {
+    if (INPUT_SKILLS.has(sk.id)) {
+      setInputModal({ skill: sk, text: "" });
+    } else {
+      void runSkill(sk);
+    }
   }
 
   function toggleAuto() {
@@ -86,9 +125,7 @@ export default function SkillsPage() {
           <p className="page-sub">Self-instruct · Auto-learn · Think then Act</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn-secondary" onClick={enableAllSkills}>
-            Enable All
-          </button>
+          <button className="btn-secondary" onClick={enableAllSkills}>Enable All</button>
           <button className={auto ? "btn-primary" : "btn-ghost"} onClick={toggleAuto}>
             Auto mode: {auto ? "ON" : "OFF"}
           </button>
@@ -100,6 +137,7 @@ export default function SkillsPage() {
         </div>
       </div>
 
+      {/* Skill builder flow */}
       {building && (
         <div className="card" style={{ padding: 24, marginBottom: 24, borderColor: "rgba(168,85,247,0.3)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -146,10 +184,63 @@ export default function SkillsPage() {
         </div>
       )}
 
-      {runOut && (
-        <div className="card" style={{ padding: 16, marginBottom: 16, whiteSpace: "pre-wrap", fontSize: 13 }}>{runOut}</div>
+      {/* Input modal for meeting-summarizer / doc-review-ai */}
+      {inputModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 200, padding: 16,
+        }}>
+          <div className="card" style={{ width: "100%", maxWidth: 540, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+                <FileText size={16} style={{ color: "var(--purple)" }} />
+                {inputModal.skill.name}
+              </div>
+              <button onClick={() => setInputModal(null)} style={{ color: "var(--muted)" }}><X size={18} /></button>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
+              {inputModal.skill.id === "meeting-summarizer"
+                ? "Meeting notes, transcript, ya discussion paste karo:"
+                : "Document text, agreement, ya circular paste karo:"}
+            </p>
+            <textarea
+              autoFocus
+              rows={8}
+              value={inputModal.text}
+              onChange={(e) => setInputModal({ ...inputModal, text: e.target.value })}
+              placeholder={inputModal.skill.id === "meeting-summarizer"
+                ? "Paste meeting notes or call transcript here..."
+                : "Paste document text, loan agreement, or circular here..."}
+              style={{ resize: "vertical", marginBottom: 16, fontSize: 13 }}
+            />
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="btn-ghost" onClick={() => setInputModal(null)}>Cancel</button>
+              <button
+                className="btn-primary"
+                disabled={!inputModal.text.trim() || busy}
+                onClick={() => { setBusy(true); void runSkill(inputModal.skill, inputModal.text).finally(() => setBusy(false)); }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                {busy ? <><Loader2 size={14} className="spin" /> Running...</> : <><Play size={14} /> Run Skill</>}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
+      {/* Output panel */}
+      {runOut && (
+        <div className="card" style={{ padding: 16, marginBottom: 16, whiteSpace: "pre-wrap", fontSize: 13, maxHeight: 400, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>Output</span>
+            <button onClick={() => setRunOut("")} style={{ fontSize: 11, color: "var(--muted)" }}>Clear</button>
+          </div>
+          {runOut}
+        </div>
+      )}
+
+      {/* Skills grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
         {skills.map((sk) => (
           <div key={sk.id} className="card" style={{ padding: 18 }}>
@@ -165,12 +256,24 @@ export default function SkillsPage() {
             </div>
             <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>{sk.description}</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11.5, color: "var(--muted)" }}>
-              <span>{sk.trigger} · {sk.runs || 0} runs</span>
-              <button className="btn-ghost" onClick={() => runSkill(sk)} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Play size={12} /> Run</button>
+              <span>{sk.trigger.slice(0, 40)} · {sk.runs || 0} runs</span>
+              <button
+                className="btn-ghost"
+                onClick={() => handleRunClick(sk)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+              >
+                {INPUT_SKILLS.has(sk.id) ? <FileText size={12} /> : <Play size={12} />}
+                {INPUT_SKILLS.has(sk.id) ? "Paste & Run" : sk.id === "daily-briefing" ? "Live Brief" : "Run"}
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        .spin { animation: spin 1s linear infinite; }
+      `}</style>
     </div>
   );
 }
