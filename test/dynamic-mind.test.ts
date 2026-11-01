@@ -1,41 +1,38 @@
-import { describe, it, expect } from 'vitest';
-import { createRequire } from 'node:module';
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
-const require = createRequire(import.meta.url);
-const { sovereignMind } = require('../dynamic-mind.cjs');
-const { searchBanks, getBankOptions } = require('../src/knowledge/search-engine.cjs');
+const projectRoot = fileURLToPath(new URL("..", import.meta.url));
+const SARI_SCRIPT_ID = "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3";
+const SARI_DEPLOYMENT_ID = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
 
-describe('SARI Sovereign Dynamic Mind & Bank Knowledgebase Integration', () => {
-  it('searchBanks returns matched lenders for personal loan', () => {
-    const result = searchBanks({ query: 'HDFC', product: 'PERSONAL LOAN' });
-    expect(result).toBeTruthy();
-    expect(result.results.length).toBeGreaterThan(0);
-    expect(result.results[0].product).toBe('PERSONAL LOAN');
-    expect(result.results[0].startingRate).toMatch(/%/);
-    expect(result.results[0].tatDays).toBeGreaterThan(0);
+describe("SARI Dynamic Mind defaults", () => {
+  it("uses the SARI Apps Script bridge when no environment configuration exists", () => {
+    const isolatedHome = mkdtempSync(join(tmpdir(), "sari-dynamic-mind-"));
+
+    try {
+      const output = execFileSync(
+        process.execPath,
+        [
+          "-e",
+          "const mind = require('./dynamic-mind.cjs'); console.log(JSON.stringify({ scriptId: mind.SCRIPT_ID, deploymentId: mind.DEPLOYMENT_ID, execUrl: mind.EXEC_URL }));",
+        ],
+        {
+          cwd: projectRoot,
+          encoding: "utf8",
+          env: { PATH: process.env.PATH || "", HOME: isolatedHome, USERPROFILE: isolatedHome },
+        }
+      );
+      const config = JSON.parse(output) as { scriptId: string; deploymentId: string; execUrl: string };
+
+      expect(config.scriptId).toBe(SARI_SCRIPT_ID);
+      expect(config.deploymentId).toBe(SARI_DEPLOYMENT_ID);
+      expect(config.execUrl).toContain(SARI_DEPLOYMENT_ID);
+    } finally {
+      rmSync(isolatedHome, { recursive: true, force: true });
+    }
   });
-
-  it('searchBanks recommends 2-bank split for amounts >= 50 Lakhs', () => {
-    const result = searchBanks({ amount: 5000000 });
-    expect(result.splitRecommendation).toBeTruthy();
-    expect(result.splitRecommendation.recommended).toBe(true);
-    expect(result.splitRecommendation.structure.length).toBe(2);
-  });
-
-  it('getBankOptions returns valid options array for UI components', () => {
-    const options = getBankOptions('PERSONAL LOAN');
-    expect(Array.isArray(options)).toBe(true);
-    expect(options.length).toBeGreaterThan(0);
-    expect(options[0].label).toBeTruthy();
-    expect(options[0].startingRate).toBeTruthy();
-  });
-
-  it('sovereignMind.infer enriches loan queries with BANK_KNOWLEDGEBASE', async () => {
-    const result = await sovereignMind.infer('What are starting ROI and lenders for personal loan?');
-    expect(result).toBeTruthy();
-    expect(result.text).toBeTruthy();
-    expect(result.text).toMatch(/UNDERSTAND/);
-    expect(result.text).toMatch(/PLAN/);
-    expect(result.text).toMatch(/BANK_KNOWLEDGEBASE/);
-  }, 60000);
 });

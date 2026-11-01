@@ -44,12 +44,13 @@ presence flags only:
 
 ## 3. Project and deployment
 
-> **Status (2026-10-25):** a dedicated project now exists —
+> **Status (2026-10-26):** a dedicated project now exists —
 > `15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3` — containing
 > v4.0.0, deployed as
 > `AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3`
-> (version 1). It is not yet serving anonymous traffic: the owner has to
-> authorize the script once.
+> (version 1). Owner authorization, the anonymous health probe, and signed MCP
+> ping are verified. `SARI_SHARED_SECRET` is configured. Cloud `ai_infer` still
+> requires a valid Gemini API key in Script Properties.
 
 The previous URL in this repo (`AKfycbwzdhZF…`) belonged to a **different**
 Apps Script project — the Bulbhul Operating System — which is why deploying
