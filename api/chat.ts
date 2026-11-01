@@ -83,7 +83,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const trimmedPrompt = prompt.slice(0, MAX_PROMPT_CHARS);
 
-    // ─── TIER 1: GOOGLE GEMINI (server-side keys only) ─────────────────────
+    // ─── TIER 1: OPENROUTER API (verified live models) ────────────────────
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    if (openRouterKey && openRouterKey.length > 10) {
+      const orModels = [
+        "liquid/lfm-2.5-2.6b:free",
+        "nvidia/nemotron-3.5-lightning:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "google/gemma-4-31b-it:free",
+        "google/gemma-4-26b-a4b-it:free",
+      ];
+      for (const orModel of orModels) {
+        try {
+          const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${openRouterKey}`,
+              "HTTP-Referer": "https://sari-assistant.vercel.app",
+              "X-Title": "SARI Sovereign AI",
+            },
+            body: JSON.stringify({
+              model: orModel,
+              messages: [
+                { role: "system", content: SYSTEM_INSTRUCTION },
+                { role: "user", content: trimmedPrompt },
+              ],
+              temperature: 0.7,
+              max_tokens: 1024,
+            }),
+            signal: AbortSignal.timeout(15000),
+          });
+
+          if (orRes.ok) {
+            const orData: OpenRouterResponse = await orRes.json();
+            const orText = orData.choices?.[0]?.message?.content?.trim();
+            if (orText) {
+              res.status(200).json({ ok: true, text: orText, tier: "Cloud", model: orData.model || orModel });
+              return;
+            }
+          }
+        } catch {
+          // try next model
+        }
+      }
+    }
+
+    // ─── TIER 1.5: GOOGLE GEMINI (server-side keys) ───────────────────────
     const rawKeys = [
       process.env.GEMINI_API_KEY,
       process.env.MALLIK_API_KEY,
@@ -125,52 +171,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         } catch {
           // try next model / key
-        }
-      }
-    }
-
-    // ─── TIER 1.5: OPENROUTER (single key, 200+ models) ──────────────────
-    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
-    if (openRouterKey && openRouterKey.length > 10) {
-      const orModels = [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemini-2.0-flash-exp:free",
-        "qwen/qwen-2.5-72b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-      ];
-      for (const orModel of orModels) {
-        try {
-          const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${openRouterKey}`,
-              "HTTP-Referer": "https://sari-assistant.vercel.app",
-              "X-Title": "SARI Sovereign AI",
-            },
-            body: JSON.stringify({
-              model: orModel,
-              messages: [
-                { role: "system", content: SYSTEM_INSTRUCTION },
-                { role: "user", content: trimmedPrompt },
-              ],
-              temperature: 0.7,
-              max_tokens: 1024,
-            }),
-            signal: AbortSignal.timeout(20000),
-          });
-
-          if (orRes.ok) {
-            const orData: OpenRouterResponse = await orRes.json();
-            const orText = orData.choices?.[0]?.message?.content?.trim();
-            if (orText) {
-              res.status(200).json({ ok: true, text: orText, tier: "OpenRouter", model: orData.model || orModel });
-              return;
-            }
-          }
-        } catch {
-          // try next model
         }
       }
     }

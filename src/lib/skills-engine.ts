@@ -273,6 +273,70 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
+    id: "autonomous-web-search",
+    name: "Autonomous Web Search & Live Intelligence",
+    description: "Autonomous real-time web search across live news, regulatory circulars, market interest rates, competitor fintech offerings, and public domain intelligence.",
+    status: "live",
+    trigger: "search / web / google / internet / news / latest / market / competitor / check online / find on web",
+    steps: [
+      "Formulate precise multi-angle search query vectors from user objective",
+      "Execute real-time search across verified live news and web indexes",
+      "Extract grounded facts, source URLs, regulatory dates, and key metrics",
+      "Filter out clickbait, unverified rumors, and low-trust domains",
+      "Synthesize clear, structured executive briefing with direct citations"
+    ],
+    instruction: "Act as SARI's autonomous web search operative. Provide verified, up-to-date real-world facts with zero speculation. Always cite source domains and present structured actionable findings in UNDERSTAND / PLAN / ACT / LEARN format.",
+    runs: 0,
+  },
+  {
+    id: "github-autonomous-ops",
+    name: "GitHub Platform & Repository Operations",
+    description: "Autonomous GitHub repository auditing, pull request reviews, Actions CI/CD workflow healing, branch hygiene, and structural code search.",
+    status: "live",
+    trigger: "github / repo / repository / pull request / pr / commit / branch / ci / workflow / action / issue / git push / merge",
+    steps: [
+      "Inspect repository commit trees, active pull requests, and branch sync status",
+      "Analyze GitHub Actions CI workflow logs to pinpoint failure steps and stack traces",
+      "Search repository files for affected symbols, interfaces, and contract callers",
+      "Formulate surgical, non-breaking code fixes with conventional commit messages",
+      "Verify merge-readiness and monitor live deployment rollouts"
+    ],
+    instruction: "Operate autonomously across GitHub repositories and CI/CD pipelines. Audit failed workflows, manage pull requests, and enforce clean git hygiene with zero regression risk.",
+    runs: 0,
+  },
+  {
+    id: "google-drive-autonomous",
+    name: "Google Drive Autonomous Intelligence & Knowledge Vault",
+    description: "Deep search, index, and synthesize documents, credit policy manuals, sheets, and contracts stored across Google Drive folders autonomously.",
+    status: "live",
+    trigger: "drive / google drive / folder / gdrive / doc / spreadsheet / sheet / file / pdf / credit manual / contract / store",
+    steps: [
+      "Scan designated Google Drive folders and cloud workspace paths",
+      "Extract structured text and numerical tables from PDFs, Docs, and Sheets",
+      "Cross-reference borrower criteria against lender credit policy manuals",
+      "Synthesize unified answers with direct document names and citations",
+      "Index extracted heuristics into SARI's dynamic memory vault"
+    ],
+    instruction: "Autonomously search, read, and extract knowledge from Google Drive files and lender policy manuals. Ground answers strictly in verified document contents with zero hallucination.",
+    runs: 0,
+  },
+  {
+    id: "autonomous-self-learn",
+    name: "Autonomous Continuous Self-Learning Engine",
+    description: "Continuous self-learning engine that ingests user instructions, operational outcomes, and conversation heuristics to autonomously expand SARI's dynamic memory vault.",
+    status: "live",
+    trigger: "self learn / learn / memory / remember / lesson / auto learn / evolve / adapt / improve / note this / yaad rakhna",
+    steps: [
+      "Detect new rules, preferences, lender criteria, and corrections in conversation",
+      "Extract core heuristic and cross-check against existing memory",
+      "Store timestamped lesson into SARI local and cloud memory vault",
+      "Adapt future reasoning and skill selection based on accumulated lessons",
+      "Synchronize learning records with Google Apps Script sovereign memory"
+    ],
+    instruction: "Continuously learn from every conversation and user directive. Automatically extract lessons, update memory banks, and adapt future behavior without requiring manual configuration.",
+    runs: 0,
+  },
+  {
     id: "think",
     name: "Think Then Act Cognitive Core",
     description: "Execute UNDERSTAND → PLAN → ACT → LEARN reasoning on every single request",
