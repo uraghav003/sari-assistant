@@ -9,16 +9,19 @@ import {
   isSameOrigin,
   rateLimit,
   readBody,
-  requireSession,
   sessionFromRequest,
   tooManyRequests,
   verifyToken,
 } from "./_security.js";
 import { verifyTotp } from "./_totp.js";
-import { resetOtps } from "./request-otp.js";
 
 const CHANGE_PW_WINDOW_MS = 15 * 60 * 1000;
 const CHANGE_PW_MAX_ATTEMPTS = 5;
+const OTP_WINDOW_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+// In-memory OTP store (single-instance; cleared on redeploy — acceptable for single-user)
+const resetOtps = new Map<string, { code: string; expiresAt: number }>();
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16);
@@ -77,6 +80,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const body = readBody(req);
+  const action = typeof body.action === "string" ? body.action : "change";
+
+  // ── action: "request-otp" ─────────────────────────────────────────────────
+  if (action === "request-otp") {
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (!email) {
+      res.status(400).json({ ok: false, error: "Email is required" });
+      return;
+    }
+    const limitKey = `request-otp:${email}`;
+    const limit = rateLimit(limitKey, OTP_MAX_ATTEMPTS, OTP_WINDOW_MS);
+    if (!limit.ok) {
+      tooManyRequests(res, limit.retryAfter);
+      return;
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    resetOtps.set(email, { code, expiresAt: Date.now() + OTP_WINDOW_MS });
+    res.status(200).json({
+      ok: true,
+      message: "Password reset OTP sent to registered email.",
+      devCode: process.env.NODE_ENV === "development" ? code : undefined,
+    });
+    return;
+  }
+
+  // ── action: "change" (default) ────────────────────────────────────────────
   const sessionOk = verifyToken(sessionFromRequest(req));
   let authorized = sessionOk;
 
@@ -119,7 +148,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     const newHash = hashPassword(newPassword);
-
     process.env.SARI_PASSWORD_HASH = newHash;
     delete process.env.SARI_PASSWORD;
 
