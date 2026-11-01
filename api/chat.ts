@@ -132,7 +132,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 1.5: OPENROUTER (single key, 200+ models) ──────────────────
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey && openRouterKey.length > 10) {
-      const orModels = ["nvidia/nemotron-3.5-lightning:free", "nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-31b-it:free"];
+      const orModels = [
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemini-2.0-flash-exp:free",
+        "qwen/qwen-2.5-72b-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+      ];
       for (const orModel of orModels) {
         try {
           const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {

@@ -73,8 +73,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  if (req.method !== "POST") {
-    res.status(405).json({ ok: false, error: "Method not allowed. Use POST." });
+  if (req.method !== "POST" && req.method !== "GET") {
+    res.status(405).json({ ok: false, error: "Method not allowed. Use GET or POST." });
     return;
   }
 
@@ -83,6 +83,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const limit = rateLimit(`leads:${clientIp(req)}`, ACTION_MAX_REQUESTS, ACTION_WINDOW_MS);
   if (!limit.ok) {
     tooManyRequests(res, limit.retryAfter);
+    return;
+  }
+
+  if (req.method === "GET") {
+    res.status(200).json({
+      ok: true,
+      telegramConfigured: telegramConfig() !== null,
+      supabaseConfigured: supabaseConfig() !== null,
+      leads: [],
+    });
     return;
   }
 

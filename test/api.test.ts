@@ -190,6 +190,15 @@ describe("SARI Sovereign API Contracts", () => {
     expect(dispatchData.ok).toBe(true);
     expect(dispatchData.channel).toBe("in_app");
   });
+  it("supports GET on leads endpoint for health and pipeline inspection", async () => {
+    const resGet = createMockResponse();
+    await leadsHandler(request("GET", {}, { cookie: authCookie }), resGet.res);
+    expect(resGet.statusCode).toBe(200);
+    const getData = resGet.data as Record<string, unknown>;
+    expect(getData.ok).toBe(true);
+    expect(Array.isArray(getData.leads)).toBe(true);
+  });
+
 
   it("handles audit sink with session guard", async () => {
     const anonRes = createMockResponse();

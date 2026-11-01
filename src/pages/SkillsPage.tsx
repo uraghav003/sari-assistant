@@ -76,10 +76,19 @@ export default function SkillsPage() {
           fetch("/api/leads", { credentials: "same-origin" }).then((r) => r.json()).catch(() => null),
         ]);
         if (h) ctx += `SYSTEM_HEALTH: ${JSON.stringify(h)}\n`;
-        if (l?.leads) ctx += `LEADS_COUNT: ${l.leads.length} leads in pipeline\n`;
-        if (l?.leads) {
-          const hot = l.leads.filter((x: { status?: string }) => x.status === "hot" || x.status === "new").slice(0, 5);
-          if (hot.length) ctx += `HOT_LEADS: ${hot.map((x: { name?: string; status?: string }) => `${x.name ?? "Unknown"} (${x.status ?? ""})`).join(", ")}\n`;
+        let localLeads: Array<{ name?: string; status?: string }> = [];
+        try {
+          const raw = typeof window !== "undefined" ? localStorage.getItem("sari_autonomous_leads") : null;
+          if (raw) localLeads = JSON.parse(raw);
+        } catch {}
+        const activeLeads: Array<{ name?: string; status?: string }> =
+          (l?.leads && Array.isArray(l.leads) && l.leads.length > 0) ? l.leads : localLeads;
+        if (activeLeads.length) {
+          ctx += `LEADS_COUNT: ${activeLeads.length} leads in pipeline\n`;
+          const hot = activeLeads.filter((x) => x.status === "hot" || x.status === "new").slice(0, 5);
+          if (hot.length) {
+            ctx += `HOT_LEADS: ${hot.map((x) => `${x.name ?? "Unknown"} (${x.status ?? ""})`).join(", ")}\n`;
+          }
         }
       } catch {}
       prompt += `\nLIVE CONTEXT:\n${ctx || "No live data available."}\n\nGenerate today's MD briefing now.`;

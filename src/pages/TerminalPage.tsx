@@ -23,7 +23,7 @@ export default function TerminalPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/terminal")
+    fetch("/api/terminal", { credentials: "same-origin" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setCommands(d.commands);
@@ -79,7 +79,7 @@ export default function TerminalPage() {
   }
 
   function reloadCommands() {
-    fetch("/api/terminal")
+    fetch("/api/terminal", { credentials: "same-origin" })
       .then((r) => r.json())
       .then((d) => { if (d.ok) setCommands(d.commands); })
       .catch(() => {});

@@ -68,13 +68,13 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       const data: unknown = await res.json();
       if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
         const text = data.text.trim();
-        if (text.length >= MIN_RESPONSE_CHARS) {
+        if (text.length > 0) {
           audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
           learnFromInteraction(userPrompt, text, "Cloud");
           return { content: text, mode: "cloud" };
         }
       }
-      throw new Error("Cloud response too short");
+      throw new Error("Cloud response empty");
     } finally {
       clearTimeout(timeout);
     }
@@ -109,7 +109,7 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
           typeof data.message.content === "string"
         ) {
           const content = data.message.content.trim();
-          if (content.length >= MIN_RESPONSE_CHARS) {
+          if (content.length > 0) {
             audit("chat", "allowed", `Local model ${config.ollamaModel} responded`);
             learnFromInteraction(userPrompt, content, "Local");
             return { content, mode: "ollama" };
