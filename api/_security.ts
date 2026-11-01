@@ -15,9 +15,6 @@ export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 
-/** Single source of truth for the Apps Script web-app URL. */
-export const DEFAULT_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbwzdhZF3cVTT01atwZOSnXq7kBvx6k9NgFCbSvfAIXldCjBnMUqxKIBlLUPTiA7V8tc/exec";
 
 function sessionSecret(): string | null {
   const value = process.env.SARI_SESSION_SECRET;
@@ -47,11 +44,12 @@ export function safeEqual(a: string | undefined | null, b: string | undefined | 
  * one credential check (SARI_PASSWORD or SARI_PASSWORD_HASH) are configured.
  */
 export function authConfigured(): boolean {
-  const secret = process.env.SARI_SESSION_SECRET;
-  if (!secret || secret.trim().length < MIN_SECRET_LENGTH) return false;
-  const hasPassword = Boolean(process.env.SARI_PASSWORD?.trim());
-  const hasHash = Boolean(process.env.SARI_PASSWORD_HASH?.trim());
-  return hasPassword || hasHash;
+  const hasSecret = sessionSecret() !== null;
+  const hasCredential = Boolean(
+    process.env.SARI_LOGIN_EMAIL?.trim() &&
+      (process.env.SARI_PASSWORD_HASH?.trim() || process.env.SARI_PASSWORD)
+  );
+  return hasSecret && hasCredential;
 }
 
 export function issueToken(): string | null {
@@ -233,12 +231,11 @@ export function readBody(req: VercelRequest): Record<string, unknown> {
  */
 export function checkCredentials(email: string, password: string): boolean {
   if (typeof email !== "string" || typeof password !== "string" || password.length > 512) return false;
-
-  const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL;
-  if (!rawExpectedEmail) return false; // fail closed — no hardcoded email fallback
-  const allowedEmails = rawExpectedEmail.split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+  const rawEmailEnv = (process.env.SARI_LOGIN_EMAIL || "").trim().toLowerCase();
+  if (!rawEmailEnv) return false;
   const givenEmail = email.trim().toLowerCase();
-  if (!allowedEmails.some(allowed => safeEqual(givenEmail, allowed))) return false;
+  const allowedEmails = rawEmailEnv.split(",").map(e => e.trim());
+  if (!allowedEmails.includes(givenEmail)) return false;
 
   const passwordEnv = process.env.SARI_PASSWORD?.trim();
   if (passwordEnv && safeEqual(password, passwordEnv)) return true;

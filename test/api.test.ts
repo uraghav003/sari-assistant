@@ -8,6 +8,8 @@ import leadsHandler from "../api/leads.js";
 import auditHandler from "../api/audit.js";
 import changePasswordHandler from "../api/change-password.js";
 import probeScriptHandler from "../api/probe-script.js";
+import webhookHandler from "../api/webhook.js";
+import { appsScriptAuth, authConfigured } from "../api/_security.js";
 
 interface MockResponse {
   statusCode: number;
@@ -211,5 +213,85 @@ describe("SARI Sovereign API Contracts", () => {
     await logoutHandler(request("POST", {}, { cookie: authCookie }), res.res);
     expect(res.statusCode).toBe(200);
     expect(res.headers["set-cookie"]).toMatch(/Max-Age=0/);
+  });
+
+  it("fails closed when no webhook secret is configured", async () => {
+    delete process.env.SARI_MASTER_API_KEY;
+    delete process.env.SARI_WEBHOOK_SECRET;
+    delete process.env.SARI_SHARED_SECRET;
+
+    const res = createMockResponse();
+    await webhookHandler(
+      request("POST", { agent: "monitor", event: "healthy" }, { authorization: "Bearer arbitrary-value" }),
+      res.res
+    );
+
+    expect(res.statusCode).toBe(503);
+  });
+
+  it("syncs an authenticated webhook event to the SARI bridge", async () => {
+    const previousFetch = globalThis.fetch;
+    const previousWebhookSecret = process.env.SARI_WEBHOOK_SECRET;
+    const previousSharedSecret = process.env.SARI_SHARED_SECRET;
+    const webhookSecret = "webhook-secret-for-test-only-1234567890";
+    const sharedSecret = "shared-secret-for-test-only-1234567890";
+    const requests: string[] = [];
+    process.env.SARI_WEBHOOK_SECRET = webhookSecret;
+    process.env.SARI_SHARED_SECRET = sharedSecret;
+    globalThis.fetch = async (input) => {
+      requests.push(String(input));
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    };
+
+    try {
+      const res = createMockResponse();
+      await webhookHandler(
+        request(
+          "POST",
+          { agent: "monitor", event: "health_check", payload: { status: "ok" } },
+          { authorization: `Bearer ${webhookSecret}`, "x-forwarded-for": "203.0.113.42" }
+        ),
+        res.res
+      );
+
+      expect(res.statusCode).toBe(200);
+      expect(res.data).toMatchObject({ ok: true, synced: true, agent: "monitor", event: "health_check" });
+      expect(requests).toHaveLength(1);
+      expect(requests[0]).toContain("AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3");
+    } finally {
+      globalThis.fetch = previousFetch;
+      if (previousWebhookSecret === undefined) delete process.env.SARI_WEBHOOK_SECRET;
+      else process.env.SARI_WEBHOOK_SECRET = previousWebhookSecret;
+      if (previousSharedSecret === undefined) delete process.env.SARI_SHARED_SECRET;
+      else process.env.SARI_SHARED_SECRET = previousSharedSecret;
+    }
+  });
+
+  it("requires explicit environment configuration for session authentication", () => {
+    const names = ["SARI_SESSION_SECRET", "SARI_PASSWORD", "SARI_PASSWORD_HASH", "SARI_LOGIN_EMAIL"] as const;
+    const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+    for (const name of names) delete process.env[name];
+
+    try {
+      expect(authConfigured()).toBe(false);
+    } finally {
+      for (const name of names) {
+        const value = previous[name];
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
+  });
+
+  it("does not sign Apps Script traffic without a configured shared secret", () => {
+    const previousSharedSecret = process.env.SARI_SHARED_SECRET;
+    delete process.env.SARI_SHARED_SECRET;
+
+    try {
+      expect(appsScriptAuth("autopilot_learn")).toBeNull();
+    } finally {
+      if (previousSharedSecret === undefined) delete process.env.SARI_SHARED_SECRET;
+      else process.env.SARI_SHARED_SECRET = previousSharedSecret;
+    }
   });
 });

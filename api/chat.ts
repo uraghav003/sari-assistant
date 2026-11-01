@@ -11,6 +11,9 @@ import {
   tooManyRequests,
 } from "./_security.js";
 
+const CANONICAL_APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec";
+
 const CHAT_WINDOW_MS = 60 * 1000;
 const CHAT_MAX_REQUESTS = 30;
 const MAX_PROMPT_CHARS = 8000;
@@ -234,13 +237,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // fall through to degraded response
       }
     }
+    // ─── TIER 3: OPENROUTER API FALLBACK (Active when primary plans finish) ───
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    if (openRouterKey && openRouterKey.length > 10) {
+      const openRouterModel = process.env.OPENROUTER_MODEL?.trim() || "deepseek/deepseek-chat";
+      try {
+        const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openRouterKey}`,
+            "HTTP-Referer": "https://sari-assistant.vercel.app",
+            "X-Title": "SARI Assistant"
+          },
+          body: JSON.stringify({
+            model: openRouterModel,
+            messages: [
+              { role: "system", content: SYSTEM_INSTRUCTION },
+              { role: "user", content: trimmedPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 1024
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        if (orRes.ok) {
+          const orData: any = await orRes.json();
+          const orReply = orData.choices?.[0]?.message?.content?.trim();
+          if (orReply) {
+            res.status(200).json({ ok: true, text: orReply, tier: "OpenRouterFallback", model: openRouterModel });
+            return;
+          }
+        }
+      } catch {
+        // Fall through to degraded response if OpenRouter also fails
+      }
+    }
 
     // ─── No tier produced an answer: say so. Never fabricate. ─────────────
     res.status(503).json({
       ok: false,
       tier: "degraded",
       error:
-        "No upstream model is reachable. Configure GEMINI_API_KEY (and optionally SARI_SHARED_SECRET + SARI_APPS_SCRIPT_URL), or use the local Ollama runtime.",
+        "No upstream model is reachable. Configure GEMINI_API_KEY or OPENROUTER_API_KEY (and optionally SARI_SHARED_SECRET + SARI_APPS_SCRIPT_URL), or use the local Ollama runtime.",
     });
   } catch {
     res.status(500).json({ ok: false, error: "Internal chat error" });

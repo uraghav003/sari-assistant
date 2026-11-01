@@ -13,7 +13,16 @@
     <meta name="apple-mobile-web-app-title" content="SARI" />
     <meta name="description" content="SARI — sovereign AI operations console for Divyanshi Capital" />
     <title>SARI - Sovereign AI Assistant</title>
-  </head>
+    <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#09090b">
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      });
+    }
+  </script>
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
