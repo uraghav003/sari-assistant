@@ -1,0 +1,1 @@
+Key technical patterns: 1) Use zero-configuration Google Apps Script without PropertiesService dependencies, 2) Replace heavy n8n automation with lightweight Node.js Telegram polling daemon for direct Apps Script integration

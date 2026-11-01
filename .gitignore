@@ -22,3 +22,5 @@ src/knowledge/*control*.json
 .claude-flow/data/
 .claude-flow/logs/
 .claude-flow/sessions/
+.sari-agents/cache/
+.sari-agents/sessions/
