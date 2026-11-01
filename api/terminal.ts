@@ -15,7 +15,7 @@ const MAX_OUTPUT = 8000;
 
 /** Whitelisted commands — only these can run from the mobile terminal. */
 const COMMANDS: Record<string, { cmd: string; label: string }> = {
-  "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'SARI_LOGIN_EMAIL\',\'SARI_TOTP_SECRET\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars" },
+  "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'OPENROUTER_API_KEY\',\'GROQ_API_KEY\',\'SARI_LOGIN_EMAIL\',\'SARI_TOTP_SECRET\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars" },
   health:       { cmd: 'node -e "[\'package.json\',\'tsconfig.json\',\'vercel.json\'].forEach(f=>{try{JSON.parse(require(\'fs\').readFileSync(f,\'utf8\'));console.log(\'✓\',f)}catch(e){console.log(\'✗\',f,e.message)}})"', label: "Config Health" },
   "git-log":    { cmd: "git log --oneline -8", label: "Recent Commits" },
   status:       { cmd: "git status --short && echo '---' && node -v", label: "System Status" },

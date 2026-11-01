@@ -32,7 +32,7 @@ function base64UrlToBuf(b64: string): ArrayBuffer {
 
 /** True if the browser supports WebAuthn and platform authenticators. */
 export async function isBiometricAvailable(): Promise<boolean> {
-  if (!window.PublicKeyCredential) return false;
+  if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
   try {
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
   } catch {
@@ -42,14 +42,20 @@ export async function isBiometricAvailable(): Promise<boolean> {
 
 /** True if a credential is already registered for this device. */
 export function hasStoredCredential(): boolean {
-  return localStorage.getItem(CREDENTIAL_KEY) !== null;
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return false;
+  try {
+    return localStorage.getItem(CREDENTIAL_KEY) !== null;
+  } catch {
+    return false;
+  }
 }
 
 /** Get stored credential email. */
 export function getStoredEmail(): string | null {
-  const raw = localStorage.getItem(CREDENTIAL_KEY);
-  if (!raw) return null;
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return null;
   try {
+    const raw = localStorage.getItem(CREDENTIAL_KEY);
+    if (!raw) return null;
     return (JSON.parse(raw) as StoredCredential).email;
   } catch {
     return null;
@@ -98,7 +104,9 @@ export async function registerBiometric(email: string): Promise<boolean> {
       createdAt: Date.now(),
     };
 
-    localStorage.setItem(CREDENTIAL_KEY, JSON.stringify(stored));
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem(CREDENTIAL_KEY, JSON.stringify(stored));
+    }
     return true;
   } catch {
     return false;
@@ -110,7 +118,13 @@ export async function registerBiometric(email: string): Promise<boolean> {
  * Returns the email if successful, null otherwise.
  */
 export async function authenticateWithBiometric(): Promise<string | null> {
-  const raw = localStorage.getItem(CREDENTIAL_KEY);
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return null;
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(CREDENTIAL_KEY);
+  } catch {
+    return null;
+  }
   if (!raw) return null;
 
   try {
@@ -143,5 +157,9 @@ export async function authenticateWithBiometric(): Promise<string | null> {
 
 /** Remove stored biometric credential. */
 export function clearBiometric(): void {
-  localStorage.removeItem(CREDENTIAL_KEY);
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem(CREDENTIAL_KEY);
+    } catch {}
+  }
 }

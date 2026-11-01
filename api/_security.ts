@@ -12,7 +12,9 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
  */
 
 export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
-export const DEFAULT_APPS_SCRIPT_URL = process.env.SARI_APPS_SCRIPT_URL ?? "";
+export const DEFAULT_APPS_SCRIPT_URL =
+  process.env.SARI_APPS_SCRIPT_URL ??
+  "https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec";
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 
@@ -134,9 +136,9 @@ export function isSameOrigin(req: VercelRequest): boolean {
   const origin = req.headers?.origin;
   if (!origin || origin === "null") return !origin; // no Origin: same-origin fetch or curl
   try {
-    const originHost = new URL(origin).host.toLowerCase();
+    const originHost = new URL(origin).host.toLowerCase().replace(/:(443|80)$/, "");
     const rawHost = req.headers?.["x-forwarded-host"] || req.headers?.host;
-    const host = (Array.isArray(rawHost) ? rawHost[0] : rawHost)?.split(",")[0]?.trim()?.toLowerCase();
+    const host = (Array.isArray(rawHost) ? rawHost[0] : rawHost)?.split(",")[0]?.trim()?.toLowerCase()?.replace(/:(443|80)$/, "");
     return typeof host === "string" && originHost === host;
   } catch {
     return false;

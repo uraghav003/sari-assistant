@@ -26,14 +26,20 @@ export default function LeadsPage() {
   const [busy, setBusy] = useState(false);
 
   const [leads, setLeads] = useState<Lead[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_LEADS;
-    const saved = localStorage.getItem("sari_autonomous_leads");
-    return saved ? (JSON.parse(saved) as Lead[]) : DEFAULT_LEADS;
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return DEFAULT_LEADS;
+    try {
+      const saved = localStorage.getItem("sari_autonomous_leads");
+      return saved ? (JSON.parse(saved) as Lead[]) : DEFAULT_LEADS;
+    } catch {
+      return DEFAULT_LEADS;
+    }
   });
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("sari_autonomous_leads", JSON.stringify(leads));
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      try {
+        localStorage.setItem("sari_autonomous_leads", JSON.stringify(leads));
+      } catch {}
     }
   }, [leads]);
 

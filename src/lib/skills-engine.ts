@@ -386,7 +386,11 @@ export function recordLesson(lesson: string): void {
   if (!clean) return;
   const prev = loadLessons();
   const next = [`${new Date().toISOString().slice(0, 16)} ${clean}`, ...prev].slice(0, 50);
-  localStorage.setItem(LESSONS_KEY, JSON.stringify(next));
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(LESSONS_KEY, JSON.stringify(next));
+    } catch {}
+  }
 }
 
 export function extractLesson(reply: string): void {
@@ -397,12 +401,20 @@ export function extractLesson(reply: string): void {
 }
 
 export function isAutoMode(): boolean {
-  if (typeof window === "undefined") return true;
-  return localStorage.getItem(AUTO_KEY) !== "off";
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
+  try {
+    return localStorage.getItem(AUTO_KEY) !== "off";
+  } catch {
+    return true;
+  }
 }
 
 export function setAutoMode(on: boolean): void {
-  localStorage.setItem(AUTO_KEY, on ? "on" : "off");
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(AUTO_KEY, on ? "on" : "off");
+    } catch {}
+  }
 }
 
 export function contextBlock(userText: string): string {
