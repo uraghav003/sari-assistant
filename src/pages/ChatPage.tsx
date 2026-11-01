@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Compass, Mail, Trash2, RefreshCw, Volume2 } from "lucide-react";
+import { Compass, Mail, Trash2, RefreshCw, Volume2, KeyRound, X } from "lucide-react";
 import { infer, type Tier } from "../lib/brain";
 import { bumpRun, contextBlock, extractLesson, matchSkill, loadSkills } from "../lib/skills-engine";
+import { changePasswordWithServer } from "../lib/auth";
 import AvatarCanvas from "../components/chat/AvatarCanvas";
 import MessageList, { type Message } from "../components/chat/MessageList";
 import ChatInputBar from "../components/chat/ChatInputBar";
@@ -53,6 +54,10 @@ export default function ChatPage() {
   const [tierStatus, setTierStatus] = useState<Tier>("Cloud");
   const [clockTime, setClockTime] = useState("");
   const [showHologram, setShowHologram] = useState(true);
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwStatus, setPwStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isSpeakingRef = useRef(false);
@@ -234,6 +239,9 @@ export default function ChatPage() {
           <button onClick={() => setShowHologram(!showHologram)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(0,255,213,0.2)", color: "#00ffd5", padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
             {showHologram ? "Compact Chat" : "Hologram Persona"}
           </button>
+          <button onClick={() => { setShowChangePw(true); setPwStatus(null); setNewPw(""); setConfirmPw(""); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+            <KeyRound size={11} /> Password
+          </button>
         </div>
       </div>
 
@@ -314,6 +322,45 @@ export default function ChatPage() {
           />
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePw && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#0d1f3c", border: "1px solid rgba(0,255,213,0.2)", borderRadius: 12, padding: 28, width: 340, position: "relative" }}>
+            <button onClick={() => setShowChangePw(false)} style={{ position: "absolute", top: 12, right: 12, background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer" }}>
+              <X size={16} />
+            </button>
+            <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Change Password</h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 6 }}>New Password (min 12 chars)</label>
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} autoComplete="new-password" placeholder="••••••••••••" style={{ width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,255,213,0.2)", borderRadius: 7, color: "#fff", fontSize: 14 }} />
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 6 }}>Confirm New Password</label>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} autoComplete="new-password" placeholder="••••••••••••" style={{ width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(0,255,213,0.2)", borderRadius: 7, color: "#fff", fontSize: 14 }} />
+            </div>
+            {pwStatus && (
+              <p style={{ fontSize: 12, color: pwStatus.ok ? "#10b981" : "#f87171", marginBottom: 14 }}>{pwStatus.msg}</p>
+            )}
+            <button
+              onClick={async () => {
+                if (newPw.length < 12) { setPwStatus({ ok: false, msg: "Min 12 characters required" }); return; }
+                if (newPw !== confirmPw) { setPwStatus({ ok: false, msg: "Passwords do not match" }); return; }
+                const r = await changePasswordWithServer(newPw);
+                if (r.ok) {
+                  setPwStatus({ ok: true, msg: "Password changed! Update SARI_PASSWORD_HASH in Vercel env." });
+                  setTimeout(() => setShowChangePw(false), 3000);
+                } else {
+                  setPwStatus({ ok: false, msg: r.error || "Failed" });
+                }
+              }}
+              style={{ width: "100%", padding: "10px 0", background: "rgba(0,255,213,0.12)", border: "1px solid rgba(0,255,213,0.3)", borderRadius: 7, color: "#00ffd5", fontWeight: 600, fontSize: 13, cursor: "pointer" }}
+            >
+              Update Password
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

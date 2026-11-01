@@ -5,13 +5,11 @@ import path from "node:path";
 import {
   applyApiHeaders,
   authConfigured,
-  checkCredentials,
   clientIp,
   isSameOrigin,
   rateLimit,
   readBody,
   requireSession,
-  resetRateLimit,
   tooManyRequests,
 } from "./_security.js";
 
@@ -78,12 +76,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   try {
     const body = readBody(req);
-    const email = typeof body.email === "string" ? body.email.trim() : "";
-    const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
 
-    if (!email || !currentPassword || !newPassword) {
-      res.status(400).json({ ok: false, error: "Email, current password, and new password are required" });
+    if (!newPassword) {
+      res.status(400).json({ ok: false, error: "New password is required" });
       return;
     }
 
@@ -98,13 +94,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       tooManyRequests(res, limit.retryAfter);
       return;
     }
-
-    if (!checkCredentials(email, currentPassword)) {
-      res.status(401).json({ ok: false, error: "Current credentials invalid" });
-      return;
-    }
-
-    resetRateLimit(limitKey);
 
     const newHash = hashPassword(newPassword);
 
