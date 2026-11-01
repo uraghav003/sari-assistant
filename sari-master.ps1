@@ -441,7 +441,7 @@ switch ($Action) {
         # Apps Script row - active execution hub
         $deploySnippet = if ($cfg.appsScript.deploymentId.Length -ge 12) { $cfg.appsScript.deploymentId.Substring(0, 12) + "..." } else { $cfg.appsScript.deploymentId }
         $deploySnippet8 = if ($cfg.appsScript.deploymentId.Length -ge 8) { $cfg.appsScript.deploymentId.Substring($cfg.appsScript.deploymentId.Length - 3) } else { "" }
-        $asSnippetFormatted = "AKfycbwzdhZF3...8tc"
+        $asSnippetFormatted = "AKfycbwQvs1O...c6Ed"
         $asVal = "DeployId: $asSnippetFormatted | ScriptId: $($cfg.appsScript.scriptId)"
         $pluginList += [PSCustomObject]@{
             Plugin      = "Google Apps Script"
