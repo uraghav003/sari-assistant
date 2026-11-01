@@ -214,6 +214,25 @@ describe("SARI Sovereign API Contracts", () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers["set-cookie"]).toMatch(/Max-Age=0/);
   });
+  it("handles totp-setup and totp-verify via change-password handler", async () => {
+    const unauthRes = createMockResponse();
+    await changePasswordHandler(request("GET", {}, {}, { action: "totp-setup" }), unauthRes.res);
+    expect(unauthRes.statusCode).toBe(401);
+
+    const authRes = createMockResponse();
+    await changePasswordHandler(request("GET", {}, { cookie: authCookie }, { action: "totp-setup" }), authRes.res);
+    expect(authRes.statusCode).toBe(200);
+    const data = authRes.data as Record<string, unknown>;
+    expect(data.ok).toBe(true);
+
+    const badVerifyRes = createMockResponse();
+    await changePasswordHandler(
+      request("POST", { action: "totp-verify", code: "bad" }, { cookie: authCookie }),
+      badVerifyRes.res
+    );
+    expect(badVerifyRes.statusCode).toBe(400);
+  });
+
 
   it("fails closed when no webhook secret is configured", async () => {
     delete process.env.SARI_MASTER_API_KEY;
