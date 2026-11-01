@@ -276,22 +276,42 @@ export function saveSkills(skills: Skill[]): void {
   localStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
 }
 
-export function matchSkill(text: string, skills: Skill[]): Skill | null {
+function scoreSkill(text: string, skill: Skill): number {
   const t = text.toLowerCase();
+  const words = t.split(/\s+/);
+  let score = 0;
+
+  for (const part of skill.trigger.toLowerCase().split(/[\/,]/)) {
+    const kw = part.trim();
+    if (!kw) continue;
+    if (t.includes(kw)) {
+      // Multi-word triggers score higher than single-word ones
+      score += kw.split(/\s+/).length * 2;
+    }
+  }
+
+  // Bonus: exact word matches in user query
+  for (const word of words) {
+    if (word.length > 3 && skill.name.toLowerCase().includes(word)) score += 1;
+  }
+
+  return score;
+}
+
+export function matchSkill(text: string, skills: Skill[]): Skill | null {
   const live = skills.filter((s) => s.status === "live");
-  return (
-    live.find((s) =>
-      s.trigger
-        .toLowerCase()
-        .split(/[\/,]/)
-        .some((part) => {
-          const clean = part.trim();
-          return clean.length > 0 && t.includes(clean);
-        })
-    ) ||
-    live.find((s) => t.includes(s.name.toLowerCase())) ||
-    null
-  );
+  let best: Skill | null = null;
+  let bestScore = 0;
+
+  for (const skill of live) {
+    const score = scoreSkill(text, skill);
+    if (score > bestScore) {
+      bestScore = score;
+      best = skill;
+    }
+  }
+
+  return best;
 }
 
 export function bumpRun(id: string): Skill[] {
@@ -354,17 +374,33 @@ export function setAutoMode(on: boolean): void {
 
 export function contextBlock(userText: string): string {
   const skills = loadSkills().filter((s) => s.status === "live");
-  const hit = matchSkill(userText, skills);
+
+  // Rank all skills and take top 3 relevant ones
+  const ranked = skills
+    .map((s) => ({ skill: s, score: scoreSkill(userText, s) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const hit = ranked[0]?.skill ?? null;
+  const related = ranked.slice(1).map((x) => x.skill.name);
+
   const lessons = loadLessons().slice(0, 6).join(" | ");
   const vault = localStorage.getItem("sari_memory_vault")?.slice(0, 800) || "";
+
   return [
     `AUTO_MODE=${isAutoMode() ? "ON" : "OFF"}`,
     `AUTOPILOT_STATUS=AUTONOMOUS`,
     `SOVEREIGN_AUTHORITY=MD_ONLY`,
     `LIVE_SKILLS=${skills.map((s) => s.name).join(", ")}`,
-    hit ? `MATCHED_SKILL=${hit.name}\nSKILL_INSTRUCTION=${hit.instruction}` : "MATCHED_SKILL=none",
+    hit
+      ? `MATCHED_SKILL=${hit.name}\nSKILL_INSTRUCTION=${hit.instruction}\nSKILL_STEPS=${hit.steps.join(" → ")}`
+      : "MATCHED_SKILL=none",
+    related.length ? `RELATED_SKILLS=${related.join(", ")}` : "",
     lessons ? `LESSONS=${lessons}` : "LESSONS=none",
     vault ? `VAULT=${vault}` : "",
     `USER=${userText}`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
