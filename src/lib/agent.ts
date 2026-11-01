@@ -14,6 +14,11 @@ export interface InferResult {
   model?: string;
 }
 
+const CLOUD_TIMEOUT_MS = 20_000;
+const OLLAMA_TIMEOUT_MS = 30_000;
+const MIN_RESPONSE_CHARS = 30;
+const MAX_RETRIES = 1;
+
 const SYSTEM = `You are SARI — Sentient Adaptive Responsive Intelligence.
 You are the Supreme AI Operational Partner and Executive Co-Pilot for Upendra Singh Raghav (MD / Maalik) at Divyanshi Capital.
 
@@ -44,38 +49,41 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
     recent.map((m) => `${m.role === "user" ? "Maalik" : "SARI"}: ${m.content}`).join("\n") +
     "\nSARI:";
 
-  return await withSelfHeal<AgentResult>(
-    "AgentInference",
-    // Primary Attempt: Cloud via /api/chat (server-side cascade: Gemini -> signed Apps Script)
-    // The session cookie is HttpOnly and same-origin, so no token is read here.
-    async () => {
+  async function tryCloud(): Promise<AgentResult> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
+    try {
       const res = await fetch("/api/chat", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
+        signal: controller.signal,
       });
-      if (res.ok) {
-        const data: unknown = await res.json();
-        if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
-          const text = data.text.trim();
-          if (text) {
-            audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
-            learnFromInteraction(userPrompt, text, "Cloud");
-            return { content: text, mode: "cloud" };
-          }
-        }
-      }
       if (res.status === 401) {
-        // The cookie expired or was revoked — surface it and bounce to login.
         void checkSession();
         throw new Error("SESSION_EXPIRED");
       }
-      throw new Error(`Edge API returned ${res.status}`);
-    },
-    // Fallback Sequence: Local Ollama -> Offline Advisory
-    async () => {
-      // 2. Secondary: Local Ollama runtime
+      if (!res.ok) throw new Error(`Edge API returned ${res.status}`);
+      const data: unknown = await res.json();
+      if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
+        const text = data.text.trim();
+        if (text.length >= MIN_RESPONSE_CHARS) {
+          audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
+          learnFromInteraction(userPrompt, text, "Cloud");
+          return { content: text, mode: "cloud" };
+        }
+      }
+      throw new Error("Cloud response too short");
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function tryOllama(): Promise<AgentResult | null> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
       try {
         const response = await fetch(`${config.ollamaUrl}/api/chat`, {
           method: "POST",
@@ -86,36 +94,58 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
             messages: [{ role: "system", content: SYSTEM }, ...recent],
             options: { temperature: 0.7, num_ctx: 4096 },
           }),
+          signal: controller.signal,
         });
-        if (response.ok) {
-          const data: unknown = await response.json();
-          if (
-            data &&
-            typeof data === "object" &&
-            "message" in data &&
-            data.message &&
-            typeof data.message === "object" &&
-            "content" in data.message &&
-            typeof data.message.content === "string"
-          ) {
-            const content = data.message.content.trim();
-            if (content) {
-              audit("chat", "allowed", `Local model ${config.ollamaModel} responded`);
-              learnFromInteraction(userPrompt, content, "Local");
-              return { content, mode: "ollama" };
-            }
+        clearTimeout(timeout);
+        if (!response.ok) return null;
+        const data: unknown = await response.json();
+        if (
+          data &&
+          typeof data === "object" &&
+          "message" in data &&
+          data.message &&
+          typeof data.message === "object" &&
+          "content" in data.message &&
+          typeof data.message.content === "string"
+        ) {
+          const content = data.message.content.trim();
+          if (content.length >= MIN_RESPONSE_CHARS) {
+            audit("chat", "allowed", `Local model ${config.ollamaModel} responded`);
+            learnFromInteraction(userPrompt, content, "Local");
+            return { content, mode: "ollama" };
           }
         }
-      } catch {
-        // Local Ollama offline
+      } finally {
+        clearTimeout(timeout);
       }
+    } catch {
+      // Local Ollama offline or aborted
+    }
+    return null;
+  }
 
-      // 3. Graceful Offline Advisory
+  return await withSelfHeal<AgentResult>(
+    "AgentInference",
+    async () => {
+      let lastErr: Error | null = null;
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          return await tryCloud();
+        } catch (e) {
+          lastErr = e instanceof Error ? e : new Error(String(e));
+          if (lastErr.message === "SESSION_EXPIRED") throw lastErr;
+        }
+      }
+      throw lastErr ?? new Error("Cloud inference failed");
+    },
+    async () => {
+      const ollamaResult = await tryOllama();
+      if (ollamaResult) return ollamaResult;
+
       audit("chat", "error", "All inference brains offline");
-      const offlineMsg =
-        "Maalik, main connect karne ki koshish kar rahi hoon lekin dono brains (Cloud Proxy aur Local Ollama) offline hain.\n\nKripya dobara login karein ya Connections page par SARI_CONFIG.json drop kijiye.";
       return {
-        content: offlineMsg,
+        content:
+          "Maalik, main connect karne ki koshish kar rahi hoon lekin dono brains (Cloud Proxy aur Local Ollama) offline hain.\n\nKripya dobara login karein ya Connections page par SARI_CONFIG.json drop kijiye.",
         mode: "offline",
       };
     }
