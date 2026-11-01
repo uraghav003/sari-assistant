@@ -14,7 +14,7 @@ export interface InferResult {
   model?: string;
 }
 
-const CLOUD_TIMEOUT_MS = 20_000;
+const CLOUD_TIMEOUT_MS = 30_000;
 const OLLAMA_TIMEOUT_MS = 30_000;
 const MIN_RESPONSE_CHARS = 30;
 const MAX_RETRIES = 1;

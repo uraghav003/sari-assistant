@@ -87,11 +87,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey && openRouterKey.length > 10) {
       const orModels = [
-        "liquid/lfm-2.5-2.6b:free",
         "nvidia/nemotron-3.5-lightning:free",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
         "google/gemma-4-31b-it:free",
-        "google/gemma-4-26b-a4b-it:free",
+        "liquid/lfm-2.5-2.6b:free",
       ];
       for (const orModel of orModels) {
         try {
@@ -110,9 +109,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
                 { role: "user", content: trimmedPrompt },
               ],
               temperature: 0.7,
-              max_tokens: 1024,
+              max_tokens: 384,
             }),
-            signal: AbortSignal.timeout(15000),
+            signal: AbortSignal.timeout(7000),
           });
 
           if (orRes.ok) {
