@@ -36,12 +36,14 @@ describe("SARI Security Module", () => {
 
     it("returns true when properly configured with password", () => {
       process.env.SARI_SESSION_SECRET = "a".repeat(64);
+      process.env.SARI_LOGIN_EMAIL = "test@example.com";
       process.env.SARI_PASSWORD = "testpass";
       expect(authConfigured()).toBe(true);
     });
 
     it("returns true when properly configured with password hash", () => {
       process.env.SARI_SESSION_SECRET = "a".repeat(64);
+      process.env.SARI_LOGIN_EMAIL = "test@example.com";
       process.env.SARI_PASSWORD_HASH = "b".repeat(64);
       expect(authConfigured()).toBe(true);
     });

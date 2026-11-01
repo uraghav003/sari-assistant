@@ -237,43 +237,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // fall through to degraded response
       }
     }
-    // ─── TIER 3: OPENROUTER API FALLBACK (Active when primary plans finish) ───
-    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
-    if (openRouterKey && openRouterKey.length > 10) {
-      const openRouterModel = process.env.OPENROUTER_MODEL?.trim() || "deepseek/deepseek-chat";
-      try {
-        const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${openRouterKey}`,
-            "HTTP-Referer": "https://sari-assistant.vercel.app",
-            "X-Title": "SARI Assistant"
-          },
-          body: JSON.stringify({
-            model: openRouterModel,
-            messages: [
-              { role: "system", content: SYSTEM_INSTRUCTION },
-              { role: "user", content: trimmedPrompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 1024
-          }),
-          signal: AbortSignal.timeout(15000),
-        });
-
-        if (orRes.ok) {
-          const orData: any = await orRes.json();
-          const orReply = orData.choices?.[0]?.message?.content?.trim();
-          if (orReply) {
-            res.status(200).json({ ok: true, text: orReply, tier: "OpenRouterFallback", model: openRouterModel });
-            return;
-          }
-        }
-      } catch {
-        // Fall through to degraded response if OpenRouter also fails
-      }
-    }
 
     // ─── No tier produced an answer: say so. Never fabricate. ─────────────
     res.status(503).json({
