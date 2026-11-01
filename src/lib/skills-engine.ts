@@ -225,6 +225,54 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
+    id: "meeting-summarizer",
+    name: "Meeting & Call Summarizer",
+    description: "Transcribe or paste meeting notes and get instant structured summary: decisions, action items, owners, and next steps — Hinglish or English.",
+    status: "live",
+    trigger: "meeting / notes / summary / mom / minutes / discussion / recap / call notes / action items / decisions",
+    steps: [
+      "Receive raw meeting text, transcript, or voice-to-text dump",
+      "Extract key decisions, open questions, and blockers",
+      "Assign action items with owner and deadline",
+      "Produce clean MOM (Minutes of Meeting) in Hinglish or English",
+      "Optionally send summary to MD via WhatsApp/email trigger"
+    ],
+    instruction: "Convert raw meeting notes or transcripts into clean, structured MOM. Highlight decisions in bold, list action items with owners, and flag unresolved blockers. Keep it under 300 words.",
+    runs: 0,
+  },
+  {
+    id: "doc-review-ai",
+    name: "AI Document Reviewer & Extractor",
+    description: "Review loan documents, agreements, policies, and circulars — extract key clauses, eligibility criteria, red flags, and compliance points instantly.",
+    status: "live",
+    trigger: "document / agreement / policy / circular / sanction letter / loan doc / review doc / extract clause / rbi / nbfc circular / terms",
+    steps: [
+      "Receive document text or key excerpts",
+      "Extract critical clauses: interest rate, tenure, prepayment, foreclosure, hidden charges",
+      "Flag regulatory red flags or non-standard terms",
+      "Summarize eligibility conditions and borrower obligations",
+      "Output structured brief with source citations"
+    ],
+    instruction: "Act as a precise document analyst. Extract structured facts from financial documents — zero hallucination, grounded only in provided text. Flag anomalies and summarize borrower risk in plain language.",
+    runs: 0,
+  },
+  {
+    id: "daily-briefing",
+    name: "MD Daily Briefing & Morning Digest",
+    description: "Generate a concise morning briefing for MD: pending approvals, hot leads, follow-ups due today, market highlights, and SARI system health.",
+    status: "live",
+    trigger: "briefing / morning / digest / daily / good morning / aaj ka / today / pending / follow-up / md update",
+    steps: [
+      "Pull pending approvals and hot leads from CRM context",
+      "List follow-ups due today with borrower names and loan stage",
+      "Summarize any unread alerts or system anomalies",
+      "Add one market or RBI news headline relevant to DSA ops",
+      "Deliver compact Hinglish briefing under 200 words"
+    ],
+    instruction: "Deliver a crisp, actionable morning briefing to MD. Prioritize time-sensitive items first. Use Hinglish. No filler — only decisions and actions needed today.",
+    runs: 0,
+  },
+  {
     id: "think",
     name: "Think Then Act Cognitive Core",
     description: "Execute UNDERSTAND → PLAN → ACT → LEARN reasoning on every single request",
