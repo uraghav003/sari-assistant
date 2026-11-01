@@ -27,7 +27,10 @@ interface GeminiApiResponse {
 }
 
 interface OpenRouterChoice {
-  message?: { content?: string };
+  message?: {
+    content?: string | null;
+    reasoning?: string | null;
+  };
 }
 
 interface OpenRouterResponse {
@@ -109,14 +112,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
                 { role: "user", content: trimmedPrompt },
               ],
               temperature: 0.7,
-              max_tokens: 384,
+              max_tokens: 1024,
+              reasoning: { max_tokens: 0 },
             }),
-            signal: AbortSignal.timeout(7000),
+            signal: AbortSignal.timeout(12000),
           });
 
           if (orRes.ok) {
             const orData: OpenRouterResponse = await orRes.json();
-            const orText = orData.choices?.[0]?.message?.content?.trim();
+            const choice = orData.choices?.[0]?.message;
+            const rawText = choice?.content ?? choice?.reasoning;
+            const orText = typeof rawText === "string" ? rawText.trim() : "";
             if (orText) {
               res.status(200).json({ ok: true, text: orText, tier: "Cloud", model: orData.model || orModel });
               return;
