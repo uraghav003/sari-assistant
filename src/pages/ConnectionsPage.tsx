@@ -406,16 +406,36 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
             </button>
           </div>
         </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center" }}>
+          <input
+            type="text"
+            value={config.ollamaUrl}
+            onChange={(e) => {
+              const updated = saveDynamicConfig({ ollamaUrl: e.target.value });
+              setConfig(updated);
+            }}
+            placeholder="http://127.0.0.1:11434"
+            style={{ flex: 1, fontSize: 13, padding: "8px 12px" }}
+          />
+          <button
+            onClick={() => checkOllama(config.ollamaUrl)}
+            className="btn-secondary"
+            style={{ padding: "8px 16px", fontSize: 13 }}
+          >
+            Test Ollama
+          </button>
+        </div>
         {ollamaStatus === "connected" ? (
           <div style={{ fontSize: 13, color: "var(--green)" }}>
-            Connected models: {ollamaModels.length > 0 ? ollamaModels.join(", ") : "None loaded"}
+            Connected models: {ollamaModels.length > 0 ? ollamaModels.join(", ") : "None loaded (run `ollama pull qwen2.5-coder` or similar)"}
           </div>
         ) : (
           <div style={{ fontSize: 13, color: "#ef4444" }}>
-            Ollama is not reachable on this device — the cloud proxy is the primary brain.
+            Ollama is offline or CORS is not enabled. Start Ollama locally with <code>OLLAMA_ORIGINS=* ollama serve</code>.
           </div>
         )}
       </div>
+
       {/* Google Gemini App & AI Studio Integration */}
       <div className="card" style={{ padding: 24, marginTop: 20, border: "1px solid rgba(168,85,247,0.4)", background: "rgba(168,85,247,0.03)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
