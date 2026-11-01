@@ -293,7 +293,7 @@ async function run(): Promise<void> {
         email: "md@divyanshicapital.com",
         currentPassword: "wrong-password",
         newPassword: "new-secret-password-123",
-      }),
+      }, { cookie }),
       res.res
     );
     check("change password rejects wrong current password", res.statusCode === 401);
@@ -305,7 +305,7 @@ async function run(): Promise<void> {
         email: "md@divyanshicapital.com",
         currentPassword: "test-password",
         newPassword: "new-secret-password-123",
-      }),
+      }, { cookie }),
       res.res
     );
     const payload = res.data as Record<string, unknown>;
