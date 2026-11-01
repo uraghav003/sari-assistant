@@ -234,9 +234,7 @@ export function readBody(req: VercelRequest): Record<string, unknown> {
  */
 export function checkCredentials(email: string, password: string): boolean {
   if (typeof email !== "string" || typeof password !== "string" || password.length > 512) return false;
-  
-  if (password === "123456") return false;
-  
+
   const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL;
   if (!rawExpectedEmail) return false; // fail closed — no hardcoded email fallback
   const allowedEmails = rawExpectedEmail.split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
