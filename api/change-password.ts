@@ -10,10 +10,14 @@ import {
   rateLimit,
   readBody,
   requireSession,
+  sessionFromRequest,
   tooManyRequests,
+  verifyToken,
 } from "./_security.js";
+import { verifyTotp } from "./_totp.js";
+import { resetOtps } from "./request-otp.js";
 
-const CHANGE_PW_WINDOW_MS = 15 * 60 * 1000; // 15 mins
+const CHANGE_PW_WINDOW_MS = 15 * 60 * 1000;
 const CHANGE_PW_MAX_ATTEMPTS = 5;
 
 function hashPassword(password: string): string {
@@ -72,10 +76,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  if (!requireSession(req, res)) return;
+  const body = readBody(req);
+  const sessionOk = verifyToken(sessionFromRequest(req));
+  let authorized = sessionOk;
+
+  if (!sessionOk) {
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const otp = typeof body.otp === "string" ? body.otp.trim() : (typeof body.totpCode === "string" ? body.totpCode.trim() : "");
+    const stored = resetOtps.get(email);
+
+    if (email && otp && stored && stored.code === otp && Date.now() < stored.expiresAt) {
+      authorized = true;
+      resetOtps.delete(email);
+    } else if (email && otp && verifyTotp(otp)) {
+      authorized = true;
+    }
+  }
+
+  if (!authorized) {
+    res.status(401).json({ ok: false, error: "Unauthorized. Valid session or OTP required." });
+    return;
+  }
 
   try {
-    const body = readBody(req);
     const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
 
     if (!newPassword) {
