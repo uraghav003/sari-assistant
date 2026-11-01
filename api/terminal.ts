@@ -26,7 +26,6 @@ const COMMANDS: Record<string, { cmd: string; label: string; danger?: boolean }>
   "deps":       { cmd: "npm outdated 2>&1 || true", label: "Outdated Deps" },
   "disk":       { cmd: 'node -e "const fs=require(\'fs\'),p=require(\'path\');function sz(d){let t=0;try{for(const f of fs.readdirSync(d)){const fp=p.join(d,f);const s=fs.statSync(fp);t+=s.isDirectory()?sz(fp):s.size}}catch{}return t}console.log(\'node_modules:\',Math.round(sz(\'node_modules\')/1048576)+\'MB\')"', label: "Disk Usage" },
   "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'SARI_LOGIN_EMAIL\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars Check" },
-  vllm:         { cmd: "pip show vllm 2>&1 || pip install vllm 2>&1 || python -m pip list 2>&1", label: "vLLM Engine" },
 };
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);

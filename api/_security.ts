@@ -49,7 +49,7 @@ export function safeEqual(a: string | undefined | null, b: string | undefined | 
 export function authConfigured(): boolean {
   const secret = process.env.SARI_SESSION_SECRET;
   if (!secret || secret.trim().length < MIN_SECRET_LENGTH) return false;
-  
+  if (!process.env.SARI_LOGIN_EMAIL?.trim()) return false;
   const hasPassword = Boolean(process.env.SARI_PASSWORD?.trim());
   const hasHash = Boolean(process.env.SARI_PASSWORD_HASH?.trim());
   return hasPassword || hasHash;
@@ -237,12 +237,13 @@ export function checkCredentials(email: string, password: string): boolean {
   
   if (password === "123456") return false;
   
-  const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL || "u.raghav003@gmail.com,md@divyanshicapital.com";
+  const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL;
+  if (!rawExpectedEmail) return false; // fail closed — no hardcoded email fallback
   const allowedEmails = rawExpectedEmail.split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
   const givenEmail = email.trim().toLowerCase();
   if (!allowedEmails.some(allowed => safeEqual(givenEmail, allowed))) return false;
 
-  const passwordEnv = process.env.SARI_PASSWORD || "Divyanshi@2026!";
+  const passwordEnv = process.env.SARI_PASSWORD?.trim();
   if (passwordEnv && safeEqual(password, passwordEnv)) return true;
 
   const hash = process.env.SARI_PASSWORD_HASH?.trim();
@@ -263,7 +264,7 @@ export function checkCredentials(email: string, password: string): boolean {
     return safeEqual(givenHash, hash.toLowerCase());
   }
 
-  return safeEqual(password, "Divyanshi@2026!");
+  return false; // no credentials configured — fail closed
 }
 
 export function signPayload(action: string, timestamp: string, sharedSecret: string): string {
