@@ -49,7 +49,6 @@ export function safeEqual(a: string | undefined | null, b: string | undefined | 
 export function authConfigured(): boolean {
   const secret = process.env.SARI_SESSION_SECRET;
   if (!secret || secret.trim().length < MIN_SECRET_LENGTH) return false;
-  if (!process.env.SARI_LOGIN_EMAIL?.trim()) return false;
   const hasPassword = Boolean(process.env.SARI_PASSWORD?.trim());
   const hasHash = Boolean(process.env.SARI_PASSWORD_HASH?.trim());
   return hasPassword || hasHash;
