@@ -1,7 +1,8 @@
 {
   "name": "sari-assistant",
   "private": true,
-  "version": "2.0.0",
+  "version": "4.1.0",
+  "description": "SARI — Sovereign Personal Virtual AI Assistant, Computer Friend & Multi-Agent Swarm Orchestrator for Divyanshi Capital",
   "type": "module",
   "scripts": {
     "dev": "vite",

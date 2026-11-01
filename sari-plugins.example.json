@@ -1,20 +1,27 @@
 {
   "system": {
-    "name": "SARI Supreme Command",
-    "version": "4.0.0",
-    "owner": "MD — Divyanshi Capital"
+    "name": "SARI Supreme Command & Swarm Orchestrator",
+    "version": "4.1.0",
+    "principal": "Upendra Singh Raghav (MD & CEO / Maalik)",
+    "organization": "Divyanshi Capital",
+    "operatingModel": "AI does the work. HI takes decisions and monitors. Never override HI."
+  },
+  "workspace": {
+    "driveFolder": "sari_supreme_command",
+    "notebooklmFolderId": "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu"
   },
   "appsScript": {
-    "scriptId": "",
-    "deploymentId": "",
+    "scriptId": "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3",
+    "deploymentId": "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3",
     "note": "Identifiers only. Secrets belong in Script Properties and Vercel environment variables."
   },
-  "notebooklm": {
-    "folderId": ""
-  },
-  "notion": {
-    "databaseId": "",
-    "note": "Token is read from NOTION_API_KEY at runtime; never store it here."
+  "agents": {
+    "sari": { "role": "Master Personal AI & Swarm Orchestrator", "status": "ACTIVE" },
+    "bulbhul": { "role": "Fintech Personal Banker & Underwriting Core", "status": "ACTIVE" },
+    "laila": { "role": "Zero-Trust Gatekeeper & Policy Sentinel", "status": "ACTIVE" },
+    "bhism": { "role": "Outbound Telephony Calling Desk", "status": "ACTIVE" },
+    "postmaster": { "role": "Omnichannel Messaging & Meetings Hub", "status": "ACTIVE" },
+    "mallik": { "role": "Sovereign Build Engine & AI Product Factory", "status": "ACTIVE" }
   },
   "plugins": []
 }

@@ -31,7 +31,7 @@ const seedMessages: Message[] = [
     id: "welcome-1",
     role: "sari",
     content:
-      "Good morning, Malik! 🌟 SARI Supreme Intelligence v11.2 fully active.\n\nAll keyword traps have been eliminated, and Gemini 2.0 Flash is live with multi-model cascade. Tell me your objective, and I will execute.",
+      "Namaste, Maalik! 🌟 SARI Personal Virtual AI Assistant & Swarm Controller (v4.1.0) is fully active.\n\nI am connected to your Google Drive workspace (`sari_supreme_command`) and actively coordinating all 6 sovereign agents (BULBHUL, LAILA, BHISM, POSTMASTER, MALLIK). Tell me your workload, task, or research objective today, and I will execute.",
     time: "Just now",
   },
 ];
@@ -295,17 +295,29 @@ export default function ChatPage() {
               Your private session is ready. SARI can use relevant saved context from your existing memory.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button type="button" onClick={() => handleCommand("Find my focus: optimize loan pipeline")} style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
+              <button type="button" onClick={() => handleCommand("Find my focus: optimize loan pipeline & check DSA queues")} style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#00ffd5" }}>
                   <Compass size={14} /> Find my focus
                 </span>
-                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Make room for what matters</span>
+                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Optimize loan pipeline & agent swarm</span>
               </button>
-              <button type="button" onClick={() => handleCommand("Read my inbox and summarize pending approvals")} style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
+              <button type="button" onClick={() => handleCommand("Read my inbox and summarize pending approvals across 6 agents")} style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(0,255,213,0.18)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#a855f7" }}>
                   <Mail size={14} /> Read my inbox
                 </span>
-                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Authorized account only</span>
+                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Summarize pending approvals</span>
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
+              <button type="button" onClick={() => handleCommand("Check Google Drive workspace `sari_supreme_command` for recent files")} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 500, color: "var(--green)" }}>
+                  🗂 Drive Workspace Scan
+                </span>
+              </button>
+              <button type="button" onClick={() => handleCommand("Audit GitHub CI workflows and swarm agent status")} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer", textAlign: "left", width: "100%" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 500, color: "var(--cyan)" }}>
+                  🤖 Swarm Telemetry Audit
+                </span>
               </button>
             </div>
           </div>

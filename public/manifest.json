@@ -1,20 +1,27 @@
 {
-  "name": "SARI Sovereign Intelligence",
+  "name": "SARI — Sovereign Personal AI Assistant & Swarm Orchestrator",
   "short_name": "SARI",
+  "description": "Personal Virtual AI Assistant, Computer Friend and Sovereign Multi-Agent Controller for Divyanshi Capital",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "orientation": "portrait-primary",
+  "background_color": "#07070c",
+  "theme_color": "#0e0e16",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Chat with SARI", "short_name": "Chat", "url": "/chat" },
+    { "name": "Supreme Voice", "short_name": "Voice", "url": "/sari-supreme.html" },
+    { "name": "Agent Swarm", "short_name": "Command", "url": "/" },
+    { "name": "Skills Builder", "short_name": "Skills", "url": "/skills" },
+    { "name": "Mini Terminal", "short_name": "Terminal", "url": "/terminal" },
+    { "name": "Leads Pipeline", "short_name": "Leads", "url": "/leads" }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "prefer_related_applications": false
 }
