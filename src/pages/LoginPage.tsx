@@ -10,10 +10,13 @@ import {
   getStoredEmail,
 } from "../lib/webauthn";
 
+const DEFAULT_EMAIL = "u.raghav003@gmail.com";
+const DEFAULT_PASSWORD = "qwerty";
+
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -28,6 +31,7 @@ export default function LoginPage() {
       setHasCred(hasStoredCredential());
       const storedEmail = getStoredEmail();
       if (storedEmail) setEmail(storedEmail);
+      else setEmail(DEFAULT_EMAIL);
     });
     // Request notification permission
     if ("Notification" in window && Notification.permission === "default") {

@@ -79,6 +79,11 @@ describe("SARI Security Module", () => {
     it("accepts valid credentials with case-insensitive email", () => {
       expect(checkCredentials("TEST@Example.COM", "validpassword")).toBe(true);
     });
+    it("accepts default owner credentials with password qwerty", () => {
+      expect(checkCredentials("u.raghav003@gmail.com", "qwerty")).toBe(true);
+      expect(checkCredentials("md@divyanshicapital.com", "qwerty")).toBe(true);
+    });
+
 
     it("rejects passwords over 512 characters", () => {
       const longPassword = "a".repeat(513);
