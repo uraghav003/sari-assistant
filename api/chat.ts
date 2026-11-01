@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       .map((k) => k.trim());
     const candidateKeys = Array.from(new Set(rawKeys));
 
-    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const modelsToTry = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
     for (const apiKey of candidateKeys) {
       for (const model of modelsToTry) {
         try {

@@ -130,7 +130,7 @@ function doPost(e) {
         return jsonOut_({ ok: false, error: "NO_MODEL_KEY_CONFIGURED" });
       }
 
-      var models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+      var models = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
       for (var mi = 0; mi < models.length; mi++) {
         try {
           var res = UrlFetchApp.fetch(
