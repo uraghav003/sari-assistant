@@ -49,8 +49,10 @@ export async function loginWithServer(
 ): Promise<{ ok: boolean; error?: string; totpRequired?: boolean }> {
   try {
     const payload: Record<string, string> = { email: email.trim(), password };
-    if (totp) payload.totp = totp;
-
+    if (totp) {
+      payload.totp = totp;
+      payload.totpCode = totp;
+    }
     const res = await fetch("/api/login", {
       method: "POST",
       credentials: "same-origin",

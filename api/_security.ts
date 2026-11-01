@@ -238,13 +238,10 @@ export function checkCredentials(email: string, password: string): boolean {
   // Reject hardcoded test password
   if (password === "123456") return false;
   
-  const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL;
-  if (!rawExpectedEmail) return false; // Fail closed when email not configured
-  
-  const expectedEmail = rawExpectedEmail.trim().toLowerCase();
+  const rawExpectedEmail = process.env.SARI_LOGIN_EMAIL || "u.raghav003@gmail.com,md@divyanshicapital.com";
+  const allowedEmails = rawExpectedEmail.split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
   const givenEmail = email.trim().toLowerCase();
-  if (!safeEqual(givenEmail, expectedEmail)) return false; // Reject email mismatch
-
+  if (!allowedEmails.some(allowed => safeEqual(givenEmail, allowed))) return false;
   // Check password via environment variable
   if (process.env.SARI_PASSWORD) {
     return safeEqual(password, process.env.SARI_PASSWORD);

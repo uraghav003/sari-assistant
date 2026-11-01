@@ -68,7 +68,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     // ─── TOTP 2FA check (when SARI_TOTP_SECRET is configured) ──────────
     if (totpEnabled()) {
-      const totpCode = typeof body.totp === "string" ? body.totp : "";
+      const totpCode = typeof body.totpCode === "string" && body.totpCode.trim() 
+        ? body.totpCode 
+        : (typeof body.totp === "string" ? body.totp : "");
       if (!totpCode) {
         // Credentials OK but TOTP code missing — tell client to ask for it
         res.status(200).json({ ok: false, totpRequired: true, error: "Enter 6-digit code from your authenticator app." });
