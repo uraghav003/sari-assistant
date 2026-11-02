@@ -16,10 +16,10 @@ const MAX_OUTPUT = 8000;
 /** Whitelisted commands — only these can run from the mobile terminal. */
 const COMMANDS: Record<string, { cmd: string; label: string }> = {
   "env-check":  { cmd: 'node -e "const v=[\'SARI_SESSION_SECRET\',\'SARI_PASSWORD_HASH\',\'SARI_SHARED_SECRET\',\'GEMINI_API_KEY\',\'OPENROUTER_API_KEY\',\'GROQ_API_KEY\',\'SARI_LOGIN_EMAIL\',\'SARI_TOTP_SECRET\'];v.forEach(k=>console.log(k+\': \'+(process.env[k]?\'✓ set\':\'✗ missing\')))"', label: "Env Vars" },
-  health:       { cmd: 'node -e "[\'package.json\',\'tsconfig.json\',\'vercel.json\'].forEach(f=>{try{JSON.parse(require(\'fs\').readFileSync(f,\'utf8\'));console.log(\'✓\',f)}catch(e){console.log(\'✗\',f,e.message)}})"', label: "Config Health" },
-  "git-log":    { cmd: "git log --oneline -8", label: "Recent Commits" },
-  status:       { cmd: "git status --short && echo '---' && node -v", label: "System Status" },
-  "api-routes": { cmd: 'ls api/*.ts | grep -v "^api/_" | sed "s/api\\///;s/\\.ts$//" | sort', label: "API Routes" },
+  health:       { cmd: 'node -e "const fs=require(\'fs\');const path=require(\'path\');[\'package.json\',\'tsconfig.json\',\'vercel.json\'].forEach(f=>{const p=path.resolve(process.cwd(),f);try{JSON.parse(fs.readFileSync(p,\'utf8\'));console.log(\'✓\',f)}catch(e){console.log(\'✗\',f,e.message)}})"', label: "Config Health" },
+  "git-log":    { cmd: 'node -e "try{console.log(require(\'child_process\').execSync(\'git log --oneline -8\').toString())}catch(e){console.log(\'Git CLI not available in serverless ephemeral runtime — repository inspection is handled via GitHub API & Vercel builds.\')}"', label: "Recent Commits" },
+  status:       { cmd: 'node -e "try{console.log(require(\'child_process\').execSync(\'git status --short\').toString())}catch(e){console.log(\'Git CLI not available in serverless ephemeral runtime\')};console.log(\'Node version:\',process.version)"', label: "System Status" },
+  "api-routes": { cmd: 'node -e "const fs=require(\'fs\');const path=require(\'path\');const apiDir=path.resolve(process.cwd(),\'api\');try{fs.readdirSync(apiDir).filter(f=>f.endsWith(\'.ts\')&&!f.startsWith(\'_\')).map(f=>f.replace(/\\.ts$/, \'\')).sort().forEach(r=>console.log(r))}catch(e){console.log(\'No api dir found:\',e.message)}"', label: "API Routes" },
   "env-region": { cmd: 'node -e "console.log(\'region:\',process.env.VERCEL_REGION||\'local\',\'env:\',process.env.VERCEL_ENV||\'development\')"', label: "Vercel Region" },
   "mem-usage":  { cmd: 'node -e "const m=process.memoryUsage();console.log(\'rss:\',Math.round(m.rss/1048576)+\'MB\',\'heap:\',Math.round(m.heapUsed/1048576)+\'MB/\'+Math.round(m.heapTotal/1048576)+\'MB\')"', label: "Memory" },
   uptime:       { cmd: 'node -e "const u=process.uptime();console.log(\'process uptime:\',u.toFixed(1)+\'s\')"', label: "Uptime" },
