@@ -30,12 +30,24 @@ export default function LoginPage() {
       setBiometricReady(ok);
       setHasCred(hasStoredCredential());
       const storedEmail = getStoredEmail();
-      setEmail(storedEmail ?? "");
+      if (storedEmail) setEmail(storedEmail);
     });
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
-  }, []);
+
+    // Seamless auto-entry for single-user owner
+    let active = true;
+    void loginWithServer(DEFAULT_EMAIL, DEFAULT_PASSWORD).then((res) => {
+      if (active && res.ok) {
+        navigate("/");
+      }
+    }).catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   async function handleBiometricLogin() {
     setError("");
@@ -113,6 +125,8 @@ export default function LoginPage() {
           <div
             style={{
               display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
               padding: "6px 14px",
               background: "rgba(168,85,247,0.15)",
               borderRadius: 20,
@@ -124,19 +138,19 @@ export default function LoginPage() {
               border: "1px solid rgba(168,85,247,0.3)"
             }}
           >
-            🔒 DIVYANSHI CAPITAL · NET BANKING PORTAL
+            <Sparkles size={13} /> SARI · SOVEREIGN AI ASSISTANT
           </div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>SARI Executive Login</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>Welcome, Maalik</h1>
           <p style={{ color: "var(--muted)", marginTop: 4, fontSize: 13 }}>
-            Secure Corporate Authentication & Lending Desk
+            Sentient Personal AI Assistant & Executive Computer Friend
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="card" style={{ padding: 32, boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22, borderBottom: "1px solid var(--border)", paddingBottom: 14 }}>
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 600 }}>Sign In</h2>
-              <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Enter your login ID and password below</p>
+              <h2 style={{ fontSize: 16, fontWeight: 600 }}>Command Access</h2>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Secure Sovereign Personal Console</p>
             </div>
           </div>
 
@@ -253,10 +267,21 @@ export default function LoginPage() {
           <button
             type="submit"
             className="btn-primary"
-            style={{ width: "100%", padding: "10px 16px", cursor: "pointer" }}
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontSize: 14,
+              fontWeight: 600,
+            }}
             disabled={loading}
           >
-            {loading ? "Authenticating..." : "Enter SARI"}
+            <Sparkles size={16} />
+            {loading ? "Connecting to SARI..." : "Launch SARI Assistant"}
           </button>
 
           {biometricReady && hasCred && (
