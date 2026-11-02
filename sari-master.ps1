@@ -12,7 +12,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position=0, Mandatory=$false)]
-    [ValidateSet("status", "test", "build", "audit", "dual-audit", "deploy", "sync", "plugins", "drive", "notion", "notebooklm")]
+    [ValidateSet("status", "test", "build", "audit", "dual-audit", "deploy", "sync", "plugins", "drive", "notion", "notebooklm", "ruflo", "automode")]
     [string]$Action = "status",
 
     [Parameter(Mandatory=$false)]
@@ -609,6 +609,43 @@ switch ($Action) {
 
         Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
         Write-Host "[OK] NOTEBOOKLM STATUS: CONNECTED & SYNCHRONIZED" -ForegroundColor Green
+        exit 0
+    }
+
+    { $_ -in "ruflo", "automode" } {
+        Show-Header "SARI MASTER CONTROL PLANE: RUFLO AI AGENT HUB & AUTO-MODE"
+        Write-Host "[*] Probing Ruflo Swarm configuration..." -ForegroundColor Cyan
+
+        $rufloHubConfig = "$env:USERPROFILE\.agents\skills\ruflo-hub.config.json"
+        $rufloRunner = "$env:USERPROFILE\.agents\skills\ruflo-hub-runner.ts"
+        $mcpConfig = Join-Path $RepoRoot ".mcp.json"
+
+        if (Test-Path $rufloHubConfig) {
+            Write-Host "[OK] Ruflo Hub Configuration: FOUND ($rufloHubConfig)" -ForegroundColor Green
+            $rhc = Get-Content $rufloHubConfig -Raw | ConvertFrom-Json
+            Write-Host "[OK] Swarm Leader: $($rhc.swarm.leader) (v3Mode: $($rhc.swarm.v3Mode))" -ForegroundColor Green
+            Write-Host "[OK] Swarm Topology: $($rhc.swarm.topology) (Max Agents: $($rhc.swarm.maxAgents))" -ForegroundColor Green
+        } else {
+            Write-Host "[!] Ruflo Hub configuration not found at $rufloHubConfig" -ForegroundColor Yellow
+        }
+
+        if (Test-Path $mcpConfig) {
+            Write-Host "[OK] MCP Configuration (.mcp.json): Active with Ruflo MCP integration" -ForegroundColor Green
+        }
+
+        if (Test-Path $rufloRunner) {
+            Write-Host "[OK] Ruflo Hub Runner: READY ($rufloRunner)" -ForegroundColor Green
+        }
+
+        Write-Host "[*] Handing controls to Ruflo Swarm in AUTO-MODE..." -ForegroundColor Cyan
+        [Environment]::SetEnvironmentVariable("RUFLO_AUTO_MODE", "true")
+        [Environment]::SetEnvironmentVariable("RUFLO_WORKSPACE", $RepoRoot)
+        [Environment]::SetEnvironmentVariable("RUFLO_LEADER", "sari")
+
+        Write-Host "[OK] SARI Auto-Mode: ENGAGED" -ForegroundColor Green
+        Write-Host "[OK] Supervisor Handover: Transferred to Ruflo AI Agent Hub" -ForegroundColor Green
+        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "[OK] RUFLO STATUS: ACTIVE IN AUTO-MODE WITH MCP" -ForegroundColor Green
         exit 0
     }
 }

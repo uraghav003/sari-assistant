@@ -10,6 +10,15 @@
         "OLLAMA_MODEL": "qwen2.5-coder:latest"
       }
     },
+    "ruflo": {
+      "command": "npx",
+      "args": ["-y", "tsx", "C:\\Users\\aecr\\.agents\\skills\\ruflo-hub-runner.ts"],
+      "env": {
+        "RUFLO_WORKSPACE": "C:\\Users\\aecr\\sari-assistant",
+        "RUFLO_LEADER": "sari",
+        "RUFLO_AUTO_MODE": "true"
+      }
+    },
     "supabase": {
       "command": "npx",
       "args": ["-y", "@supabase/mcp-server-supabase@latest", "--project-ref", "hgbfbvtujatvwpjgibng"],
