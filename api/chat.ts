@@ -265,10 +265,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       }
     }
 
-    // ─── TIER 2.5: UNSIGNED APPS SCRIPT (fallback when SHARED_SECRET missing on deploy) ─
+    // ─── TIER 2.5: UNSIGNED APPS SCRIPT POST (fallback when SHARED_SECRET missing on deploy) ─
     if (!auth) {
       try {
-        const unsignedRes = await fetch(`${scriptUrl}?action=ai_infer&prompt=${encodeURIComponent(trimmedPrompt.slice(0, 500))}`, {
+        const unsignedRes = await fetch(scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "ai_infer", prompt: trimmedPrompt.slice(0, 500), auth: {} }),
           signal: AbortSignal.timeout(15000),
         });
         if (unsignedRes.ok) {

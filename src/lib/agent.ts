@@ -254,7 +254,7 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       }
       return {
         content,
-        mode: "cloud",
+        mode: "offline",
       };
     }
   );
