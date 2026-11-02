@@ -1,25 +1,27 @@
 {
-  "name": "SARI Supreme Command",
+  "id": "/",
+  "name": "SARI — Sovereign Personal AI Assistant",
   "short_name": "SARI",
-  "description": "Sovereign AI operations console for Divyanshi Capital",
-  "start_url": "/",
+  "description": "Sovereign AI operations console for Divyanshi Capital — Maalik ka personal AI brain",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait-primary",
   "background_color": "#07070c",
   "theme_color": "#0e0e16",
+  "lang": "en-IN",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
   ],
   "shortcuts": [
-    { "name": "Supreme Voice", "short_name": "Voice", "url": "/sari-supreme.html" },
-    { "name": "Chat with SARI", "short_name": "Chat", "url": "/chat" },
-    { "name": "Mini Terminal", "short_name": "Terminal", "url": "/terminal" },
-    { "name": "Alerts", "short_name": "Alerts", "url": "/alerts" },
-    { "name": "Leads", "short_name": "Leads", "url": "/leads" }
+    { "name": "Chat with SARI", "short_name": "Chat", "url": "/chat", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Leads Pipeline", "short_name": "Leads", "url": "/leads", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Alerts Feed", "short_name": "Alerts", "url": "/alerts", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mini Terminal", "short_name": "Terminal", "url": "/terminal", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
   ],
   "categories": ["business", "finance", "productivity"],
   "prefer_related_applications": false

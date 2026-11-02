@@ -68,7 +68,7 @@ FONT_CANDIDATES = [
 ]
 font_path = next((p for p in FONT_CANDIDATES if os.path.exists(p)), "")
 
-for size in (192, 512):
+for size in (152, 167, 192, 512):
     icon = make_icon(size, font_path)
     path = os.path.join(OUT, f"icon-{size}.png")
     icon.save(path, optimize=True)

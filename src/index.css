@@ -18,7 +18,11 @@ body {
   color: var(--text);
   font-family: Inter, system-ui, sans-serif;
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
 }
 button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: none; }
@@ -42,7 +46,7 @@ input:focus, textarea:focus { border-color: rgba(168,85,247,0.5); }
 a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 3px; }
-.app-shell { display: flex; height: 100vh; overflow: hidden; }
+.app-shell { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 .sidebar {
   width: 260px;
   background: var(--card);
@@ -84,7 +88,7 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(168,85,247,0.28);
 }
 .sidebar-foot { padding: 12px; border-top: 1px solid var(--border); }
-.main { flex: 1; overflow: auto; background: var(--bg); }
+.main { flex: 1; overflow: auto; overflow-y: scroll; -webkit-overflow-scrolling: touch; background: var(--bg); }
 .page { padding: 28px 32px; max-width: 1200px; }
 .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
 .page-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
@@ -202,4 +206,18 @@ a { color: inherit; text-decoration: none; }
   .page-title { font-size: 20px; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .stat-val { font-size: 22px; }
+}
+
+/* iOS keyboard & safe area helpers */
+@supports (height: 100dvh) {
+  .app-shell { height: 100dvh; }
+}
+/* Minimum 44px touch targets on mobile */
+@media (max-width: 640px) {
+  .nav-item { min-height: 44px; min-width: 44px; }
+  .btn-primary, .btn-ghost { min-height: 44px; }
+  /* Fix iOS input zoom: font-size >= 16px in inputs */
+  input, textarea, select { font-size: 16px; }
+  /* Smooth momentum scroll everywhere */
+  * { -webkit-overflow-scrolling: touch; }
 }
