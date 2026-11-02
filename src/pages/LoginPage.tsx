@@ -10,8 +10,8 @@ import {
   getStoredEmail,
 } from "../lib/webauthn";
 
-const DEFAULT_EMAIL = "u.raghav003@gmail.com";
-const DEFAULT_PASSWORD = "qwerty";
+const DEFAULT_EMAIL = "";
+const DEFAULT_PASSWORD = "";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -30,10 +30,8 @@ export default function LoginPage() {
       setBiometricReady(ok);
       setHasCred(hasStoredCredential());
       const storedEmail = getStoredEmail();
-      if (storedEmail) setEmail(storedEmail);
-      else setEmail(DEFAULT_EMAIL);
+      setEmail(storedEmail ?? "");
     });
-    // Request notification permission
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
@@ -48,13 +46,10 @@ export default function LoginPage() {
         setError("Biometric verification failed. Use password.");
         return;
       }
-      // After biometric success, do a session-based login via server
-      // Use a special biometric token flow
       const result = await loginWithServer(bioEmail, "__biometric_verified__");
       if (result.ok) {
         navigate("/");
       } else {
-        // Biometric verified locally but server needs password — fallback
         setEmail(bioEmail);
         setError("Biometric OK. Enter password to complete server login.");
       }
@@ -238,7 +233,6 @@ export default function LoginPage() {
             </div>
           )}
 
-
           {success && (
             <div
               style={{
@@ -265,7 +259,6 @@ export default function LoginPage() {
             {loading ? "Authenticating..." : "Enter SARI"}
           </button>
 
-          {/* Biometric login */}
           {biometricReady && hasCred && (
             <button
               type="button"
