@@ -47,7 +47,7 @@ npm run build
 Generate the required secrets with:
 
 ```powershell
-pwsh ./scripts/rotate-secrets.ps1 -Email md@divyanshicapital.com
+pwsh ./scripts/rotate-secrets.ps1 -Email u.raghav003@gmail.com
 ```
 
 It writes `.env.production.local` (gitignored) and prints the exact Vercel and

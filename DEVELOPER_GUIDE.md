@@ -22,7 +22,7 @@ sari-assistant/
 ## 🔐 Key Fixes & Design Principles
 
 ### 1. Multi-Executive Login (`SARI_LOGIN_EMAIL`)
-- **Fix**: Updated `api/_security.ts` (`checkCredentials`) to correctly parse comma-separated whitelist emails (e.g., `u.raghav003@gmail.com, md@divyanshicapital.com`) instead of treating them as a single literal string.
+- **Fix**: Updated `api/_security.ts` (`checkCredentials`) to correctly parse comma-separated whitelist emails (e.g., `u.raghav003@gmail.com, upendra.raghav@divyanshicapital.com`) instead of treating them as a single literal string.
 - **Session Security**: Authentication issues an HttpOnly cookie (`sari_session`); no sensitive tokens are stored in `localStorage`.
 
 ### 2. Automated Testing

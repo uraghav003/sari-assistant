@@ -3,7 +3,7 @@
   Run: pwsh scripts/set-auth-env.ps1
 #>
 param(
-    [string]$Email = "md@divyanshicapital.com",
+    [string]$Email = "u.raghav003@gmail.com",
     [string]$Password
 )
 

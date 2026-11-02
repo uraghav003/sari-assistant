@@ -10,7 +10,7 @@
 
 process.env.SARI_SESSION_SECRET = "test-session-secret-that-is-long-enough-1234";
 process.env.SARI_PASSWORD = "test-password";
-process.env.SARI_LOGIN_EMAIL = "md@divyanshicapital.com";
+process.env.SARI_LOGIN_EMAIL = "u.raghav003@gmail.com";
 delete process.env.SARI_PASSWORD_HASH;
 delete process.env.GEMINI_API_KEY;
 delete process.env.MALLIK_API_KEY;
@@ -127,7 +127,7 @@ async function run(): Promise<void> {
     await loginHandler(
       request(
         "POST",
-        { email: "md@divyanshicapital.com", password },
+        { email: "u.raghav003@gmail.com", password },
         { "x-forwarded-for": "10.0.0.1" }
       ),
       res.res
@@ -141,7 +141,7 @@ async function run(): Promise<void> {
     await loginHandler(
       request(
         "POST",
-        { email: "md@divyanshicapital.com", password: "wrong" },
+        { email: "u.raghav003@gmail.com", password: "wrong" },
         { "x-forwarded-for": "10.0.0.1" }
       ),
       res.res
@@ -157,7 +157,7 @@ async function run(): Promise<void> {
       await loginHandler(
         request(
           "POST",
-          { email: "md@divyanshicapital.com", password: `guess-${i}` },
+          { email: "u.raghav003@gmail.com", password: `guess-${i}` },
           { "x-forwarded-for": "10.0.0.99" }
         ),
         res.res
@@ -197,7 +197,7 @@ async function run(): Promise<void> {
     await loginHandler(
       request(
         "POST",
-        { email: "md@divyanshicapital.com", password: "test-password" },
+        { email: "u.raghav003@gmail.com", password: "test-password" },
         { "x-forwarded-for": "10.0.0.2" }
       ),
       res.res
