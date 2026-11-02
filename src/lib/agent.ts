@@ -5,7 +5,7 @@ import { learnFromInteraction } from "./self-learn";
 import { checkSession } from "./auth";
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
-export type AgentResult = { content: string; mode: "cloud" | "ollama" | "offline" };
+export type AgentResult = { content: string; mode: "cloud" | "ollama" | "vllm" | "offline" };
 
 export type Tier = "Cloud" | "Local" | "Offline";
 export interface InferResult {
@@ -38,14 +38,28 @@ Persona & Rules:
 - Automatically protect confidential financial figures and credentials by masking them as [RESTRICTED].
 - Workspace folder: "sari_supreme_command".`;
 
-export async function pingOllama(signal?: AbortSignal): Promise<boolean> {
+export async function pingLocalRuntime(signal?: AbortSignal): Promise<{ ok: boolean; type: "ollama" | "vllm" | "none" }> {
   const config = loadDynamicConfig();
+  if (!config.ollamaUrl) return { ok: false, type: "none" };
+
+  // 1. Check vLLM / OpenAI-compatible endpoint
   try {
-    const response = await fetch(`${config.ollamaUrl}/api/tags`, { signal });
-    return response.ok;
-  } catch {
-    return false;
-  }
+    const vllmRes = await fetch(`${config.ollamaUrl}/v1/models`, { signal });
+    if (vllmRes.ok) return { ok: true, type: "vllm" };
+  } catch {}
+
+  // 2. Check Ollama native endpoint
+  try {
+    const ollamaRes = await fetch(`${config.ollamaUrl}/api/tags`, { signal });
+    if (ollamaRes.ok) return { ok: true, type: "ollama" };
+  } catch {}
+
+  return { ok: false, type: "none" };
+}
+
+export async function pingOllama(signal?: AbortSignal): Promise<boolean> {
+  const status = await pingLocalRuntime(signal);
+  return status.ok;
 }
 
 export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
@@ -57,9 +71,10 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
     recent.map((m) => `${m.role === "user" ? "Maalik" : "SARI"}: ${m.content}`).join("\n") +
     "\nSARI:";
 
-  // Force try local Ollama first if reachable, ensuring local fallback works robustly
-  if (config.ollamaUrl && (await pingOllama())) {
-    const localFirst = await tryOllama();
+  // Force try local engine (vLLM or Ollama) first if reachable, ensuring local fallback works robustly
+  const localProbe = await pingLocalRuntime();
+  if (localProbe.ok && localProbe.type !== "none") {
+    const localFirst = await tryLocalEngine(localProbe.type);
     if (localFirst) return localFirst;
   }
 
@@ -95,11 +110,50 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
     }
   }
 
-  async function tryOllama(): Promise<AgentResult | null> {
+  async function tryLocalEngine(engineType: "ollama" | "vllm"): Promise<AgentResult | null> {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
       try {
+        if (engineType === "vllm") {
+          const response = await fetch(`${config.ollamaUrl}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: config.ollamaModel,
+              messages: [{ role: "system", content: SYSTEM }, ...recent],
+              temperature: 0.7,
+              max_tokens: 2048,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (response.ok) {
+            const data: unknown = await response.json();
+            const text =
+              data &&
+              typeof data === "object" &&
+              "choices" in data &&
+              Array.isArray(data.choices) &&
+              data.choices[0] &&
+              typeof data.choices[0] === "object" &&
+              "message" in data.choices[0] &&
+              data.choices[0].message &&
+              typeof data.choices[0].message === "object" &&
+              "content" in data.choices[0].message &&
+              typeof data.choices[0].message.content === "string"
+                ? data.choices[0].message.content.trim()
+                : null;
+            if (text) {
+              const sanitized = text.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
+              audit("chat", "allowed", `Local vLLM model ${config.ollamaModel} responded`);
+              learnFromInteraction(userPrompt, sanitized, "Local");
+              return { content: sanitized, mode: "vllm" };
+            }
+          }
+          return null;
+        }
+
         const response = await fetch(`${config.ollamaUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -135,7 +189,7 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
         clearTimeout(timeout);
       }
     } catch {
-      // Local Ollama offline or aborted
+      // Local engine offline or aborted
     }
     return null;
   }
@@ -155,8 +209,11 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       throw lastErr ?? new Error("Cloud inference failed");
     },
     async () => {
-      const ollamaResult = await tryOllama();
-      if (ollamaResult) return ollamaResult;
+      const localProbe = await pingLocalRuntime();
+      if (localProbe.ok && localProbe.type !== "none") {
+        const localResult = await tryLocalEngine(localProbe.type);
+        if (localResult) return localResult;
+      }
 
       audit("chat", "error", "All inference brains offline");
       return {
@@ -171,10 +228,10 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
 export async function infer(userBlock: string): Promise<InferResult> {
   const config = loadDynamicConfig();
   const result = await runAgent([{ role: "user", content: userBlock }]);
-  const tier: Tier = result.mode === "cloud" ? "Cloud" : result.mode === "ollama" ? "Local" : "Offline";
+  const tier: Tier = result.mode === "cloud" ? "Cloud" : (result.mode === "ollama" || result.mode === "vllm") ? "Local" : "Offline";
   return {
     text: result.content,
     tier,
-    model: result.mode === "cloud" ? "edge-cascade" : result.mode === "ollama" ? config.ollamaModel : undefined,
+    model: result.mode === "cloud" ? "edge-cascade" : (result.mode === "ollama" || result.mode === "vllm") ? config.ollamaModel : undefined,
   };
 }

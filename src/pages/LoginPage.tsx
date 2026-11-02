@@ -10,8 +10,8 @@ import {
   getStoredEmail,
 } from "../lib/webauthn";
 
-const DEFAULT_EMAIL = "";
-const DEFAULT_PASSWORD = "";
+const DEFAULT_EMAIL = "u.raghav003@gmail.com";
+const DEFAULT_PASSWORD = "qwerty";
 
 export default function LoginPage() {
   const navigate = useNavigate();

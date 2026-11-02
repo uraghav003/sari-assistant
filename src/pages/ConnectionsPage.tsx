@@ -128,17 +128,42 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
     const target = url || config.ollamaUrl;
     setCheckingOllama(true);
     try {
-      const res = await fetch(`${target}/api/tags`, { signal: AbortSignal.timeout(3000) });
-      if (!res.ok) throw new Error("Offline");
-      const data: unknown = await res.json();
-      const models = (data && typeof data === "object" && Array.isArray((data as { models?: unknown }).models)
-        ? ((data as { models: Array<{ name?: string }> }).models)
-        : []
-      )
-        .map((m) => m.name || "")
-        .filter(Boolean);
-      setOllamaModels(models);
-      setOllamaStatus("connected");
+      // 1. Try Ollama tags
+      try {
+        const res = await fetch(`${target}/api/tags`, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const data: unknown = await res.json();
+          const models: string[] = [];
+          if (data && typeof data === "object" && "models" in data && Array.isArray(data.models)) {
+            for (const item of data.models) {
+              if (item && typeof item === "object" && "name" in item && typeof item.name === "string") {
+                models.push(item.name);
+              }
+            }
+          }
+          setOllamaModels(models);
+          setOllamaStatus("connected");
+          return;
+        }
+      } catch {}
+
+      // 2. Try vLLM / OpenAI models
+      const resVllm = await fetch(`${target}/v1/models`, { signal: AbortSignal.timeout(3000) });
+      if (resVllm.ok) {
+        const data: unknown = await resVllm.json();
+        const models: string[] = [];
+        if (data && typeof data === "object" && "data" in data && Array.isArray(data.data)) {
+          for (const item of data.data) {
+            if (item && typeof item === "object" && "id" in item && typeof item.id === "string") {
+              models.push(item.id);
+            }
+          }
+        }
+        setOllamaModels(models);
+        setOllamaStatus("connected");
+        return;
+      }
+      throw new Error("Offline");
     } catch {
       setOllamaStatus("offline");
       setOllamaModels([]);
