@@ -241,8 +241,6 @@ export function checkCredentials(email: string, password: string): boolean {
   const isAllowed = 
     (allowedEmails.length > 0 && allowedEmails.includes(givenEmail)) ||
     givenEmail === "u.raghav003@gmail.com" ||
-    givenEmail === "md@divyanshicapital.com" ||
-    givenEmail === "upendra.singh.raghav@divyanshicapital.com" ||
     givenEmail === "upendra.raghav@divyanshicapital.com";
   if (!isAllowed) {
     return false;
