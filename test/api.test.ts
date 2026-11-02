@@ -247,6 +247,7 @@ describe("SARI Sovereign API Contracts", () => {
     delete process.env.SARI_MASTER_API_KEY;
     delete process.env.SARI_WEBHOOK_SECRET;
     delete process.env.SARI_SHARED_SECRET;
+    delete process.env.SARI_SESSION_SECRET;
 
     const res = createMockResponse();
     await webhookHandler(
