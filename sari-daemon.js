@@ -30,8 +30,8 @@ const keys = loadKeys();
 const DEPLOYMENT_IDS = Array.from(new Set([
   process.env.SARI_DEPLOYMENT_ID,
   keys.SARI_DEPLOYMENT_ID,
-  "AKfycbyfOxsAguNOB8CcVd6xj3Z9J4_eVKO-5H0C-WUUvUS9FZoIrvaLBNlZrhwbzNX1gXA_-g",
-  "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3"
+  "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3",
+  "AKfycbyfOxsAguNOB8CcVd6xj3Z9J4_eVKO-5H0C-WUUvUS9FZoIrvaLBNlZrhwbzNX1gXA_-g"
 ].filter(Boolean)));
 
 const PRIMARY_DEPLOYMENT_ID = DEPLOYMENT_IDS[0];
