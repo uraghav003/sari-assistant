@@ -129,6 +129,33 @@ export function getAlerts(): AppNotification[] {
 export function unreadCount(): number {
   return items.filter((item) => !item.read).length;
 }
+export function isVoiceAlertsEnabled(): boolean {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
+  return localStorage.getItem("sari_voice_alerts") !== "false";
+}
+
+export function setVoiceAlertsEnabled(enabled: boolean): void {
+  if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    localStorage.setItem("sari_voice_alerts", enabled ? "true" : "false");
+  }
+}
+
+export function speakAlert(text: string): void {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const clean = `Maalik, alert notification: ${text.replace(/[*_#`[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 300)}`;
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.05;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find((v) => (v.lang.includes("IN") || v.name.includes("Zira") || v.name.includes("Natural")) && v.name.includes("Female")) ||
+      voices.find((v) => v.lang.includes("en") || v.lang.includes("hi"));
+    if (preferred) utterance.voice = preferred;
+    window.speechSynthesis.speak(utterance);
+  } catch {}
+}
 
 export function pushAlert(input: {
   title?: string;
@@ -159,9 +186,11 @@ export function pushAlert(input: {
 
   items = [notification, ...items].slice(0, MAX_ITEMS);
   persist();
+  if (isVoiceAlertsEnabled()) {
+    speakAlert(`${notification.title}. ${notification.body}`);
+  }
   return notification;
 }
-
 export function markAsRead(id: string): void {
   if (!id) return;
   let changed = false;
