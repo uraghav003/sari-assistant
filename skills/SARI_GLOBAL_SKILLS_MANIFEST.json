@@ -1,0 +1,9 @@
+{
+  "sovereign": "SARI Supreme Command & Swarm Orchestrator",
+  "principal": "Upendra Singh Raghav (MD & CEO / Maalik)",
+  "organization": "Divyanshi Capital",
+  "workspace": "sari_supreme_command",
+  "agents": ["SARI", "BULBHUL", "LAILA", "BHISM", "POSTMASTER", "MALLIK"],
+  "sharedGlobalSkillsFolder": "C:/Users/aecr/sari-assistant/skills",
+  "syncStatus": "ACTIVE_24_7"
+}
