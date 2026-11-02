@@ -57,7 +57,7 @@ export default function DashboardPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 className="page-title">Command Center & Swarm Hub</h1>
-          <p className="page-sub">SARI online · Personal Virtual AI Assistant & Multi-Agent Controller · Workspace: sari_supreme_command</p>
+          <p className="page-sub">Welcome, Maalik (Upendra Singh Raghav) · SARI Sovereign Personal AI Active · sari_supreme_command</p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <button
@@ -81,6 +81,43 @@ export default function DashboardPage() {
           </button>
           <span className="badge badge-live"><span className="dot" /> Live</span>
         </div>
+      </div>
+      <div style={{ marginTop: 14, padding: "12px 18px", background: "linear-gradient(90deg, rgba(168,85,247,0.12), rgba(6,182,212,0.08))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #a855f7, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>
+            UR
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
+              Upendra Singh Raghav · Sovereign Owner (Maalik)
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Primary: <code style={{ color: "var(--accent)" }}>u.raghav003@gmail.com</code></span>
+              <span>•</span>
+              <span style={{ color: "#22c55e", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block" }}></span>
+                Exclusive Master Access Locked
+              </span>
+            </div>
+          </div>
+        </div>
+        <Link
+          to="/chat"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 14px",
+            background: "linear-gradient(135deg, #a855f7, #7c3aed)",
+            color: "#fff",
+            borderRadius: 8,
+            fontSize: 12.5,
+            fontWeight: 600,
+            textDecoration: "none"
+          }}
+        >
+          🎙️ Speak Voice Command
+        </Link>
       </div>
       {syncMsg && (
         <div style={{ marginTop: 10, fontSize: 12.5, color: "var(--green)", fontWeight: 500 }}>

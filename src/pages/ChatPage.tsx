@@ -49,7 +49,13 @@ export default function ChatPage() {
 
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [autoListening, setAutoListening] = useState(false);
+  const [autoListening, setAutoListening] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sari_voice_listening");
+      return saved === null ? true : saved === "true";
+    }
+    return true;
+  });
   const [speaking, setSpeaking] = useState(false);
   const [tierStatus, setTierStatus] = useState<Tier>("Cloud");
   const [clockTime, setClockTime] = useState("");
@@ -174,6 +180,37 @@ export default function ChatPage() {
     setMessages(nextMessages);
     if (!commandText) setInput("");
     setTyping(true);
+    const lower = query.toLowerCase().trim();
+    if (lower === "clear" || lower === "clear chat" || lower === "reset") {
+      clearChat();
+      speakSari("Ji Maalik, chat reset ho gayi hai. Bataiye kya aadesh hai?");
+      setTyping(false);
+      return;
+    }
+    if (lower === "stop" || lower === "mute" || lower === "chup" || lower === "stop speaking") {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeaking(false);
+      setTyping(false);
+      return;
+    }
+    if (lower === "who are you" || lower === "who is your owner" || lower === "who is maalik" || lower === "introduce yourself") {
+      const intro = "Namaste Maalik! Main SARI hoon — Sentient Adaptive Responsive Intelligence. Aap mere Maalik aur supreme owner hain, Upendra Singh Raghav (Founder & MD). Main sirf aapke aadesh par poora swarm chalati hoon.";
+      const sariMsg: Message = { id: crypto.randomUUID(), role: "sari", content: intro, time: timeStr };
+      setMessages([...nextMessages, sariMsg]);
+      setTyping(false);
+      speakSari(intro);
+      return;
+    }
+    if (lower === "system status" || lower === "status") {
+      const statusText = "Ji Maalik! SARI Sovereign System 100% operational hai. Cloud Vercel deployment 200 OK, Apps Script healthy hai, aur sabhi 6 agents active hain.";
+      const sariMsg: Message = { id: crypto.randomUUID(), role: "sari", content: statusText, time: timeStr };
+      setMessages([...nextMessages, sariMsg]);
+      setTyping(false);
+      speakSari(statusText);
+      return;
+    }
 
     const hit = matchSkill(query, loadSkills());
     if (hit) bumpRun(hit.id);
@@ -203,6 +240,9 @@ export default function ChatPage() {
   function toggleAutoListening() {
     const nextState = !autoListening;
     setAutoListening(nextState);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sari_voice_listening", String(nextState));
+    }
     if (recognitionRef.current) {
       try { nextState ? recognitionRef.current.start() : recognitionRef.current.stop(); } catch {}
     }
@@ -231,9 +271,9 @@ export default function ChatPage() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span aria-live="polite" style={{ fontSize: 11, color: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981", boxShadow: `0 0 10px ${speaking ? "#00ffd5" : typing ? "#ffcf77" : "#10b981"}` }} />
-            {speaking ? "SARI IS SPEAKING..." : typing ? "SARI IS THINKING..." : "PRIVATE SESSION CONNECTED"}
+          <span aria-live="polite" style={{ fontSize: 11, color: speaking ? "#00ffd5" : typing ? "#ffcf77" : autoListening ? "#22c55e" : "#94a3b8", display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: speaking ? "#00ffd5" : typing ? "#ffcf77" : autoListening ? "#22c55e" : "#94a3b8", boxShadow: `0 0 10px ${speaking ? "#00ffd5" : typing ? "#ffcf77" : autoListening ? "#22c55e" : "transparent"}` }} />
+            {speaking ? "SARI IS SPEAKING..." : typing ? "SARI IS THINKING..." : autoListening ? "🎙️ VOICE COMMAND ACTIVE" : "PRIVATE SESSION CONNECTED"}
           </span>
           <span style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{clockTime}</span>
           <button onClick={() => setShowHologram(!showHologram)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(0,255,213,0.2)", color: "#00ffd5", padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
