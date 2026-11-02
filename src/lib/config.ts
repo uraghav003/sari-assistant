@@ -10,7 +10,7 @@ export interface DynamicConfig {
   autopilotEnabled: boolean;
 }
 
-const CONFIG_STORAGE_KEY = "sari_dynamic_config_v1";
+const CONFIG_STORAGE_KEY = "sari_dynamic_config_v2";
 
 export const DEFAULT_SCRIPT_ID = "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3";
 export const DEFAULT_DEPLOYMENT_ID = "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
