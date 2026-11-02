@@ -32,7 +32,7 @@ const COMMANDS: Record<string, { label: string; execute: () => string }> = {
       "GET,POST /api/terminal — Executive in-process diagnostic console",
       "POST     /api/webhook — Autonomous key-value auto-fixer & event ingress",
       "",
-      "Total Active Routes: 12 production endpoints"
+      "Total Active Routes: 13 production endpoints"
     ].join("\n"),
   },
   "google-workspace": {

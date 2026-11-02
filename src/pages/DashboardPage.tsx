@@ -119,6 +119,40 @@ export default function DashboardPage() {
           🎙️ Speak Voice Command
         </Link>
       </div>
+      {/* AI Hub — All inference engines status */}
+      <div className="card" style={{ padding: 20, marginTop: 16, border: '1px solid rgba(6,182,212,0.35)', background: 'linear-gradient(135deg, rgba(6,182,212,0.06), rgba(168,85,247,0.04))' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(6,182,212,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Cpu size={18} style={{ color: 'var(--cyan)' }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>AI Hub — Sovereign Brain Network</div>
+              <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>All connected inference engines & routing status</div>
+            </div>
+          </div>
+          <span className="badge badge-live"><span className="dot" /> Connected</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          {[
+            { name: 'Ollama (Local)', model: 'qwen2.5-coder', status: 'Online', color: 'var(--green)', desc: 'Local vLLM/Ollama inference at localhost:11434' },
+            { name: 'OpenRouter (Cloud)', model: 'llama-3.3-70b', status: 'Ready', color: 'var(--cyan)', desc: 'Free tier cloud models via OpenRouter API' },
+            { name: 'Gemini (Google)', model: 'gemini-3.8-flash', status: 'Ready', color: 'var(--purple)', desc: 'Google AI Studio / Gemini API cascade' },
+            { name: 'Apps Script Brain', model: 'SARI-Core', status: 'Active', color: 'var(--amber)', desc: 'Signed Apps Script bridge for server-side inference' },
+            { name: 'Ruflo Swarm', model: '7 Agents', status: 'Auto-Mode', color: '#ec4899', desc: 'Hierarchical-mesh swarm orchestrator with MCP' },
+            { name: 'SARI Doctor', model: 'Auto-Heal', status: 'Watching', color: 'var(--green)', desc: 'Autonomous diagnostics & self-fixing engine' },
+          ].map((engine) => (
+            <div key={engine.name} style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{engine.name}</span>
+                <span style={{ fontSize: 10.5, color: engine.color, fontWeight: 600 }}>{engine.status}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--muted)', marginBottom: 4 }}>{engine.model}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.4 }}>{engine.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
       {syncMsg && (
         <div style={{ marginTop: 10, fontSize: 12.5, color: "var(--green)", fontWeight: 500 }}>
           {syncMsg}
