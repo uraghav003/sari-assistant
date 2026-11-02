@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, lazy, type ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -6,14 +6,15 @@ import { checkSession, subscribeAuth } from "./lib/auth";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import ChatPage from "./pages/ChatPage";
-import SkillsPage from "./pages/SkillsPage";
-import ConnectionsPage from "./pages/ConnectionsPage";
-import PoliciesPage from "./pages/PoliciesPage";
-import AuditPage from "./pages/AuditPage";
-import LeadsPage from "./pages/LeadsPage";
-import AlertsPage from "./pages/AlertsPage";
-import TerminalPage from "./pages/TerminalPage";
+
+const ChatPage = lazy(() => import("./pages/ChatPage"));
+const SkillsPage = lazy(() => import("./pages/SkillsPage"));
+const ConnectionsPage = lazy(() => import("./pages/ConnectionsPage"));
+const PoliciesPage = lazy(() => import("./pages/PoliciesPage"));
+const AuditPage = lazy(() => import("./pages/AuditPage"));
+const LeadsPage = lazy(() => import("./pages/LeadsPage"));
+const AlertsPage = lazy(() => import("./pages/AlertsPage"));
+const TerminalPage = lazy(() => import("./pages/TerminalPage"));
 
 function ProtectedRoute({ authenticated, children }: { authenticated: boolean; children: ReactNode }) {
   if (!authenticated) return <Navigate to="/login" replace />;

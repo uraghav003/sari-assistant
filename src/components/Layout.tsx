@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, MessageSquare, Sparkles, Link2,
@@ -81,7 +81,11 @@ export default function Layout() {
           </button>
         </div>
       </aside>
-      <main className="main"><Outlet /></main>
+      <main className="main">
+        <Suspense fallback={<div style={{ padding: "2rem", color: "#94a3b8" }}>Loading…</div>}>
+          <Outlet />
+        </Suspense>
+      </main>
     </div>
   );
 }

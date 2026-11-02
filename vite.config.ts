@@ -7,8 +7,17 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
-              return 'vendor';
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router') || id.includes('scheduler/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('@supabase/')) {
+              return 'vendor-supabase';
             }
           }
         },
