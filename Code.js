@@ -80,8 +80,8 @@ function doGet(e) {
   }
 
   if (action === "get_memory") {
-    var stored = props_().getProperty("SARI_MEMORY_VAULT");
-    return jsonOut_({ ok: true, memory: stored ? JSON.parse(stored) : {} });
+    var stored = getVaultData_();
+    return jsonOut_({ ok: true, memory: stored });
   }
 
   return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
@@ -92,10 +92,67 @@ function sanitizeVault_(vault) {
   var clean = {};
   var keys = Object.keys(vault).slice(0, 200);
   for (var i = 0; i < keys.length; i++) {
+    var key = String(keys[i]).slice(0, 120);
     var value = vault[keys[i]];
-    if (typeof value === "string") clean[keys[i].slice(0, 120)] = value.slice(0, 2000);
+    if (typeof value === "string") {
+      clean[key] = value.slice(0, 4000);
+    } else if (typeof value === "number" || typeof value === "boolean") {
+      clean[key] = value;
+    } else if (Array.isArray(value)) {
+      clean[key] = value.slice(0, 100).map(function(item) {
+        if (typeof item === "string") return item.slice(0, 500);
+        if (typeof item === "object" && item !== null) {
+          try { return JSON.parse(JSON.stringify(item)); } catch(e) { return String(item); }
+        }
+        return item;
+      });
+    } else if (typeof value === "object" && value !== null) {
+      clean[key] = sanitizeVault_(value);
+    }
   }
   return clean;
+}
+
+function getVaultData_() {
+  var props = props_();
+  var totalChunks = parseInt(props.getProperty("SARI_VAULT_CHUNKS") || "1", 10);
+  if (totalChunks > 1) {
+    var combined = "";
+    for (var c = 0; c < totalChunks; c++) {
+      combined += (props.getProperty("SARI_VAULT_CHUNK_" + c) || "");
+    }
+    try { return JSON.parse(combined); } catch (e) { return {}; }
+  }
+  var single = props.getProperty("SARI_MEMORY_VAULT");
+  if (single) {
+    try { return JSON.parse(single); } catch (e) { return {}; }
+  }
+  return {};
+}
+
+function setVaultData_(vaultObj) {
+  var sanitized = sanitizeVault_(vaultObj);
+  var serialized = JSON.stringify(sanitized);
+  if (serialized.length > MAX_VAULT_BYTES) {
+    return { ok: false, error: "VAULT_TOO_LARGE" };
+  }
+  var props = props_();
+  var CHUNK_SIZE = 8000;
+  if (serialized.length <= CHUNK_SIZE) {
+    props.setProperty("SARI_MEMORY_VAULT", serialized);
+    props.deleteProperty("SARI_VAULT_CHUNKS");
+  } else {
+    var chunks = [];
+    for (var i = 0; i < serialized.length; i += CHUNK_SIZE) {
+      chunks.push(serialized.substring(i, i + CHUNK_SIZE));
+    }
+    props.setProperty("SARI_VAULT_CHUNKS", String(chunks.length));
+    for (var j = 0; j < chunks.length; j++) {
+      props.setProperty("SARI_VAULT_CHUNK_" + j, chunks[j]);
+    }
+    props.deleteProperty("SARI_MEMORY_VAULT");
+  }
+  return { ok: true, size: serialized.length };
 }
 
 function doPost(e) {
@@ -172,19 +229,16 @@ function doPost(e) {
     }
 
     if (action === "sync_memory") {
-      var vault = sanitizeVault_(payload.vault);
-      var serialized = JSON.stringify(vault);
-      if (serialized.length > MAX_VAULT_BYTES) {
-        return jsonOut_({ ok: false, error: "VAULT_TOO_LARGE" });
+      var saveRes = setVaultData_(payload.vault);
+      if (!saveRes.ok) {
+        return jsonOut_({ ok: false, error: saveRes.error || "VAULT_TOO_LARGE" });
       }
-      props_().setProperty("SARI_MEMORY_VAULT", serialized);
-      response.result = { synced: true, keysCount: Object.keys(vault).length };
+      response.result = { synced: true, size: saveRes.size };
       return jsonOut_(response);
     }
 
     if (action === "autopilot_learn") {
-      var existingRaw = props_().getProperty("SARI_MEMORY_VAULT");
-      var existing = existingRaw ? JSON.parse(existingRaw) : {};
+      var existing = getVaultData_();
       var lessons = Array.isArray(payload.lessons) ? payload.lessons.slice(0, 20) : [];
       var skills = Array.isArray(payload.skills) ? payload.skills.slice(0, 50) : [];
       var priorLessons = Array.isArray(existing.lessons) ? existing.lessons : [];
@@ -196,11 +250,8 @@ function doPost(e) {
 
       existing.lessons = mergedLessons;
       existing.skills = skills;
-      var nextSerialized = JSON.stringify(sanitizeVault_(existing));
-      if (nextSerialized.length <= MAX_VAULT_BYTES) {
-        props_().setProperty("SARI_MEMORY_VAULT", nextSerialized);
-      }
-      response.result = { learned: mergedLessons.length, skills: skills.length };
+      var saveResult = setVaultData_(existing);
+      response.result = { learned: mergedLessons.length, skills: skills.length, saved: saveResult.ok };
       return jsonOut_(response);
     }
 

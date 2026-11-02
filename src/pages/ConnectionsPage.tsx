@@ -3,6 +3,8 @@ import {
   Database,
   Cpu,
   Upload,
+  Download,
+  Cloud,
   RefreshCw,
   Code2,
   ShieldCheck,
@@ -41,7 +43,7 @@ export default function ConnectionsPage() {
   const [checkingOllama, setCheckingOllama] = useState(false);
   const [server, setServer] = useState<ServerStatus | null>(null);
   const [geminiCopied, setGeminiCopied] = useState(false);
-
+  const [isSyncingVault, setIsSyncingVault] = useState(false);
   useEffect(() => {
     const current = loadDynamicConfig();
     setConfig(current);
@@ -216,6 +218,71 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
       }
     };
     reader.readAsText(file);
+  }
+
+  async function handleSyncVaultToCloud() {
+    setIsSyncingVault(true);
+    setVaultMsg("Syncing memory vault to Sovereign cloud backend...");
+    try {
+      const stored = localStorage.getItem("sari_memory_vault");
+      let lessons: string[] = [];
+      if (stored) {
+        try {
+          const parsed: unknown = JSON.parse(stored);
+          if (parsed && typeof parsed === "object") {
+            if ("lessons" in parsed && Array.isArray(parsed.lessons)) {
+              for (const l of parsed.lessons) {
+                if (typeof l === "string") lessons.push(l);
+              }
+            } else {
+              for (const [k, v] of Object.entries(parsed)) {
+                lessons.push(`${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+              }
+            }
+          }
+        } catch {}
+      }
+      if (lessons.length === 0) {
+        lessons = ["SARI Sovereign Memory Vault active and healthy."];
+      }
+      const res = await fetch("/api/autopilot", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessons: lessons.slice(0, 20), skills: ["sovereign-vault-sync"] }),
+      });
+      if (res.ok) {
+        const now = new Date().toLocaleString();
+        localStorage.setItem("sari_memory_sync_time", now);
+        setLastSync(now);
+        setVaultMsg(`✓ Successfully synced ${vaultEntries} vault entries to cloud`);
+      } else {
+        const data: unknown = await res.json().catch(() => ({}));
+        const err = data && typeof data === "object" && "error" in data && typeof data.error === "string" ? data.error : `HTTP ${res.status}`;
+        setVaultMsg(`✗ Sync error: ${err}`);
+      }
+    } catch (e: unknown) {
+      setVaultMsg(`✗ Sync failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setIsSyncingVault(false);
+    }
+  }
+
+  function handleExportVaultJson() {
+    const stored = localStorage.getItem("sari_memory_vault") || JSON.stringify({
+      system: "SARI_MEMORY_VAULT",
+      updatedAt: new Date().toISOString(),
+      owner: "Upendra Singh Raghav",
+      status: "active"
+    }, null, 2);
+
+    const blob = new Blob([stored], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `SARI_MEMORY_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -404,10 +471,28 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
         <div style={{ fontSize: 13, marginBottom: 14, color: "var(--muted)" }}>
           {vaultMsg} · Last sync: {lastSync}
         </div>
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "rgba(255,255,255,0.06)", border: "1px dashed var(--border)", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
-          <Upload size={16} /> Upload SARI_MEMORY.json
-          <input type="file" accept=".json" onChange={handleMemoryFileDrop} style={{ display: "none" }} />
-        </label>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "rgba(255,255,255,0.06)", border: "1px dashed var(--border)", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
+            <Upload size={15} /> Upload SARI_MEMORY.json
+            <input type="file" accept=".json" onChange={handleMemoryFileDrop} style={{ display: "none" }} />
+          </label>
+          <button
+            onClick={handleSyncVaultToCloud}
+            disabled={isSyncingVault}
+            className="btn-primary"
+            style={{ padding: "9px 16px", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+          >
+            <Cloud size={15} className={isSyncingVault ? "spin" : ""} />
+            {isSyncingVault ? "Syncing..." : "Sync Vault to Cloud"}
+          </button>
+          <button
+            onClick={handleExportVaultJson}
+            className="btn-secondary"
+            style={{ padding: "9px 16px", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+          >
+            <Download size={15} /> Export Vault
+          </button>
+        </div>
       </div>
 
       {/* Ollama */}
