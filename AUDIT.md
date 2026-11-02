@@ -266,7 +266,7 @@ curl -s -X POST "https://script.google.com/macros/s/<NEW_ID>/exec" -d '{"action"
 # expected: unauthorized / no memory payload
 
 npx tsc --noEmit   # expected: 0 errors
-git grep -nE "sari_sovereign_secure_hmac_secret"   # expected: nothing
+git grep -nE "sari_sovereign_secure"   # expected: nothing
 ```
 
 ---
