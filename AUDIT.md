@@ -104,7 +104,7 @@ The deployment ID is public in `public/sari-supreme.html:530`, `src/lib/config.t
 
 ```ts
 const DEFAULT_SESSION_SECRET = "[REDACTED]";
-const allowedPasswords = ["[REDACTED]", "sari2026", "divyanshi2026", "admin786"];
+const allowedPasswords = ["[REDACTED]"];
 ```
 
 Token = `${expiry}.HMAC_SHA256(secret, expiry)`. Secret is in the repo, so `node -e` mints a valid token for any future expiry — no login needed. The fallback password list also means the app is **permanently** accessible with known credentials even after `SARI_PASSWORD` is set (the env branch is skipped only when it exists; the fallbacks are the else-branch).
@@ -266,7 +266,7 @@ curl -s -X POST "https://script.google.com/macros/s/<NEW_ID>/exec" -d '{"action"
 # expected: unauthorized / no memory payload
 
 npx tsc --noEmit   # expected: 0 errors
-git grep -nE "[REDACTED]|sari_sovereign_secure_hmac_secret|divyanshi2026|admin786"   # expected: nothing
+git grep -nE "sari_sovereign_secure_hmac_secret|admin786"   # expected: nothing
 ```
 
 ---
