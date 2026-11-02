@@ -261,36 +261,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         }
       } catch {
-        // fall through to unsigned attempt
+        // fall through to sovereign brain
       }
     }
-
-    // ─── TIER 2.5: UNSIGNED APPS SCRIPT POST (fallback when SHARED_SECRET missing on deploy) ─
-    if (!auth) {
-      try {
-        const unsignedRes = await fetch(scriptUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "ai_infer", prompt: trimmedPrompt.slice(0, 500), auth: {} }),
-          signal: AbortSignal.timeout(15000),
-        });
-        if (unsignedRes.ok) {
-          const uData: unknown = await unsignedRes.json();
-          if (uData && typeof uData === "object") {
-            const obj = uData as Record<string, unknown>;
-            const result = obj.result && typeof obj.result === "object" ? (obj.result as Record<string, unknown>) : null;
-            const reply = result && typeof result.text === "string" ? result.text : null;
-            if (reply) {
-              res.status(200).json({ ok: true, text: reply, tier: "AppsScriptFallback", model: "AppsScript-Unsigned" });
-              return;
-            }
-          }
-        }
-      } catch {
-        // fall through
-      }
-    }
-
     // ─── TIER 3: SARI SOVEREIGN AUTONOMOUS RESPONSE (100% reliable) ──────
     const p = trimmedPrompt.toLowerCase();
     let autonomousReply = "";
