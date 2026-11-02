@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "daemon": "node sari-daemon.js",
     "vercel:dev": "vercel dev --local --listen 3001 --yes",
-    "test": "echo \"No tests configured\" && exit 0",
+    "test": "npm run typecheck && npm run build",
     "test:api": "npx tsx test-endpoints.ts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
