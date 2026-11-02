@@ -79,11 +79,23 @@ const COMMANDS: Record<string, { label: string; execute: () => string }> = {
     execute: () => {
       const vars = [
         'SARI_SESSION_SECRET', 'SARI_LOGIN_EMAIL', 'SARI_PASSWORD_HASH', 'SARI_PASSWORD',
-        'SARI_SHARED_SECRET', 'GEMINI_API_KEY', 'OPENROUTER_API_KEY', 'GROQ_API_KEY',
+        'SARI_SHARED_SECRET', 'GEMINI_API_KEY', 'OPENROUTER_API_KEY', 'OPEN_ROUTER_API_KEY',
+        'OPENROUTER_KEY', 'OPENROUTE_API_KEY', 'OR_API_KEY', 'GROQ_API_KEY',
         'SARI_APPS_SCRIPT_URL', 'OLLAMA_URL', 'OLLAMA_MODEL',
         'MALLIK_API_KEY', 'GOOGLE_API_KEY', 'AI_STUDIO_API_KEY'
       ];
-      return vars.map(k => `${k}: ${process.env[k] ? '✓ Configured (' + process.env[k]!.slice(0, 6) + '...)' : '○ Not Set'}`).join("\n");
+      const lines = vars.map(k => `${k}: ${process.env[k] ? '✓ Set (' + process.env[k]!.slice(0, 8) + '...)' : '○ Not Set'}`);
+      // Also scan for any env key containing ROUTE, ROUTER, or OPENAI
+      const discovered = Object.keys(process.env).filter(k =>
+        /route|router|openai|gemini|groq|anthropic/i.test(k) && !vars.includes(k)
+      );
+      if (discovered.length > 0) {
+        lines.push("", "=== DISCOVERED API KEYS ===");
+        for (const dk of discovered) {
+          lines.push(`${dk}: ✓ Found (${(process.env[dk] ?? "").slice(0, 8)}...)`);
+        }
+      }
+      return lines.join("\n");
     },
   },
   health: {

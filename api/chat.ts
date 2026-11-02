@@ -94,7 +94,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const trimmedPrompt = prompt.slice(0, MAX_PROMPT_CHARS);
 
     // ─── TIER 1: OPENROUTER API (verified live models) ────────────────────
-    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    const openRouterKey = (
+      process.env.OPENROUTER_API_KEY ||
+      process.env.OPEN_ROUTER_API_KEY ||
+      process.env.OPENROUTER_KEY ||
+      process.env.OPENROUTE_API_KEY ||
+      process.env.OR_API_KEY ||
+      ""
+    ).trim();
     if (openRouterKey && openRouterKey.length > 10) {
       const requestedModel = typeof body.model === "string" ? body.model.trim() : "";
       const defaultModels = [
