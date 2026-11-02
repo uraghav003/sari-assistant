@@ -64,19 +64,25 @@ function Show-GitStatus {
 
 function Probe-AppsScript {
     Write-Host "[*] Probing canonical Google Apps Script status endpoint..." -ForegroundColor Cyan
-    try {
-        $endpoint = 'https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec?action=status'
-        $res = Invoke-RestMethod -Uri $endpoint -Method Get -TimeoutSec 15
-        if ($res -and $res.status -eq "ok") {
-            Write-Host "[OK] Apps Script Deployment: HEALTHY" -ForegroundColor Green
-            return $true
+    $endpoint = 'https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec?action=status'
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            $res = Invoke-RestMethod -Uri $endpoint -Method Get -TimeoutSec 30
+            if ($res -and $res.status -eq "ok") {
+                Write-Host "[OK] Apps Script Deployment: HEALTHY" -ForegroundColor Green
+                return $true
+            }
+            Write-Host "[!] Apps Script returned an unexpected payload (attempt $attempt)." -ForegroundColor Yellow
+        } catch {
+            if ($attempt -lt 3) {
+                Write-Host "[*] Apps Script probe attempt $attempt timed out, retrying..." -ForegroundColor Yellow
+                Start-Sleep -Seconds 2
+            } else {
+                Write-Host "[!] Apps Script Deployment probe failed after 3 attempts: $_" -ForegroundColor Red
+            }
         }
-        Write-Host "[!] Apps Script returned an unexpected payload." -ForegroundColor Yellow
-        return $false
-    } catch {
-        Write-Host "[!] Apps Script Deployment probe failed: $_" -ForegroundColor Red
-        return $false
     }
+    return $false
 }
 
 # HMAC-signs Apps Script calls. The shared secret never leaves the environment.
