@@ -27,7 +27,7 @@ function loadKeys() {
 }
 
 const keys = loadKeys();
-const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || keys.SARI_DEPLOYMENT_ID || "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
+const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || keys.SARI_DEPLOYMENT_ID || "AKfycbyfOxsAguNOB8CcVd6xj3Z9J4_eVKO-5H0C-WUUvUS9FZoIrvaLBNlZrhwbzNX1gXA_-g";
 const EXEC_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
 const SHARED_SECRET = process.env.SARI_SHARED_SECRET || keys.SARI_SHARED_SECRET || "";
 
