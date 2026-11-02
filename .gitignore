@@ -24,3 +24,4 @@ src/knowledge/*control*.json
 .claude-flow/sessions/
 .sari-agents/cache/
 .sari-agents/sessions/
+sari_audit_dump.txt
