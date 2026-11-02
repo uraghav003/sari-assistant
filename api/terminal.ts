@@ -79,9 +79,11 @@ const COMMANDS: Record<string, { label: string; execute: () => string }> = {
     execute: () => {
       const vars = [
         'SARI_SESSION_SECRET', 'SARI_LOGIN_EMAIL', 'SARI_PASSWORD_HASH', 'SARI_PASSWORD',
-        'SARI_SHARED_SECRET', 'GEMINI_API_KEY', 'SARI_APPS_SCRIPT_URL', 'OLLAMA_URL', 'OLLAMA_MODEL'
+        'SARI_SHARED_SECRET', 'GEMINI_API_KEY', 'OPENROUTER_API_KEY', 'GROQ_API_KEY',
+        'SARI_APPS_SCRIPT_URL', 'OLLAMA_URL', 'OLLAMA_MODEL',
+        'MALLIK_API_KEY', 'GOOGLE_API_KEY', 'AI_STUDIO_API_KEY'
       ];
-      return vars.map(k => `${k}: ${process.env[k] ? '✓ Configured' : '○ Default / Optional'}`).join("\n");
+      return vars.map(k => `${k}: ${process.env[k] ? '✓ Configured (' + process.env[k]!.slice(0, 6) + '...)' : '○ Not Set'}`).join("\n");
     },
   },
   health: {
