@@ -65,7 +65,8 @@ function Show-GitStatus {
 function Probe-AppsScript {
     Write-Host "[*] Probing canonical Google Apps Script status endpoint..." -ForegroundColor Cyan
     try {
-        $res = Invoke-RestMethod -Uri "$CanonicalAppsScriptUrl?action=status" -Method Get -TimeoutSec 15
+        $endpoint = 'https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec?action=status'
+        $res = Invoke-RestMethod -Uri $endpoint -Method Get -TimeoutSec 15
         if ($res -and $res.status -eq "ok") {
             Write-Host "[OK] Apps Script Deployment: HEALTHY" -ForegroundColor Green
             return $true
