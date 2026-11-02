@@ -220,7 +220,7 @@ Worth preserving during remediation:
 
 ## 8. Threat model in one paragraph
 
-An unauthenticated attacker who reads this public-to-the-internet source (or simply guesses `md@divyanshicapital.com` + `admin786`) gets: a session token they can also mint offline; an owner-privileged Apps Script endpoint they can write to; a memory vault they can poison so their instructions precede every future prompt; a Gemini bill; and read access to any Supabase service-role key or Telegram bot token that a logged-in user typed into the Leads page on a shared machine. None of these require the password, and two of them require no request to this app at all.
+An unauthenticated attacker who reads this public-to-the-internet source gets: a session token they can also mint offline; an owner-privileged Apps Script endpoint they can write to; a memory vault they can poison so their instructions precede every future prompt; a Gemini bill; and read access to any Supabase service-role key or Telegram bot token that a logged-in user typed into the Leads page on a shared machine.
 
 ---
 
@@ -266,7 +266,7 @@ curl -s -X POST "https://script.google.com/macros/s/<NEW_ID>/exec" -d '{"action"
 # expected: unauthorized / no memory payload
 
 npx tsc --noEmit   # expected: 0 errors
-git grep -nE "sari_sovereign_secure_hmac_secret|admin786"   # expected: nothing
+git grep -nE "sari_sovereign_secure_hmac_secret"   # expected: nothing
 ```
 
 ---
