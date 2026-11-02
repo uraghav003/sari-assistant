@@ -5,6 +5,7 @@ export interface ParsedConfigImport {
   scriptId?: string;
   deploymentId?: string;
   notebooklmFolderId?: string;
+  driveWorkspaceName?: string;
   entriesCount: number;
 }
 
@@ -41,10 +42,17 @@ export function importUniversalConfigJson(jsonText: string): ParsedConfigImport 
       extracted.entriesCount++;
     }
 
+    const workspaceName = obj.driveWorkspaceName ?? obj.googleDriveFolder ?? obj.workspaceName;
+    if (typeof workspaceName === "string" && workspaceName.trim()) {
+      extracted.driveWorkspaceName = workspaceName.trim();
+      extracted.entriesCount++;
+    }
+
     const update: Record<string, string> = {};
     if (extracted.scriptId) update.scriptId = extracted.scriptId;
     if (extracted.deploymentId) update.deploymentId = extracted.deploymentId;
     if (extracted.notebooklmFolderId) update.notebooklmFolderId = extracted.notebooklmFolderId;
+    if (extracted.driveWorkspaceName) update.driveWorkspaceName = extracted.driveWorkspaceName;
     if (extracted.entriesCount > 0) saveDynamicConfig(update);
 
     audit("config_importer", "success", `Imported ${extracted.entriesCount} routing identifiers from JSON.`);
