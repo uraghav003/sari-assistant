@@ -93,9 +93,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const trimmedPrompt = prompt.slice(0, MAX_PROMPT_CHARS);
 
-    // ─── TIER 1: OPENROUTER API (verified live models) ────────────────────
+    // ─── TIER 1: GROQ (ultra-fast <1s response, verified live key) ────────
+    const groqKey = process.env.GROQ_API_KEY?.trim();
+    if (groqKey && groqKey.length > 10) {
+      const groqModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+      for (const gModel of groqModels) {
+        try {
+          const gRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${groqKey}`,
+            },
+            body: JSON.stringify({
+              model: gModel,
+              messages: [
+                { role: "system", content: SYSTEM_INSTRUCTION },
+                { role: "user", content: trimmedPrompt },
+              ],
+              temperature: 0.7,
+              max_tokens: 1024,
+            }),
+            signal: AbortSignal.timeout(6000),
+          });
+
+          if (gRes.ok) {
+            const gData: OpenRouterResponse = await gRes.json();
+            const gText = gData.choices?.[0]?.message?.content?.trim();
+            if (gText) {
+              res.status(200).json({ ok: true, text: gText, tier: "Groq", model: gModel });
+              return;
+            }
+          }
+        } catch {
+          // try next model
+        }
+      }
+    }
+
+    // ─── TIER 1.2: OPENROUTER API (multi-key lookup, fast models first) ───
     const openRouterKey = (
       process.env.OPENROUTER_API_KEY ||
+      process.env.OPENROUTER_API_KEY1 ||
       process.env.OPEN_ROUTER_API_KEY ||
       process.env.OPENROUTER_KEY ||
       process.env.OPENROUTE_API_KEY ||
@@ -105,19 +144,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (openRouterKey && openRouterKey.length > 10) {
       const requestedModel = typeof body.model === "string" ? body.model.trim() : "";
       const defaultModels = [
-        // Free tier (zero cost)
         "meta-llama/llama-3.3-70b-instruct:free",
         "google/gemini-2.0-flash-exp:free",
         "qwen/qwen-2.5-72b-instruct:free",
-        "nvidia/nemotron-3.5-lightning:free",
-        "google/gemma-4-31b-it:free",
-        // Paid tier (auto-fallback if key has credits)
-        "anthropic/claude-sonnet-4",
-        "google/gemini-2.5-flash",
-        "meta-llama/llama-4-maverick",
         "deepseek/deepseek-r1",
-        "qwen/qwen3-235b-a22b",
-        "mistralai/mistral-medium-3",
+        "anthropic/claude-sonnet-4",
       ];
       const orModels = requestedModel ? [requestedModel, ...defaultModels.filter(m => m !== requestedModel)] : defaultModels;
       for (const orModel of orModels) {
@@ -140,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
               max_tokens: 1024,
               reasoning: { max_tokens: 0 },
             }),
-            signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(6000),
           });
 
           if (orRes.ok) {
@@ -187,7 +218,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
                 contents: [{ parts: [{ text: trimmedPrompt }] }],
                 generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
               }),
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(10000),
             }
           );
 
@@ -201,44 +232,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         } catch {
           // try next model / key
-        }
-      }
-    }
-
-    // ─── TIER 1.6: GROQ (ultra-fast Llama/Mixtral) ───────────────────────
-    const groqKey = process.env.GROQ_API_KEY?.trim();
-    if (groqKey && groqKey.length > 10) {
-      const groqModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
-      for (const gModel of groqModels) {
-        try {
-          const gRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${groqKey}`,
-            },
-            body: JSON.stringify({
-              model: gModel,
-              messages: [
-                { role: "system", content: SYSTEM_INSTRUCTION },
-                { role: "user", content: trimmedPrompt },
-              ],
-              temperature: 0.7,
-              max_tokens: 1024,
-            }),
-            signal: AbortSignal.timeout(10000),
-          });
-
-          if (gRes.ok) {
-            const gData: OpenRouterResponse = await gRes.json();
-            const gText = gData.choices?.[0]?.message?.content?.trim();
-            if (gText) {
-              res.status(200).json({ ok: true, text: gText, tier: "Groq", model: gModel });
-              return;
-            }
-          }
-        } catch {
-          // try next model
         }
       }
     }
