@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(200).json({
       ok: true,
       telegramConfigured: telegramConfig() !== null,
-      supabaseConfigured: supabaseConfig() !== null,
+      supabaseConfigured: supabaseConfig() !== null || appsScriptAuth("notion_sync") !== null,
       leads: [],
     });
     return;
@@ -107,7 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         res.status(200).json({
           ok: true,
           telegramConfigured: telegramConfig() !== null,
-          supabaseConfigured: supabaseConfig() !== null,
+          supabaseConfigured: supabaseConfig() !== null || appsScriptAuth("notion_sync") !== null,
         });
         return;
       }
