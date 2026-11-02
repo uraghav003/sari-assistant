@@ -96,7 +96,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ─── TIER 1: OPENROUTER API (verified live models) ────────────────────
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey && openRouterKey.length > 10) {
-      const orModels = [
+      const requestedModel = typeof body.model === "string" ? body.model.trim() : "";
+      const defaultModels = [
         "meta-llama/llama-3.3-70b-instruct:free",
         "google/gemini-2.0-flash-exp:free",
         "qwen/qwen-2.5-72b-instruct:free",
@@ -104,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         "nvidia/nemotron-3-ultra-550b-a55b:free",
         "google/gemma-4-31b-it:free",
       ];
+      const orModels = requestedModel ? [requestedModel, ...defaultModels.filter(m => m !== requestedModel)] : defaultModels;
       for (const orModel of orModels) {
         try {
           const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
