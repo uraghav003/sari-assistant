@@ -11,7 +11,7 @@ export default function handler(_req: VercelRequest, res: VercelResponse): void 
   res.status(200).json({
     status: "ok",
     system: "SARI_SOVEREIGN_AI",
-    version: "4.1.0",
+    version: "4.1.1",
     uptime: `${hours}h ${minutes}m`,
     auth: authConfigured() ? "configured" : "missing",
     environment: process.env.VERCEL_ENV || "local",
