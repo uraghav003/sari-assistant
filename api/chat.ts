@@ -98,12 +98,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (openRouterKey && openRouterKey.length > 10) {
       const requestedModel = typeof body.model === "string" ? body.model.trim() : "";
       const defaultModels = [
+        // Free tier (zero cost)
         "meta-llama/llama-3.3-70b-instruct:free",
         "google/gemini-2.0-flash-exp:free",
         "qwen/qwen-2.5-72b-instruct:free",
         "nvidia/nemotron-3.5-lightning:free",
-        "nvidia/nemotron-3-ultra-550b-a55b:free",
         "google/gemma-4-31b-it:free",
+        // Paid tier (auto-fallback if key has credits)
+        "anthropic/claude-sonnet-4",
+        "google/gemini-2.5-flash",
+        "meta-llama/llama-4-maverick",
+        "deepseek/deepseek-r1",
+        "qwen/qwen3-235b-a22b",
+        "mistralai/mistral-medium-3",
       ];
       const orModels = requestedModel ? [requestedModel, ...defaultModels.filter(m => m !== requestedModel)] : defaultModels;
       for (const orModel of orModels) {
