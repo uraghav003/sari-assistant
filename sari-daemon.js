@@ -92,7 +92,7 @@ server.listen(PORT, () => {
   console.log(`================================================================`);
   console.log(`👑 SARI SOVEREIGN DAEMON ACTIVE 24/7 ON PORT ${PORT}`);
   console.log(`- Mode: Always On / Never Sleeping`);
-  console.log(`- Apps Script Sync Target: ${PRIMARY_DEPLOYMENT_ID}`);
+  console.log(`- Apps Script Sync Targets: ${DEPLOYMENT_IDS.map(d => d.slice(0, 14) + "…").join(", ")}`);
   console.log(`================================================================`);
 
   // Run initial heartbeat
