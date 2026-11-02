@@ -22,7 +22,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { loadDynamicConfig, saveDynamicConfig, pingAppsScript } from "../lib/config";
-import { importUniversalConfigJson } from "../lib/key-resolver";
+import { importUniversalConfigJson, autoHealFromKeyValues, type AutoHealResult } from "../lib/key-resolver";
 
 interface ServerStatus {
   configured: boolean;
@@ -44,6 +44,9 @@ export default function ConnectionsPage() {
   const [server, setServer] = useState<ServerStatus | null>(null);
   const [geminiCopied, setGeminiCopied] = useState(false);
   const [isSyncingVault, setIsSyncingVault] = useState(false);
+  const [pastedKeys, setPastedKeys] = useState("");
+  const [autoHealResult, setAutoHealResult] = useState<AutoHealResult | null>(null);
+  const [webhookCopied, setWebhookCopied] = useState(false);
   useEffect(() => {
     const current = loadDynamicConfig();
     setConfig(current);
@@ -179,6 +182,17 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
     void checkAppsScript(config.deploymentId);
   }
 
+  function handleAutoHealKeys() {
+    if (!pastedKeys.trim()) return;
+    const result = autoHealFromKeyValues(pastedKeys);
+    setAutoHealResult(result);
+    if (result.status === "healed") {
+      const updated = loadDynamicConfig();
+      setConfig(updated);
+      void checkAppsScript(updated.deploymentId);
+      void checkOllama(updated.ollamaUrl);
+    }
+  }
   function handleUniversalJsonDrop(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -328,7 +342,127 @@ API Hub: https://sari-assistant.vercel.app/api/chat`;
         </div>
       </div>
 
-      {/* Universal JSON import */}
+      {/* Autonomous Webhook & Key-Value Integrator */}
+      <div className="card" style={{ padding: 24, marginTop: 20, border: "1px solid rgba(168,85,247,0.4)", background: "linear-gradient(180deg, rgba(168,85,247,0.06), rgba(6,17,44,0.4))" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(168,85,247,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Zap size={22} style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>Autonomous Webhook & Key-Value Integrator</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                Paste raw keys/values or webhook JSON — SARI automatically parses, routes, and auto-fixes connections on her own
+              </div>
+            </div>
+          </div>
+          <span className="badge" style={{ background: "rgba(168,85,247,0.15)", color: "var(--accent)", border: "1px solid rgba(168,85,247,0.3)" }}>
+            ⚡ Self-Healing Active
+          </span>
+        </div>
+
+        <textarea
+          value={pastedKeys}
+          onChange={(e) => setPastedKeys(e.target.value)}
+          placeholder={'Paste JSON (e.g. {"deploymentId": "...", "ollamaUrl": "..."}) or KEY=VALUE lines (e.g. DEPLOYMENT_ID=AKfycb...)'}
+          rows={4}
+          style={{
+            width: "100%",
+            padding: "12px 14px",
+            fontSize: 12.5,
+            fontFamily: "monospace",
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            color: "var(--fg)",
+            marginBottom: 12,
+            resize: "vertical",
+          }}
+        />
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={handleAutoHealKeys}
+              disabled={!pastedKeys.trim()}
+              className="btn-primary"
+              style={{
+                padding: "9px 18px",
+                fontSize: 13,
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                cursor: pastedKeys.trim() ? "pointer" : "not-allowed",
+              }}
+            >
+              <Sparkles size={15} /> ⚡ Auto-Fix & Integrate
+            </button>
+            {pastedKeys && (
+              <button
+                onClick={() => { setPastedKeys(""); setAutoHealResult(null); }}
+                className="btn-secondary"
+                style={{ padding: "9px 14px", fontSize: 12.5 }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11.5, color: "var(--muted)", fontFamily: "monospace" }}>Webhook: <code>/api/webhook</code></span>
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText('curl -X POST "https://sari-assistant.vercel.app/api/webhook" -H "Content-Type: application/json" -H "Authorization: Bearer <SARI_KEY>" -d \'{"action":"auto_heal","keys":{}}\'');
+                setWebhookCopied(true);
+                setTimeout(() => setWebhookCopied(false), 2500);
+              }}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid var(--border)",
+                color: webhookCopied ? "var(--green)" : "var(--muted)",
+                padding: "5px 10px",
+                borderRadius: 6,
+                fontSize: 11,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              {webhookCopied ? <Check size={12} /> : <Copy size={12} />}
+              {webhookCopied ? "Copied curl!" : "Copy Webhook Curl"}
+            </button>
+          </div>
+        </div>
+
+        {autoHealResult && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: "12px 16px",
+              borderRadius: 8,
+              background: autoHealResult.status === "healed" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+              border: `1px solid ${autoHealResult.status === "healed" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: 13, color: autoHealResult.status === "healed" ? "var(--green)" : "#ef4444", marginBottom: 6 }}>
+              {autoHealResult.status === "healed" ? `✓ SARI Self-Healing Successful: ${autoHealResult.entriesCount} settings resolved` : `✗ Auto-Heal Notice`}
+            </div>
+            {autoHealResult.fixesApplied.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "var(--fg)", lineHeight: 1.6 }}>
+                {autoHealResult.fixesApplied.map((fix, idx) => (
+                  <li key={idx}>{fix}</li>
+                ))}
+              </ul>
+            )}
+            {autoHealResult.error && (
+              <div style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>{autoHealResult.error}</div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="card" style={{ padding: 24, marginTop: 20, border: "1px dashed rgba(59,130,246,0.5)", background: "rgba(59,130,246,0.03)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

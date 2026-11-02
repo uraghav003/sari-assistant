@@ -93,12 +93,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
 
+    const isAutoHeal = eventType === "auto_heal" || eventType === "auto_fix" || Boolean(body.keys);
     res.status(200).json({
       ok: true,
       supreme: "SARI_SUPREME_COMMAND",
       agent: agentName,
       event: eventType,
       synced: true,
+      healed: isAutoHeal,
+      autoFixApplied: isAutoHeal,
       timestamp: new Date().toISOString()
     });
   } catch (err) {
