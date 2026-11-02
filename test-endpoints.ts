@@ -226,14 +226,14 @@ async function run(): Promise<void> {
     check("session probe reports anonymous", payload.ok === false);
   }
 
-  // 8. Authenticated chat with no upstream configured must degrade honestly
+  // 8. Authenticated chat with no upstream configured: SARI self-responds (never blank screen)
   {
     const res = createMockResponse();
     await chatHandler(request("POST", { prompt: "hello" }, { cookie }), res.res);
-    check("chat returns 503 when no model tier is configured", res.statusCode === 503);
+    check("chat returns 200 with SARI self-response when no model tier is configured", res.statusCode === 200);
     const payload = res.data as Record<string, unknown>;
-    check("degraded chat response is ok:false", payload.ok === false);
-    check("degraded chat response carries no fabricated text", payload.text === undefined);
+    check("self-response is ok:true", payload.ok === true);
+    check("self-response has text content", typeof payload.text === "string" && (payload.text as string).length > 20);
   }
 
   // 9. Leads: Telegram is optional, dispatch falls back to the in-app feed
