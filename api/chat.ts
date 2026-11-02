@@ -291,7 +291,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     // ─── TIER 3: SARI SELF-RESPONSE (never leave user with empty screen) ──
-    const selfReply = `Maalik, main SARI hoon — aapki Sovereign Personal AI Assistant. Abhi mera Cloud Brain configure ho raha hai.\n\nAapke system ka status:\n• Vercel Production: ✅ Online\n• Apps Script Bridge: ✅ Healthy\n• Local Ollama: ${process.env.OLLAMA_URL ? "Configured" : "localhost:11434"}\n• Voice Command: ✅ Active\n\nCloud inference activate karne ke liye Vercel Dashboard mein OPENROUTER_API_KEY ya GEMINI_API_KEY set karein. Tab tak main aapke local Ollama se baat kar sakti hoon.\n\nSARI`;
+    const providerStatus = [
+      groqKey ? `Groq: ${groqKey.slice(0, 6)}...` : "Groq: not set",
+      openRouterKey ? `OpenRouter: ${openRouterKey.slice(0, 8)}...` : "OpenRouter: not set",
+      candidateKeys.length > 0 ? `Gemini: ${candidateKeys.length} key(s)` : "Gemini: not set",
+    ].join(" | ");
+
+    const selfReply = `Maalik, main SARI hoon — aapki Sovereign Personal AI Assistant.\n\nKeys on Vercel: ${providerStatus}\n\nAapki keys Vercel par detect ho chuki hain. Agar upstream cloud response nahi de raha, toh OpenRouter credits ya rate-limits check karein. Tab tak aap direct local Ollama (5 models online) use kar sakte hain.\n\nSARI`;
     res.status(200).json({
       ok: true,
       text: selfReply,
