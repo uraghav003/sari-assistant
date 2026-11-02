@@ -237,11 +237,14 @@ export function checkCredentials(email: string, password: string): boolean {
   const rawEmailEnv = (process.env.SARI_LOGIN_EMAIL || "").trim().toLowerCase();
   const givenEmail = email.trim().toLowerCase();
   const allowedEmails = rawEmailEnv ? rawEmailEnv.split(",").map((e) => e.trim()) : [];
-  if (
-    !allowedEmails.includes(givenEmail) &&
-    givenEmail !== "u.raghav003@gmail.com" &&
-    givenEmail !== "md@divyanshicapital.com"
-  ) {
+  
+  const isAllowed = 
+    (allowedEmails.length > 0 && allowedEmails.includes(givenEmail)) ||
+    givenEmail === "u.raghav003@gmail.com" ||
+    givenEmail === "md@divyanshicapital.com" ||
+    givenEmail === "upendra.singh.raghav@divyanshicapital.com" ||
+    givenEmail === "upendra.raghav@divyanshicapital.com";
+  if (!isAllowed) {
     return false;
   }
 

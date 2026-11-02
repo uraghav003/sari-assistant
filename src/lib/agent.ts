@@ -81,7 +81,8 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
       if (!res.ok) throw new Error(`Edge API returned ${res.status}`);
       const data: unknown = await res.json();
       if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
-        const text = data.text.trim();
+        let text = data.text.trim();
+        text = text.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
         if (text.length > 0) {
           audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
           learnFromInteraction(userPrompt, text, "Cloud");
@@ -122,7 +123,8 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
           "content" in data.message &&
           typeof data.message.content === "string"
         ) {
-          const content = data.message.content.trim();
+          let content = data.message.content.trim();
+          content = content.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
           if (content.length > 0) {
             audit("chat", "allowed", `Local model ${config.ollamaModel} responded`);
             learnFromInteraction(userPrompt, content, "Local");

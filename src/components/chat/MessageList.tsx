@@ -12,6 +12,36 @@ interface Props {
   typing: boolean;
 }
 
+function renderFormattedContent(text: string) {
+  // Split by code blocks or lines to convert markdown-style formatting (bold, code, etc.) into React elements safely
+  const parts = text.split(/(```[\s\S]*?```|`[\s\S]*?`|\*\*[\s\S]*?\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("```") && part.endsWith("```")) {
+      const code = part.slice(3, -3).replace(/^[a-z]+\n/, "");
+      return (
+        <pre key={idx} style={{ background: "rgba(0,0,0,0.3)", padding: "8px 12px", borderRadius: 6, margin: "6px 0", overflowX: "auto", fontSize: 12, fontFamily: "monospace" }}>
+          <code>{code}</code>
+        </pre>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code key={idx} style={{ background: "rgba(255,255,255,0.1)", padding: "2px 5px", borderRadius: 4, fontSize: "0.9em", fontFamily: "monospace", color: "#5eead4" }}>
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={idx} style={{ fontWeight: 600, color: "#f8fafc" }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 export default function MessageList({ messages, typing }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +73,7 @@ export default function MessageList({ messages, typing }: Props) {
                 color: "#ffffff",
               }}
             >
-              {m.content}
+              {renderFormattedContent(m.content)}
             </div>
           </div>
         );
