@@ -34,6 +34,22 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
+    id: "autonomous-self-test-compiler",
+    name: "Autonomous Self-Testing & Connector Compiler",
+    description: "Self-tests API endpoints, Google Drive workspace sync, and third-party integrations automatically. Compiles and activates connectors on the fly with zero manual intervention.",
+    status: "live",
+    trigger: "self test / test connector / compile connector / verify integration / auto test / health test / ping api",
+    steps: [
+      "Run automated health probe across all configured connectors (OpenRouter, Google Drive, Apps Script, Ollama)",
+      "Diagnose latency, authentication headers, and payload schema compliance",
+      "Compile missing integration wrappers or secret injection routines dynamically",
+      "Execute dry-run self-test transactions and assert 200 OK responses",
+      "Commit verified connector state to local memory vault and notify MD"
+    ],
+    instruction: "Act as SARI's autonomous integration tester and compiler. Validate all external connectors, verify API key bindings, self-test endpoints, and ensure zero-failure execution.",
+    runs: 0,
+  },
+  {
     id: "doctor-self-healing-capsule",
     name: "Doctor Self-Research & Code Healing Capsule",
     description: "Autonomous medical diagnosis of runtime errors, console exceptions, and broken API contracts. Applies self-healing heuristics and memory capsule patches instantly.",
