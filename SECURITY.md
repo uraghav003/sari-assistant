@@ -61,9 +61,7 @@ repository must be treated as public.
    page; check the Supabase logs for unexpected use.
 8. **Notion token** — revoke the integration token if it was passed to
    `sari-master.ps1 -Token` (that token was written to a tracked file before this fix).
-9. **Git history** — the retired strings (`MALLIK_V3_786`, the old HMAC secret) remain
-   in history. They are now useless once rotated; do not rewrite history on a shared
-   remote without coordinating.
+9. **Git history** — historical commits. They are now useless once rotated; do not rewrite history on a shared remote without coordinating.
 
 ## Alerts and notifications
 
