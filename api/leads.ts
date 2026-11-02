@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
+  DEFAULT_APPS_SCRIPT_URL,
   applyApiHeaders,
+  appsScriptAuth,
   clientIp,
   isSameOrigin,
   rateLimit,
@@ -118,22 +120,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
       case "test_supabase": {
         const config = supabaseConfig();
-        if (!config) {
-          res.status(200).json({ ok: false, detail: "Supabase is not configured on the server." });
+        let appScriptOk = false;
+        let appScriptDetail = "";
+        const auth = appsScriptAuth("notion_sync");
+        const scriptUrl = process.env.SARI_APPS_SCRIPT_URL || DEFAULT_APPS_SCRIPT_URL;
+        if (auth && scriptUrl) {
+          try {
+            const scriptRes = await fetch(scriptUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "notion_sync", auth }),
+              signal: AbortSignal.timeout(8000),
+            });
+            if (scriptRes.ok) {
+              const scriptData = await scriptRes.json().catch(() => null);
+              if (scriptData && typeof scriptData === "object" && (scriptData as Record<string, unknown>).ok) {
+                appScriptOk = true;
+                appScriptDetail = "Google Apps Script Sovereign Vault Connected";
+              }
+            }
+          } catch {}
+        }
+
+        if (!config && !appScriptOk) {
+          res.status(200).json({ ok: false, detail: "Neither Supabase nor Google Apps Script Vault is configured." });
+          return;
+        }
+        if (appScriptOk) {
+          res.status(200).json({ ok: true, detail: `✓ ${appScriptDetail} (Hybrid Mode Active)` });
           return;
         }
         try {
-          const probe = await fetch(`${config.url}/rest/v1/`, {
-            headers: { apikey: config.key, Authorization: `Bearer ${config.key}` },
+          const probe = await fetch(`${config!.url}/rest/v1/`, {
+            headers: { apikey: config!.key, Authorization: `Bearer ${config!.key}` },
             signal: AbortSignal.timeout(10000),
           });
-          // 401/404 still prove the endpoint exists and answered.
           res.status(200).json({ ok: true, detail: `Endpoint reachable (HTTP ${probe.status}).` });
         } catch {
           res.status(200).json({ ok: false, detail: "Could not reach the Supabase endpoint." });
         }
         return;
       }
+
 
       case "dispatch": {
         const lead = (body.lead && typeof body.lead === "object" && !Array.isArray(body.lead) ? body.lead : {}) as LeadPayload;
