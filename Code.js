@@ -277,13 +277,24 @@ function doPost(e) {
       return jsonOut_(response);
     }
     if (action === "drive_workspace") {
+      var folderId = String(payload.folderId || "").trim();
       var folderName = String(payload.folderName || "sari_supreme_command").trim();
-      var folder = getOrCreateWorkspaceFolder_(folderName);
+      var folder = null;
+      if (folderId) {
+        try {
+          folder = DriveApp.getFolderById(folderId);
+        } catch (e) {
+          // invalid ID fallback
+        }
+      }
+      if (!folder) {
+        folder = getOrCreateWorkspaceFolder_(folderName);
+      }
       var fileCount = 0;
       var fileList = [];
       if (folder) {
         var files = folder.getFiles();
-        while (files.hasNext() && fileList.length < 20) {
+        while (files.hasNext() && fileList.length < 50) {
           var f = files.next();
           fileCount++;
           fileList.push({ name: f.getName(), id: f.getId(), size: f.getSize(), updated: f.getLastUpdated().toISOString() });

@@ -82,6 +82,19 @@ function Probe-AppsScript {
 # HMAC-signs Apps Script calls. The shared secret never leaves the environment.
 function Get-SariAuth {
     param([string]$ScriptAction)
+    if ([string]::IsNullOrWhiteSpace($env:SARI_SHARED_SECRET) -and (Test-Path "$RepoRoot\.env")) {
+        Get-Content "$RepoRoot\.env" | ForEach-Object {
+            $line = $_.Trim()
+            if ($line -and -not $line.StartsWith("#") -and $line.Contains("=")) {
+                $parts = $line.Split("=", 2)
+                $k = $parts[0].Trim()
+                $v = $parts[1].Trim()
+                if (-not [Environment]::GetEnvironmentVariable($k)) {
+                    [Environment]::SetEnvironmentVariable($k, $v)
+                }
+            }
+        }
+    }
     $secret = $env:SARI_SHARED_SECRET
     if ([string]::IsNullOrWhiteSpace($secret)) { return $null }
     $ts = [string][DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
@@ -348,23 +361,25 @@ switch ($Action) {
         $cfg = Get-PluginConfig
 
         if ($PSBoundParameters.ContainsKey("FolderId") -and -not [string]::IsNullOrWhiteSpace($FolderId)) {
-            if ($cfg.notebooklm.PSObject.Properties['folderId']) {
-                $cfg.notebooklm.folderId = $FolderId
-            } else {
-                $cfg.notebooklm | Add-Member -MemberType NoteProperty -Name "folderId" -Value $FolderId
+            if (-not $cfg.workspace) {
+                $cfg | Add-Member -MemberType NoteProperty -Name "workspace" -Value ([PSCustomObject]@{})
             }
-            $cfg.notebooklm.enabled = $true
+            if ($cfg.workspace.PSObject.Properties['notebooklmFolderId']) {
+                $cfg.workspace.notebooklmFolderId = $FolderId
+            } else {
+                $cfg.workspace | Add-Member -MemberType NoteProperty -Name "notebooklmFolderId" -Value $FolderId
+            }
             Save-PluginConfig -Config $cfg
             Write-Host "[OK] Updated Google Drive Folder ID in sari-plugins.json ($FolderId)" -ForegroundColor Green
         }
 
         # Verify target Google Drive Folder ID
-        $targetFolderId = if ($cfg.googleDrive -and $cfg.googleDrive.folderId) {
+        $targetFolderId = if ($FolderId) {
+            $FolderId
+        } elseif ($cfg.workspace -and $cfg.workspace.notebooklmFolderId) {
+            $cfg.workspace.notebooklmFolderId
+        } elseif ($cfg.googleDrive -and $cfg.googleDrive.folderId) {
             $cfg.googleDrive.folderId
-        } elseif ($cfg.drive -and $cfg.drive.folderId) {
-            $cfg.drive.folderId
-        } elseif ($cfg.notebooklm -and $cfg.notebooklm.folderId) {
-            $cfg.notebooklm.folderId
         } else {
             "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu"
         }
@@ -384,14 +399,29 @@ switch ($Action) {
             Write-Host "[!] NotebookLM Dossier file not found at $dossierFullPath" -ForegroundColor Yellow
         }
 
-        # Signed Apps Script call (action: notebooklm_sync, folderId: targetFolderId)
-        Write-Host "[*] Probing Apps Script backend with Google Drive link..." -ForegroundColor Cyan
-        $driveRes = Invoke-SariScript -ScriptAction "notebooklm_sync" -Extra @{ folderId = $targetFolderId }
-
-        Write-Host "[OK] External Notion Requirement: RETIRED (Zero manual tokens required)" -ForegroundColor Green
-        Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+        # Signed Apps Script call for Google Drive audit
+        Write-Host "[*] Auditing Google Drive Folder ($targetFolderId) via signed Apps Script..." -ForegroundColor Cyan
+        $driveRes = Invoke-SariScript -ScriptAction "drive_workspace" -Extra @{ folderId = $targetFolderId }
         if ($driveRes -and $driveRes.ok) {
-            Write-Host "[OK] DRIVE STATUS: SYNCHRONIZED" -ForegroundColor Green
+            $r = $driveRes.result
+            Write-Host "[OK] Google Drive Folder Name: $($r.folderName)" -ForegroundColor Green
+            Write-Host "[OK] Google Drive Folder URL:  $($r.url)" -ForegroundColor Green
+            Write-Host "[OK] Files Audited in Drive:   $($r.fileCount)" -ForegroundColor Green
+            if ($r.files) {
+                Write-Host "`n--- Google Drive Audit File List ---" -ForegroundColor Cyan
+                foreach ($f in $r.files) {
+                    Write-Host " -> $($f.name) ($($f.size) bytes, updated $($f.updated))"
+                }
+            }
+            Write-Host "-----------------------------------------------------" -ForegroundColor DarkGray
+            Write-Host "[OK] DRIVE STATUS: AUDITED & SYNCHRONIZED" -ForegroundColor Green
+            exit 0
+        }
+
+        # Fallback to notebooklm_sync if drive_workspace returns null
+        $nlRes = Invoke-SariScript -ScriptAction "notebooklm_sync" -Extra @{ folderId = $targetFolderId }
+        if ($nlRes -and $nlRes.ok) {
+            Write-Host "[OK] DRIVE STATUS: SYNCHRONIZED via NotebookLM" -ForegroundColor Green
             exit 0
         }
 
