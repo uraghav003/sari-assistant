@@ -57,6 +57,12 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
     recent.map((m) => `${m.role === "user" ? "Maalik" : "SARI"}: ${m.content}`).join("\n") +
     "\nSARI:";
 
+  // Force try local Ollama first if reachable, ensuring local fallback works robustly
+  if (config.ollamaUrl && (await pingOllama())) {
+    const localFirst = await tryOllama();
+    if (localFirst) return localFirst;
+  }
+
   async function tryCloud(): Promise<AgentResult> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
