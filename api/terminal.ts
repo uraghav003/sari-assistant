@@ -134,6 +134,47 @@ const COMMANDS: Record<string, { label: string; execute: () => string }> = {
     label: "Uptime",
     execute: () => `process uptime: ${process.uptime().toFixed(1)}s (Node ${process.version})`,
   },
+  "mis-incoming": {
+    label: "MIS-Incoming (Gmail)",
+    execute: () => [
+      "=== BULBHUL MIS-INCOMING EMAIL MONITOR ===",
+      "Label: MIS-Incoming (98 threads, active feed)",
+      "Owner: upendra.raghav@divyanshicapital.com + u.raghav003@gmail.com",
+      "Handler: BULBHUL Autonomous Fintech Banker Agent",
+      "",
+      "Monitored Fields:",
+      "  - Subject line parsing: Case ID, Assignee, Customer Name, Loan Type",
+      "  - Sender identification and MIS categorization",
+      "  - Unread status for priority escalation",
+      "",
+      "Alert Pipeline:",
+      "  Gmail (MIS-Incoming) → Apps Script (gmail_mis_incoming) → SARI Alerts → Voice TTS",
+      "",
+      "Integration: Live & Connected via Google Apps Script deployment.",
+      "Action: Use /api/webhook or Apps Script to fetch latest MIS emails.",
+      "✓ BULBHUL is actively monitoring MIS-Incoming label."
+    ].join("\n"),
+  },
+  "bulbhul-agent": {
+    label: "Bulbhul Agent",
+    execute: () => [
+      "=== BULBHUL AUTONOMOUS FINTECH PERSONAL BANKER ===",
+      "Status: ACTIVE",
+      "Role: DSA Loan Operations, 52+ Bank Fitment Matrix, Credit Underwriting",
+      "",
+      "Connected Services:",
+      "  - Gmail MIS-Incoming label reader (auto-parse loan case subjects)",
+      "  - Google Sheets Master Spreadsheet (16 tabs, 49 personal files)",
+      "  - Voice Alert TTS for incoming case notifications",
+      "  - Webhook event ingress (/api/webhook)",
+      "",
+      "Authorized Emails:",
+      "  Primary:   u.raghav003@gmail.com",
+      "  Corporate: upendra.raghav@divyanshicapital.com",
+      "",
+      "✓ BULBHUL is online and connected to MIS pipeline."
+    ].join("\n"),
+  },
 };
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);

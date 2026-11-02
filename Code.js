@@ -15,7 +15,8 @@ var ALLOWED_ACTIONS = [
   "notion_sync",
   "notebooklm_sync",
   "terminal_status",
-  "drive_workspace"
+  "drive_workspace",
+  "gmail_mis_incoming"
 ];
 
 var AUTH_WINDOW_MS = 5 * 60 * 1000;
@@ -310,6 +311,17 @@ function doPost(e) {
       };
       return jsonOut_(response);
     }
+    if (action === "gmail_mis_incoming") {
+      var maxEmails = Math.min(parseInt(payload.limit || "10", 10), 30);
+      var emails = readMisIncomingEmails_(maxEmails);
+      response.result = {
+        label: "MIS-Incoming",
+        count: emails.length,
+        emails: emails,
+        owner: "upendra.raghav@divyanshicapital.com"
+      };
+      return jsonOut_(response);
+    }
 
     return jsonOut_({ ok: false, error: "UNKNOWN_ACTION" });
   } catch (err) {
@@ -360,4 +372,49 @@ function getOrCreateWorkspaceFolder_(name) {
   } catch (err) {
     return null;
   }
+}
+
+/**
+ * Read emails from Gmail label "MIS-Incoming".
+ * Returns subject, sender, date, snippet, and read status for BULBHUL alerts.
+ */
+function readMisIncomingEmails_(maxCount) {
+  var results = [];
+  try {
+    var labelName = "MIS-Incoming";
+    var threads = GmailApp.search("label:" + labelName, 0, maxCount);
+    for (var t = 0; t < threads.length; t++) {
+      var thread = threads[t];
+      var msgs = thread.getMessages();
+      var lastMsg = msgs[msgs.length - 1];
+      var subject = lastMsg.getSubject() || "(no subject)";
+      var from = lastMsg.getFrom() || "unknown";
+      var date = lastMsg.getDate().toISOString();
+      var snippet = thread.getFirstMessageSubject() || subject;
+      var isUnread = thread.isUnread();
+
+      var caseMatch = subject.match(/Case\s+(\d{2}\/\d{2}\/\d+)\/([A-Z\s]+)\s*[—–-]\s*(.+?)(?:\(([^)]+)\))?$/i);
+      var parsed = null;
+      if (caseMatch) {
+        parsed = {
+          caseId: caseMatch[1].trim(),
+          assignee: caseMatch[2].trim(),
+          customer: caseMatch[3].trim(),
+          loanType: caseMatch[4] ? caseMatch[4].trim() : "UNKNOWN"
+        };
+      }
+
+      results.push({
+        subject: subject.slice(0, 200),
+        from: from.slice(0, 100),
+        date: date,
+        snippet: snippet.slice(0, 200),
+        unread: isUnread,
+        parsed: parsed
+      });
+    }
+  } catch (err) {
+    results.push({ error: "Gmail access error: " + String(err).slice(0, 200) });
+  }
+  return results;
 }
