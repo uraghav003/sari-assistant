@@ -27,8 +27,14 @@ function loadKeys() {
 }
 
 const keys = loadKeys();
-const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || keys.SARI_DEPLOYMENT_ID || "AKfycbyfOxsAguNOB8CcVd6xj3Z9J4_eVKO-5H0C-WUUvUS9FZoIrvaLBNlZrhwbzNX1gXA_-g";
-const EXEC_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
+const DEPLOYMENT_IDS = Array.from(new Set([
+  process.env.SARI_DEPLOYMENT_ID,
+  keys.SARI_DEPLOYMENT_ID,
+  "AKfycbyfOxsAguNOB8CcVd6xj3Z9J4_eVKO-5H0C-WUUvUS9FZoIrvaLBNlZrhwbzNX1gXA_-g",
+  "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3"
+].filter(Boolean)));
+
+const PRIMARY_DEPLOYMENT_ID = DEPLOYMENT_IDS[0];
 const SHARED_SECRET = process.env.SARI_SHARED_SECRET || keys.SARI_SHARED_SECRET || "";
 
 function hmacHex_(message, secret) {
@@ -42,17 +48,31 @@ async function pulseHeartbeat() {
 
   console.log(`[${new Date().toISOString()}] 🌟 SARI Sovereign Daemon pulsing heartbeat...`);
 
-  try {
-    const url = `${EXEC_URL}?action=${action}&ts=${ts}&sig=${sig}`;
-    const res = await fetch(url, { method: "GET", signal: AbortSignal.timeout(15000) });
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      console.log(`[${new Date().toISOString()}] ✓ Apps Script heartbeat acknowledged:`, data);
-    } else {
-      console.warn(`[${new Date().toISOString()}] ⚠ Apps Script heartbeat HTTP ${res.status}`);
+  let acknowledged = false;
+  for (const depId of DEPLOYMENT_IDS) {
+    try {
+      const url = `https://script.google.com/macros/s/${depId}/exec`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, auth: { ts, sig } }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data && data.ok) {
+          console.log(`[${new Date().toISOString()}] ✓ Apps Script (${depId.slice(0, 14)}…) heartbeat acknowledged:`, data);
+          acknowledged = true;
+          break;
+        }
+      }
+    } catch (err) {
+      // try next candidate
     }
-  } catch (err) {
-    console.warn(`[${new Date().toISOString()}] ⚠ Apps Script heartbeat network error:`, err instanceof Error ? err.message : String(err));
+  }
+
+  if (!acknowledged) {
+    console.warn(`[${new Date().toISOString()}] ⚠ Apps Script heartbeat pending authorization across configured deployments.`);
   }
 }
 
@@ -72,7 +92,7 @@ server.listen(PORT, () => {
   console.log(`================================================================`);
   console.log(`👑 SARI SOVEREIGN DAEMON ACTIVE 24/7 ON PORT ${PORT}`);
   console.log(`- Mode: Always On / Never Sleeping`);
-  console.log(`- Apps Script Sync Target: ${DEPLOYMENT_ID}`);
+  console.log(`- Apps Script Sync Target: ${PRIMARY_DEPLOYMENT_ID}`);
   console.log(`================================================================`);
 
   // Run initial heartbeat
