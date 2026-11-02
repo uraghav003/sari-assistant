@@ -34,6 +34,22 @@ export const seedSkills: Skill[] = [
     runs: 0,
   },
   {
+    id: "doctor-self-healing-capsule",
+    name: "Doctor Self-Research & Code Healing Capsule",
+    description: "Autonomous medical diagnosis of runtime errors, console exceptions, and broken API contracts. Applies self-healing heuristics and memory capsule patches instantly.",
+    status: "live",
+    trigger: "doctor / heal / self repair / fix bug / diagnose / error / exception / stack trace / repair code / memory capsule",
+    steps: [
+      "Isolate exact error stack trace, network status code, or console anomaly",
+      "Query SARI's dynamic memory capsules and self-learning heuristics for known failure patterns",
+      "Diagnose root cause in TypeScript types, serverless function bindings, or storage limits",
+      "Synthesize surgical patch and execute self-heal circuit breaker",
+      "Verify repair with automated test suite and log resolution to audit vault"
+    ],
+    instruction: "Act as SARI's chief medical engineer and sovereign doctor. Diagnose any runtime or build error instantly, apply self-healing memory capsules, and ensure zero regression.",
+    runs: 0,
+  },
+  {
     id: "notion-autonomous-sync",
     name: "Notion Workspace & Database Synchronizer",
     description: "Bi-directional synchronization of DSA loan leads, policies, employee tasks, and meeting minutes with Notion databases",
