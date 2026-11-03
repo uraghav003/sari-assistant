@@ -23,6 +23,26 @@ export default function SkillsPage() {
   const [busy, setBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
 
+  // Instruction & Skill Injection Console state
+  const [customInstruction, setCustomInstruction] = useState("");
+  const [targetAgents, setTargetAgents] = useState({ bulbhul: true, sari: true, bhism: true, laila: true, postmaster: true });
+  const [injectionStatus, setInjectionStatus] = useState("");
+
+  async function applyAndPropagate() {
+    if (!customInstruction.trim()) return;
+    setBusy(true);
+    setInjectionStatus("Propagating instructions across sovereign swarm...");
+    try {
+      const activeList = Object.entries(targetAgents).filter(([, v]) => v).map(([k]) => k);
+      const res = await infer(`SOVEREIGN INJECTION:\nTARGETS: ${activeList.join(", ")}\nINSTRUCTION:\n${customInstruction}\n\nExecute policy update and return confirmation.`);
+      setInjectionStatus(`Success! Applied to [${activeList.join(", ")}]: ${res.text.slice(0, 100)}...`);
+    } catch (err: any) {
+      setInjectionStatus(`Propagation error: ${err?.message || "Unknown error"}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Input modal for skills that need pasted text
   const [inputModal, setInputModal] = useState<{ skill: Skill; text: string } | null>(null);
 
@@ -152,11 +172,54 @@ export default function SkillsPage() {
           )}
         </div>
       </div>
+      {/* Instruction & Skill Injection Console */}
+      <div className="card" style={{ padding: 24, marginBottom: 24, borderColor: "rgba(59,130,246,0.3)" }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+          <Sparkles size={16} style={{ color: "var(--blue, #3b82f6)" }} /> Instruction & Skill Injection Console
+        </h2>
+        <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>
+          Paste raw instructions, rules, or operational updates below and select target agents to instantly propagate changes across the swarm.
+        </p>
+        <textarea
+          value={customInstruction}
+          onChange={(e) => setCustomInstruction(e.target.value)}
+          placeholder="Paste sovereign instruction, bank policy update, or workflow rule here..."
+          rows={3}
+          style={{ width: "100%", padding: 12, borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "inherit", fontSize: 13, resize: "vertical", marginBottom: 14 }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, alignItems: "center" }}>
+            <span style={{ color: "var(--muted)", fontWeight: 500 }}>Target Agents:</span>
+            {(Object.keys(targetAgents) as Array<keyof typeof targetAgents>).map((agentKey) => (
+              <label key={agentKey} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", textTransform: "capitalize" }}>
+                <input
+                  type="checkbox"
+                  checked={targetAgents[agentKey]}
+                  onChange={(e) => setTargetAgents({ ...targetAgents, [agentKey]: e.target.checked })}
+                />
+                {agentKey}
+              </label>
+            ))}
+          </div>
+          <button
+            className="btn-primary"
+            disabled={!customInstruction.trim() || busy}
+            onClick={() => void applyAndPropagate()}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            {busy ? <><Loader2 size={14} className="spin" /> Propagating...</> : <><Wand2 size={14} /> Apply & Propagate</>}
+          </button>
+        </div>
+        {injectionStatus && (
+          <div style={{ marginTop: 12, padding: 10, borderRadius: 6, background: "rgba(59,130,246,0.1)", fontSize: 12, color: "var(--blue, #3b82f6)" }}>
+            {injectionStatus}
+          </div>
+        )}
+      </div>
 
       {/* Skill builder flow */}
       {building && (
         <div className="card" style={{ padding: 24, marginBottom: 24, borderColor: "rgba(168,85,247,0.3)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Sparkles size={16} style={{ color: "var(--purple)" }} />
               <span style={{ fontWeight: 600, fontSize: 14 }}>Self-Instruct Flow</span>
