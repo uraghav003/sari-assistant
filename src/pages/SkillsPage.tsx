@@ -220,6 +220,7 @@ export default function SkillsPage() {
       {/* Skill builder flow */}
       {building && (
         <div className="card" style={{ padding: 24, marginBottom: 24, borderColor: "rgba(168,85,247,0.3)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Sparkles size={16} style={{ color: "var(--purple)" }} />
               <span style={{ fontWeight: 600, fontSize: 14 }}>Self-Instruct Flow</span>
