@@ -75,187 +75,71 @@ export async function runAgent(messages: AgentMessage[]): Promise<AgentResult> {
     recent.map((m) => `${m.role === "user" ? "Maalik" : "SARI"}: ${m.content}`).join("\n") +
     "\nSARI:";
 
-  // Force try local engine (vLLM or Ollama) first if reachable, ensuring local fallback works robustly
-  const localProbe = await pingLocalRuntime();
-  if (localProbe.ok && localProbe.type !== "none") {
-    const localFirst = await tryLocalEngine(localProbe.type);
-    if (localFirst) return localFirst;
-  }
-
-  async function tryCloud(): Promise<AgentResult> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-        signal: controller.signal,
-      });
-      if (res.status === 401) {
-        void checkSession();
-        throw new Error("SESSION_EXPIRED");
-      }
-      if (!res.ok) throw new Error(`Edge API returned ${res.status}`);
-      const data: unknown = await res.json();
-      if (data && typeof data === "object" && "text" in data && typeof data.text === "string") {
-        let text = data.text.trim();
-        text = text.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
-        if (text.length > 0) {
-          audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
-          learnFromInteraction(userPrompt, text, "Cloud");
-          return { content: text, mode: "cloud" };
-        }
-      }
-      throw new Error("Cloud response empty");
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  async function tryLocalEngine(engineType: "ollama" | "vllm"): Promise<AgentResult | null> {
-    try {
+  return await withSelfHeal<AgentResult>(
+    "AgentInference",
+    // 1. PRIMARY: Local Laptop Model (Ollama) with 3.5s timeout gate
+    async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
-      try {
-        if (engineType === "vllm") {
-          const response = await fetch(`${config.ollamaUrl}/v1/chat/completions`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: config.ollamaModel,
-              messages: [{ role: "system", content: SYSTEM }, ...recent],
-              temperature: 0.7,
-              max_tokens: 2048,
-            }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          if (response.ok) {
-            const data: unknown = await response.json();
-            const text =
-              data &&
-              typeof data === "object" &&
-              "choices" in data &&
-              Array.isArray(data.choices) &&
-              data.choices[0] &&
-              typeof data.choices[0] === "object" &&
-              "message" in data.choices[0] &&
-              data.choices[0].message &&
-              typeof data.choices[0].message === "object" &&
-              "content" in data.choices[0].message &&
-              typeof data.choices[0].message.content === "string"
-                ? data.choices[0].message.content.trim()
-                : null;
-            if (text) {
-              const sanitized = text.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
-              audit("chat", "allowed", `Local vLLM model ${config.ollamaModel} responded`);
-              learnFromInteraction(userPrompt, sanitized, "Local");
-              return { content: sanitized, mode: "vllm" };
-            }
-          }
-          return null;
-        }
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
 
+      try {
         const response = await fetch(`${config.ollamaUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             model: config.ollamaModel,
             stream: false,
             messages: [{ role: "system", content: SYSTEM }, ...recent],
             options: { temperature: 0.7, num_ctx: 4096 },
           }),
-          signal: controller.signal,
         });
-        clearTimeout(timeout);
-        if (!response.ok) return null;
-        const data: unknown = await response.json();
-        if (
-          data &&
-          typeof data === "object" &&
-          "message" in data &&
-          data.message &&
-          typeof data.message === "object" &&
-          "content" in data.message &&
-          typeof data.message.content === "string"
-        ) {
-          let content = data.message.content.trim();
-          content = content.replace(/\[(?!RESTRICTED\])[A-Z_]{3,}\]/gi, "Maalik");
-          if (content.length > 0) {
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data: any = await response.json();
+          const content = data?.message?.content?.trim();
+          if (content) {
             audit("chat", "allowed", `Local model ${config.ollamaModel} responded`);
             learnFromInteraction(userPrompt, content, "Local");
             return { content, mode: "ollama" };
           }
         }
-      } finally {
-        clearTimeout(timeout);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
       }
-    } catch {
-      // Local engine offline or aborted
-    }
-    return null;
-  }
-
-  return await withSelfHeal<AgentResult>(
-    "AgentInference",
-    async () => {
-      let lastErr: Error | null = null;
-      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          return await tryCloud();
-        } catch (e) {
-          lastErr = e instanceof Error ? e : new Error(String(e));
-          if (lastErr.message === "SESSION_EXPIRED") throw lastErr;
-        }
-      }
-      throw lastErr ?? new Error("Cloud inference failed");
+      throw new Error("Local model unavailable or returned empty");
     },
+    // 2. SECONDARY (FAILOVER): Online Cloud Cascade via Edge Proxy & Gemini
     async () => {
-      const localProbe = await pingLocalRuntime();
-      if (localProbe.ok && localProbe.type !== "none") {
-        const localResult = await tryLocalEngine(localProbe.type);
-        if (localResult) return localResult;
-      }
-      audit("chat", "allowed", "Sovereign client autonomous engine responded");
-      const p = userPrompt.toLowerCase();
-      let content = "";
-      if (p.includes("bank") || p.includes("loan") || p.includes("roi") || p.includes("lap") || p.includes("rate") || p.includes("emi") || p.includes("lead")) {
-        content = "Ji Maalik! Divyanshi Capital Loan Underwriting Desk (BULBHUL) active hai.\n\n" +
-          "UNDERSTAND: " + userPrompt.slice(0, 100) + "\n" +
-          "PLAN: 52 active partner banks ke live credit matrix aur policy parameters apply karna.\n" +
-          "ACT:\n" +
-          "• Home Loan: Starting 8.35% - 8.65% (HDFC, SBI, ICICI, BoB)\n" +
-          "• Loan Against Property (LAP): Starting 9.25% - 9.75% (Bajaj, Tata Capital, PNB)\n" +
-          "• Business Loan: Starting 11.5% - 15.0% (Unsecured, based on 1-yr GST & Banking)\n" +
-          "• Maximum FOIR: 65% for salaried, up to 80% for verified business cases.\n" +
-          "• TAT: Log-in to sanction 48-72 hours.\n" +
-          "LEARN: Policy rules cached. Kisi specific customer lead ya file login ke liye 'lead <name> <mobile>' command dein.\n\n" +
-          "Aapka aadesh sir-aankhon par, Maalik!";
-      } else if (p.includes("status") || p.includes("system") || p.includes("health") || p.includes("agent") || p.includes("check")) {
-        content = "Ji Maalik! SARI Sovereign System 100% operational hai.\n\n" +
-          "UNDERSTAND: Real-time system health and connectivity check.\n" +
-          "PLAN: Multi-agent swarm aur cloud/local infrastructure audit.\n" +
-          "ACT:\n" +
-          "• Vercel Edge Server: [OK] 200 Live\n" +
-          "• Apps Script Master Sheet: [OK] Connected (16 tabs & 49 personal files)\n" +
-          "• Sovereign Swarm: 6 Active Agents (BULBHUL, BHISM, LAILA, POSTMASTER, MALLIK, DOCTOR)\n" +
-          "• Local Inference: localhost:11434 (Qwen2.5-Coder / DeepSeek-R1)\n" +
-          "LEARN: Fail-closed zero-trust security active. Data fully preserved.\n\n" +
-          "Bataiye Maalik, kya task execute karun?";
-      } else {
-        content = "Ji Maalik! Main aapki baat samajh gayi hoon.\n\n" +
-          "UNDERSTAND: \"" + userPrompt.slice(0, 120) + "\"\n" +
-          "PLAN: SARI Sovereign Brain ke zariye immediate task execution aur coordination.\n" +
-          "ACT: Aapka command note kar liya gaya hai. Sabhi microservices, Google Sheets, Gmail notifications, aur calling queues live ready hain.\n" +
-          "LEARN: Interaction recorded in system memory. Standby for direct execution.\n\n" +
-          "Aapka agla aadesh bataiye Maalik!";
-      }
-      return {
-        content,
-        mode: "offline",
-      };
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+        if (res.ok) {
+          const data: any = await res.json();
+          const text = data?.text?.trim();
+          if (text) {
+            audit("chat", "allowed", "Cloud cascade responded via Edge proxy");
+            learnFromInteraction(userPrompt, text, "Cloud");
+            return { content: text, mode: "cloud" };
+          }
+        }
+        if (res.status === 401) {
+          void checkSession();
+          throw new Error("SESSION_EXPIRED");
+        }
+      } catch {}
+
+      // 3. TERTIARY: Graceful Offline Advisory
+      audit("chat", "error", "All inference brains offline");
+      const offlineMsg =
+        "Maalik, main connect karne ki koshish kar rahi hoon lekin dono brains (Local Ollama aur Cloud Proxy) offline hain.\n\nKripya dobara login karein ya Connections page par SARI_CONFIG.json drop kijiye.";
+      return { content: offlineMsg, mode: "offline" };
     }
   );
 }
