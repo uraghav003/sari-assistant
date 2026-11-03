@@ -40,7 +40,7 @@ const COMMANDS: Record<string, { label: string; execute: () => string }> = {
     execute: () => [
       "=== GOOGLE WORKSPACE SOVEREIGN SUITE ===",
       "Authorized Master: Upendra Singh Raghav (u.raghav003@gmail.com)",
-      "Apps Script Deployment: AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3",
+      "Apps Script Deployment: AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed",
       "",
       "1. Google Sheets [ACTIVE & INSTALLED]:",
       "   - Scope: Master Spreadsheet (16 tabs) & 49 Employee Personal Files",

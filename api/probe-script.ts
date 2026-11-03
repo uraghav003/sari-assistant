@@ -11,7 +11,7 @@ import {
 
 const PROBE_WINDOW_MS = 60 * 1000;
 const PROBE_MAX_REQUESTS = 20;
-const CANONICAL_DEPLOYMENT_ID = process.env.SARI_APPS_SCRIPT_URL ? process.env.SARI_APPS_SCRIPT_URL.split("/").slice(-2)[0] : "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
+const CANONICAL_DEPLOYMENT_ID = process.env.SARI_APPS_SCRIPT_URL ? process.env.SARI_APPS_SCRIPT_URL.split("/").slice(-2)[0] : "AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   applyApiHeaders(res);

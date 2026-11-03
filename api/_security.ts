@@ -14,7 +14,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 export const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 export const DEFAULT_APPS_SCRIPT_URL =
   process.env.SARI_APPS_SCRIPT_URL ??
-  "https://script.google.com/macros/s/AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3/exec";
+  "https://script.google.com/macros/s/AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed/exec";
 export const SESSION_COOKIE = "sari_session";
 const MIN_SECRET_LENGTH = 32;
 
