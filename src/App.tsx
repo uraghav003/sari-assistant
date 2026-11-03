@@ -37,6 +37,9 @@ export default function App() {
     import("./lib/deep-audit-learn").then(({ runDeepAuditAndLearnFromGemini }) => {
       void runDeepAuditAndLearnFromGemini();
     }).catch(() => {});
+    import("./lib/swarm-healer").then(({ activateAllSubagentsAndFixMCP }) => {
+      void activateAllSubagentsAndFixMCP();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
