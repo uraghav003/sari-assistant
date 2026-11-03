@@ -264,6 +264,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // fall through to sovereign brain
       }
     }
+
+    // ─── TIER 2.5: LOCAL OLLAMA / vLLM RUNTIME (http://127.0.0.1:11434) ──────
+    try {
+      const ollamaRes = await fetch("http://127.0.0.1:11434/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: process.env.OLLAMA_MODEL || "qwen2.5-coder:latest",
+          stream: false,
+          messages: [
+            { role: "system", content: SYSTEM_INSTRUCTION },
+            { role: "user", content: trimmedPrompt },
+          ],
+          options: { temperature: 0.7, num_ctx: 4096 },
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (ollamaRes.ok) {
+        const ollamaData: any = await ollamaRes.json();
+        const ollamaText = ollamaData?.message?.content?.trim();
+        if (ollamaText) {
+          res.status(200).json({ ok: true, text: ollamaText, tier: "LocalOllama", model: "qwen2.5-coder:latest" });
+          return;
+        }
+      }
+    } catch {}
     // ─── TIER 3: SARI SOVEREIGN AUTONOMOUS RESPONSE (100% reliable) ──────
     const p = trimmedPrompt.toLowerCase();
     let autonomousReply = "";
