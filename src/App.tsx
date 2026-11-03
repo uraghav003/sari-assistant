@@ -52,6 +52,9 @@ export default function App() {
     import("./lib/fish-voice").then(({ playSariVoice }) => {
       (window as any).playSariVoice = playSariVoice;
     }).catch(() => {});
+    import("./lib/self-diagnostic").then(({ runSelfDiagnosticAndRepair }) => {
+      void runSelfDiagnosticAndRepair();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
