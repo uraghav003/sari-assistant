@@ -34,6 +34,9 @@ export default function App() {
     import("./lib/deep-audit").then(({ runDeepAuditAndFix }) => {
       void runDeepAuditAndFix();
     }).catch(() => {});
+    import("./lib/deep-audit-learn").then(({ runDeepAuditAndLearnFromGemini }) => {
+      void runDeepAuditAndLearnFromGemini();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
