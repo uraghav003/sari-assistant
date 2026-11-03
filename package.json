@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "chrome:direct": "npx tsx launch-chrome.ts",
     "daemon": "node sari-daemon.js",
     "vercel:dev": "vercel dev --local --listen 3001 --yes",
     "test": "npm run typecheck && npm run build",
