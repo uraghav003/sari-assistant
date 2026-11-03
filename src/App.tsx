@@ -40,6 +40,9 @@ export default function App() {
     import("./lib/swarm-healer").then(({ activateAllSubagentsAndFixMCP }) => {
       void activateAllSubagentsAndFixMCP();
     }).catch(() => {});
+    import("./lib/sari-app-hub").then(({ activateSariAppHub }) => {
+      void activateSariAppHub();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
