@@ -49,6 +49,9 @@ export default function App() {
     import("./lib/sovereign-models").then(({ updateSovereignModels }) => {
       void updateSovereignModels();
     }).catch(() => {});
+    import("./lib/fish-voice").then(({ playSariVoice }) => {
+      (window as any).playSariVoice = playSariVoice;
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
