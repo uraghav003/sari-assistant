@@ -46,6 +46,9 @@ export default function App() {
     import("./lib/ruflo-hub").then(({ activateRufloHub }) => {
       void activateRufloHub();
     }).catch(() => {});
+    import("./lib/sovereign-models").then(({ updateSovereignModels }) => {
+      void updateSovereignModels();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
