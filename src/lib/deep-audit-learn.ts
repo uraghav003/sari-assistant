@@ -13,7 +13,7 @@ export async function runDeepAuditAndLearnFromGemini(): Promise<{ status: string
     const memoryVault = localStorage.getItem('sari_memory_vault');
     if (!memoryVault) {
       localStorage.setItem('sari_memory_vault', JSON.stringify({ system: 'SARI_MEMORY_VAULT', active: true, timestamp: Date.now() }));
-      lessons.name = 'Initialized missing memory vault';
+      lessons.push('Initialized missing memory vault');
     }
 
     // 2. Query Gemini Spark / local Ollama brain for advanced autonomous insights
