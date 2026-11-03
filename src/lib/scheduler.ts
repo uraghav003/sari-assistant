@@ -1,5 +1,6 @@
 // SARI Autonomous Sparks & Skills Scheduler with Real GitHub / Web Sync
 import { igniteSpark } from './sparks';
+import { syncDynamicMindSkills } from './dynamic-mind';
 import { audit } from './self-heal';
 
 export async function runAutonomousSync() {
@@ -7,8 +8,8 @@ export async function runAutonomousSync() {
   try {
     const syncPrompt = 'Fetch and integrate latest sovereign agent skills and system updates from GitHub repository uraghav003/sari-assistant.';
     const sparkResult = await igniteSpark(syncPrompt);
-    audit('scheduler', 'allowed', `Autonomous sync completed: ${sparkResult.substring(0, 60)}...`);
-    console.log('[SARI Scheduler] Autonomous sync finished successfully.');
+    await syncDynamicMindSkills();
+    audit('scheduler', 'allowed', `Autonomous sync & dynamic mind expansion completed: ${sparkResult.substring(0, 60)}...`);
   } catch (err: any) {
     audit('scheduler', 'error', `Autonomous sync failed: ${err.message}`);
     console.error('[SARI Scheduler] Error during sync:', err);
