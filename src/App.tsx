@@ -43,6 +43,9 @@ export default function App() {
     import("./lib/sari-app-hub").then(({ activateSariAppHub }) => {
       void activateSariAppHub();
     }).catch(() => {});
+    import("./lib/ruflo-hub").then(({ activateRufloHub }) => {
+      void activateRufloHub();
+    }).catch(() => {});
     return unsubscribe;
   }, []);
 
