@@ -1,6 +1,6 @@
 // SARI Dynamic Mind & Local Gemini / Ollama Knowledge Connector
 import { loadDynamicConfig } from './config';
-import { audit } from './self-heal';
+import { audit } from './storage';
 
 export interface DynamicKnowledgeQuery {
   topic: string;

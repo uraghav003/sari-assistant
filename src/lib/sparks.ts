@@ -1,6 +1,7 @@
 // Gemini Sparks & Antigravity Model Real Integration
 import { loadDynamicConfig } from './config';
-import { audit, learnFromInteraction } from './self-heal';
+import { audit } from './storage';
+import { learnFromInteraction } from './self-learn';
 
 export interface SparkConfig {
   provider: 'gemini-antigravity' | 'openrouter' | 'ollama';
