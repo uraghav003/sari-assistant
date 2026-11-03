@@ -27,9 +27,12 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = subscribeAuth(setAuthenticated);
     void checkSession();
-    // Initialize autonomous background skills scheduler
+    // Initialize autonomous background skills scheduler and deep audit fix
     import("./lib/scheduler").then(({ initScheduler }) => {
       initScheduler();
+    }).catch(() => {});
+    import("./lib/deep-audit").then(({ runDeepAuditAndFix }) => {
+      void runDeepAuditAndFix();
     }).catch(() => {});
     return unsubscribe;
   }, []);
