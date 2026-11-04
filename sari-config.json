@@ -2,5 +2,13 @@
   "scriptId": "1PP7wUFkDAkmgOjgPKeWbZeg3Ajs9N4ZNRPnfih_LMv89KEdSTVPvtipp",
   "deploymentId": "AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed",
   "notebooklmFolderId": "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
-  "driveWorkspaceName": "sari_supreme_command"
+  "driveWorkspaceName": "sari_supreme_command",
+  "superCommand": {
+    "name": "SARI_SUPER_COMMAND",
+    "vercelProject": "sari-assistant",
+    "githubRepo": "uraghav003/sari-assistant",
+    "branch": "main",
+    "mode": "latest-only",
+    "recentCommits": 5
+  }
 }
