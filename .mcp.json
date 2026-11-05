@@ -15,10 +15,9 @@
     "ruflo": {
       "command": "node",
       "args": [
-        "C:/Users/aecr/.agents/skills/ruflo-hub-runner.cjs"
+        "ruflo/ruflo-hub-runner.cjs"
       ],
       "env": {
-        "RUFLO_WORKSPACE": "C:\\Users\\aecr\\sari-assistant",
         "RUFLO_LEADER": "sari",
         "RUFLO_AUTO_MODE": "true"
       }

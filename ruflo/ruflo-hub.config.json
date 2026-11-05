@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "hub": {
+    "name": "omp-ruflo-ai-hub",
+    "version": "3.0.0",
+    "port": 3000,
+    "host": "127.0.0.1",
+    "protocol": "http-sse",
+    "endpoint": "http://127.0.0.1:3000"
+  },
+  "swarm": {
+    "topology": "hierarchical-mesh",
+    "strategy": "adaptive",
+    "maxAgents": 15,
+    "v3Mode": true,
+    "autoScale": true,
+    "coordinationStrategy": "consensus",
+    "leader": "sari",
+    "apsc": {
+      "live": true,
+      "minActiveAgents": 3,
+      "pheromoneAdaptive": true,
+      "quorumThreshold": 0.67
+    }
+  },
+  "memory": {
+    "backend": "hybrid",
+    "vectorSearch": true,
+    "autoPersist": true,
+    "persistPath": ".claude-flow/data",
+    "agentDb": {
+      "enabled": true,
+      "provider": "agentdb-vector",
+      "path": ".claude-flow/data/agentdb.sqlite",
+      "hnsw": {
+        "enabled": true,
+        "dimensions": 384,
+        "similarityMetric": "cosine",
+        "m": 16,
+        "efConstruction": 200
+      },
+      "retrieval": {
+        "strategy": "hybrid",
+        "smartRetrieval": true,
+        "rrf": true,
+        "mmr": true,
+        "threshold": 0.2
+      }
+    },
+    "namespaces": [
+      "default",
+      "swarm",
+      "episodes",
+      "reasoning_bank",
+      "banking-ops"
+    ]
+  },
+  "agents": {
+    "architect": {
+      "id": "architect",
+      "name": "Architect",
+      "role": "Chief Systems Architect & Technical Specification Designer",
+      "archetype": "system-architect",
+      "skillsCount": 31,
+      "capabilities": [
+        "system-architecture",
+        "api-design",
+        "domain-modeling",
+        "codebase-design",
+        "slice-decomposition",
+        "adr-documentation",
+        "spec-mining"
+      ],
+      "tools": [
+        "find",
+        "grep",
+        "glob",
+        "read",
+        "edit",
+        "write",
+        "task"
+      ],
+      "executionStrategy": "hierarchical-planner"
+    },
+    "bulbhul": {
+      "id": "bulbhul",
+      "name": "Bulbhul",
+      "role": "BULBHUL Autonomous Fintech Personal Banker & CRM Operations",
+      "archetype": "fintech-banker",
+      "skillsCount": 12,
+      "capabilities": [
+        "fintech-banking",
+        "loan-underwriting",
+        "auto-heal",
+        "spreadsheet-sync",
+        "crm-intelligence",
+        "trigger-healing",
+        "direct-connect"
+      ],
+      "tools": [
+        "bulbhul_auto_heal",
+        "bulbhul_credit_assessment",
+        "bulbhul_chat",
+        "bulbhul_lookup_lead",
+        "bulbhul_get_pipeline",
+        "bulbhul_update_status",
+        "bulbhul_whatsapp_send",
+        "read",
+        "write",
+        "edit"
+      ],
+      "executionStrategy": "autonomous-event-driven"
+    },
+    "devops-sre": {
+      "id": "devops-sre",
+      "name": "DevOps-SRE",
+      "role": "DevOps, SRE, Platform Infrastructure & CI/CD Engineer",
+      "archetype": "platform-engineer",
+      "skillsCount": 31,
+      "capabilities": [
+        "ci-cd",
+        "cloud-deployment",
+        "daemon-supervision",
+        "sre-monitoring",
+        "containerization",
+        "kubernetes",
+        "process-management"
+      ],
+      "tools": [
+        "bash",
+        "read",
+        "write",
+        "edit",
+        "glob",
+        "proc",
+        "ssh"
+      ],
+      "executionStrategy": "proactive-autonomous"
+    },
+    "quality-test-engineer": {
+      "id": "quality-test-engineer",
+      "name": "Quality-Test-Engineer",
+      "role": "TDD, QA Automation, E2E Testing & Diagnostics Specialist",
+      "archetype": "tester",
+      "skillsCount": 17,
+      "capabilities": [
+        "tdd",
+        "unit-testing",
+        "e2e-testing",
+        "diagnostics",
+        "regression-testing",
+        "coverage-analysis",
+        "playwright"
+      ],
+      "tools": [
+        "bash",
+        "read",
+        "write",
+        "edit",
+        "grep",
+        "find"
+      ],
+      "executionStrategy": "verification-first"
+    },
+    "security-reviewer": {
+      "id": "security-reviewer",
+      "name": "Security-Reviewer",
+      "role": "Security Auditor, Threat Modeling & Vulnerability Specialist",
+      "archetype": "security-auditor",
+      "skillsCount": 5,
+      "capabilities": [
+        "zero-trust-audit",
+        "threat-modeling",
+        "vulnerability-review",
+        "secret-detection",
+        "prompt-injection-defense",
+        "owasp-compliance"
+      ],
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "sari_zero_trust_audit"
+      ],
+      "executionStrategy": "zero-trust-gatekeeper"
+    },
+    "postmaster": {
+      "id": "postmaster",
+      "name": "Postmaster",
+      "role": "Master Omnichannel Postmaster & Telephony Calling Desk",
+      "archetype": "omnichannel-telephony",
+      "skillsCount": 1,
+      "capabilities": [
+        "telephony-desk",
+        "calling-queues",
+        "voice-scripts",
+        "omnichannel-notifications",
+        "calendar-coordination",
+        "call-logging"
+      ],
+      "tools": [
+        "bhism_calling_queue",
+        "bhism_record_call",
+        "bhism_voice_script",
+        "google_chat_messages",
+        "bulbhul_send_email",
+        "bulbhul_whatsapp_send"
+      ],
+      "executionStrategy": "queue-worker"
+    },
+    "sari": {
+      "id": "sari",
+      "name": "Sari",
+      "role": "SARI Master Sovereign AI Swarm Orchestrator & Dynamic Mind",
+      "archetype": "sovereign-orchestrator",
+      "skillsCount": 12,
+      "capabilities": [
+        "swarm-orchestration",
+        "dynamic-mind-memory",
+        "cognitive-sari-4block",
+        "focus-mode-triage",
+        "skill-synthesis",
+        "cross-agent-coordination"
+      ],
+      "tools": [
+        "sari_infer_11_2",
+        "sari_focus_mode",
+        "sari_memory_vault_sync",
+        "sari_skill_synthesizer",
+        "task",
+        "read",
+        "write"
+      ],
+      "executionStrategy": "master-orchestrator"
+    }
+  }
+}
