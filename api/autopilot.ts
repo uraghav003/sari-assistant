@@ -80,6 +80,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         res.status(502).json({ ok: false, error: hint });
         return;
       }
+      const emails = data.result.emails;
+      const firstError = emails.find((e) => e.error)?.error;
+      if (firstError && !emails.some((e) => !e.error && e.subject)) {
+        res.status(502).json({ ok: false, error: firstError.slice(0, 200) });
+        return;
+      }
       const alerts = data.result.emails
         .filter((e) => !e.error && e.subject)
         .map((e) => ({
