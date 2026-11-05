@@ -3,6 +3,15 @@
   "deploymentId": "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3",
   "notebooklmFolderId": "1BP62tjji2t2ZhYbAJU7-JgaOYGwUD2Bu",
   "driveWorkspaceName": "sari_supreme_command",
+  "forbiddenIds": [
+    "1PP7wUFkDAkmgOjgPKeWbZeg3Ajs9N4ZNRPnfih_LMv89KEdSTVPvtipp",
+    "AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed"
+  ],
+  "environment": {
+    "allowed": ["SARI_SHARED_SECRET", "SARI_SESSION_SECRET", "SARI_PASSWORD_HASH"],
+    "scriptProperties": ["MALLIK_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY", "GROQ_API_KEY", "NOTION_API_KEY"],
+    "note": "Names only. Values live in the environment (max 3) or Apps Script Script Properties, never in this file."
+  },
   "superCommand": {
     "name": "SARI_SUPER_COMMAND",
     "vercelProject": "sari-assistant",
