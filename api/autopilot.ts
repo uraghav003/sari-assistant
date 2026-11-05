@@ -47,18 +47,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const action = "autopilot_learn";
+  const body = readBody(req);
+  const refresh = body.refresh === true;
+  const action = refresh ? "autopilot_heartbeat" : "autopilot_learn";
   const auth = appsScriptAuth(action);
   if (!auth) {
     res.status(503).json({ ok: false, error: "SARI_SHARED_SECRET is not configured on the server." });
     return;
   }
 
-  const body = readBody(req);
-  const lessons = stringList(body.lessons, 20, 300);
-  const skills = Array.isArray(body.skills) ? body.skills.slice(0, 50) : [];
+  const lessons = refresh ? [] : stringList(body.lessons, 20, 300);
+  const skills = refresh ? [] : Array.isArray(body.skills) ? body.skills.slice(0, 50) : [];
 
-  if (lessons.length === 0 && skills.length === 0) {
+  if (!refresh && lessons.length === 0 && skills.length === 0) {
     res.status(400).json({ ok: false, error: "Nothing to sync." });
     return;
   }
@@ -72,6 +73,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     });
     if (!upstream.ok) {
       res.status(502).json({ ok: false, error: `Apps Script returned HTTP ${upstream.status}.` });
+      return;
+    }
+    if (refresh) {
+      const data = (await upstream.json().catch(() => ({}))) as { ok?: boolean; result?: unknown; error?: string };
+      if (data.ok === false) {
+        res.status(502).json({ ok: false, error: data.error || "Supreme Command rejected the refresh." });
+        return;
+      }
+      res.status(200).json({ ok: true, system: "SARI_SUPREME_COMMAND", result: data.result ?? null });
       return;
     }
     res.status(200).json({ ok: true, lessons: lessons.length, skills: skills.length });
