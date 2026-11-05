@@ -23,8 +23,8 @@ function loadAutoKeys() {
 
 const autoKeys = loadAutoKeys();
 
-const SCRIPT_ID = process.env.SARI_SCRIPT_ID || autoKeys.SARI_SCRIPT_ID || "1PP7wUFkDAkmgOjgPKeWbZeg3Ajs9N4ZNRPnfih_LMv89KEdSTVPvtipp";
-const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || autoKeys.SARI_DEPLOYMENT_ID || "AKfycbwQvs1O-1TdNBDQKEZUsrngH_LJNBoPL1euK1iHSLRHjVN-GsmFyYPbRMT1anueC6Ed";
+const SCRIPT_ID = process.env.SARI_SCRIPT_ID || autoKeys.SARI_SCRIPT_ID || "15rN7xFT8jSqTNs1Pu-M9h4E4eD5DXaQdtkLm6Z1p-CvLH52TIWKshhI3";
+const DEPLOYMENT_ID = process.env.SARI_DEPLOYMENT_ID || autoKeys.SARI_DEPLOYMENT_ID || "AKfycbw_DlODYECpdfJKag01Jz5QlmoH2Fdj6kFElfKCOTiZfv8aFeYBLorki_4qlSC5tCr3";
 const EXEC_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
 
 const OLLAMA_URL = (process.env.OLLAMA_URL || autoKeys.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
