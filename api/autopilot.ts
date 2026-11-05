@@ -47,8 +47,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
+  // /api/sari/:op is rewritten here by vercel.json (no extra serverless function).
+  const op = typeof req.query.op === "string" ? req.query.op : "";
+  if (op === "learn" || op === "simulate") {
+    res.status(501).json({ ok: false, error: `"${op}" is not implemented on the cloud backend (Apps Script has no matching action).` });
+    return;
+  }
+
   const body = readBody(req);
-  const refresh = body.refresh === true;
+  const refresh = body.refresh === true || op === "activate";
   const action = refresh ? "autopilot_heartbeat" : "autopilot_learn";
   const auth = appsScriptAuth(action);
   if (!auth) {
@@ -76,12 +83,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
     if (refresh) {
-      const data = (await upstream.json().catch(() => ({}))) as { ok?: boolean; result?: unknown; error?: string };
-      if (data.ok === false) {
-        res.status(502).json({ ok: false, error: data.error || "Supreme Command rejected the refresh." });
+      const data = (await upstream.json().catch(() => ({}))) as { ok?: boolean; result?: { message?: string } | null; error?: string };
+      if (data.ok !== true || !data.result?.message) {
+        res.status(502).json({ ok: false, error: data.error || "Supreme Command did not acknowledge the refresh." });
         return;
       }
-      res.status(200).json({ ok: true, system: "SARI_SUPREME_COMMAND", result: data.result ?? null });
+      if (op === "activate") {
+        res.status(200).json({ ok: true, status: "active", mode: "autonomous", message: data.result.message });
+        return;
+      }
+      res.status(200).json({ ok: true, system: "SARI_SUPREME_COMMAND", result: data.result });
       return;
     }
     res.status(200).json({ ok: true, lessons: lessons.length, skills: skills.length });

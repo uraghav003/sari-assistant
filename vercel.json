@@ -7,6 +7,7 @@
   },
   "rewrites": [
     { "source": "/api/totp-setup", "destination": "/api/change-password?action=totp-setup" },
+    { "source": "/api/sari/:op", "destination": "/api/autopilot?op=:op" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
