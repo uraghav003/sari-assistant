@@ -49,6 +49,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   // /api/sari/:op is rewritten here by vercel.json (no extra serverless function).
   const op = typeof req.query.op === "string" ? req.query.op : "";
+  if (op && !["activate", "learn", "simulate", "alerts"].includes(op)) {
+    res.status(404).json({ ok: false, error: `Unknown operation "${op}".` });
+    return;
+  }
   if (op === "learn" || op === "simulate") {
     res.status(501).json({ ok: false, error: `"${op}" is not implemented on the cloud backend (Apps Script has no matching action).` });
     return;

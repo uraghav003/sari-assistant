@@ -63,7 +63,24 @@ async function poll(stop: () => void): Promise<void> {
       signal: AbortSignal.timeout(25_000),
     });
     if (res.status === 401) return; // not signed in yet; keep polling so alerts start right after login
-    if (!res.ok) return;
+    if (!res.ok) {
+      // Surface a persistent failure once instead of failing silently.
+      let reason = `HTTP ${res.status}`;
+      try {
+        const err = (await res.json()) as { error?: string };
+        if (err.error) reason = err.error;
+      } catch {
+        // keep the status code
+      }
+      const seenErr = loadSeen();
+      const key = `unavailable|${reason}`;
+      if (res.status >= 500 && !seenErr.has(key)) {
+        seenErr.add(key);
+        saveSeen(seenErr);
+        pushAlert({ title: "⚠ Email alerts unavailable", body: reason, channel: "in_app" });
+      }
+      return;
+    }
     const data = (await res.json()) as { ok?: boolean; alerts?: MailAlert[] };
     if (!data.ok || !Array.isArray(data.alerts)) return;
 
@@ -75,7 +92,7 @@ async function poll(stop: () => void): Promise<void> {
       pushAlert({ title, body, channel: "in_app" });
       void showSystemNotification(title, body);
     }
-    for (const a of data.alerts) seen.add(a.id);
+    for (const a of fresh) seen.add(a.id);
     saveSeen(seen);
   } catch {
     // network hiccup — retry on the next tick
