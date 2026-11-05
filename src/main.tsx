@@ -5,9 +5,11 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { purgeLegacySecrets } from "./lib/privacy";
+import { startMailAlerts } from "./lib/mail-alerts";
 
 // Old builds stored API keys and tokens in localStorage — remove them.
 purgeLegacySecrets();
+startMailAlerts();
 
 const queryClient = new QueryClient();
 

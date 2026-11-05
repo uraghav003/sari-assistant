@@ -53,6 +53,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(501).json({ ok: false, error: `"${op}" is not implemented on the cloud backend (Apps Script has no matching action).` });
     return;
   }
+  if (op === "alerts") {
+    const mailAuth = appsScriptAuth("gmail_mis_incoming");
+    if (!mailAuth) {
+      res.status(503).json({ ok: false, error: "SARI_SHARED_SECRET is not configured on the server." });
+      return;
+    }
+    try {
+      const upstream = await fetch(process.env.SARI_APPS_SCRIPT_URL || DEFAULT_APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "gmail_mis_incoming", auth: mailAuth, limit: 10 }),
+        signal: AbortSignal.timeout(20000),
+      });
+      const data = (await upstream.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        result?: { emails?: Array<{ subject?: string; from?: string; date?: string; snippet?: string; unread?: boolean; error?: string }> };
+      };
+      if (!upstream.ok || data.ok !== true || !Array.isArray(data.result?.emails)) {
+        const hint = data.error === "UNKNOWN_ACTION" ? "Email alerts need the updated Apps Script (gmail_mis_incoming) deployed." : data.error || "Email alert source unavailable.";
+        res.status(502).json({ ok: false, error: hint });
+        return;
+      }
+      const alerts = data.result.emails
+        .filter((e) => !e.error && e.subject)
+        .map((e) => ({
+          id: `${e.date ?? ""}|${e.subject}`.slice(0, 240),
+          subject: String(e.subject).slice(0, 200),
+          from: String(e.from ?? "").slice(0, 100),
+          date: e.date ?? null,
+          snippet: String(e.snippet ?? "").slice(0, 200),
+          unread: e.unread !== false,
+        }));
+      res.status(200).json({ ok: true, count: alerts.length, alerts });
+    } catch {
+      res.status(502).json({ ok: false, error: "Could not reach the Apps Script backend." });
+    }
+    return;
+  }
 
   const body = readBody(req);
   const refresh = body.refresh === true || op === "activate";
